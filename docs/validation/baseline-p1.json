@@ -1,0 +1,464 @@
+[
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "endpoints": {
+        "health": "str",
+        "login": "str",
+        "pedidos": "str",
+        "produtos": "str",
+        "relatorios": "str",
+        "usuarios": "str"
+      },
+      "mensagem": "str",
+      "versao": "str"
+    },
+    "body": "{\n  \"endpoints\": {\n    \"health\": \"/health\",\n    \"login\": \"/login\",\n    \"pedidos\": \"/pedidos\",\n    \"produtos\": \"/produtos\",\n    \"relatorios\": \"/relatorios/vendas\",\n    \"usuarios\": \"/usuarios\"\n  },\n  \"mensagem\": \"Bem-vindo \\u00e0 API da Loja\",\n  \"versao\": \"1.0.0\"\n}\n",
+    "method": "GET",
+    "path": "/"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "ambiente": "str",
+      "counts": {
+        "pedidos": "int",
+        "produtos": "int",
+        "usuarios": "int"
+      },
+      "database": "str",
+      "db_path": "str",
+      "debug": "bool",
+      "secret_key": "str",
+      "status": "str",
+      "versao": "str"
+    },
+    "body": "{\n  \"ambiente\": \"producao\",\n  \"counts\": {\n    \"pedidos\": 0,\n    \"produtos\": 10,\n    \"usuarios\": 3\n  },\n  \"database\": \"connected\",\n  \"db_path\": \"loja.db\",\n  \"debug\": true,\n  \"secret_key\": \"minha-chave-super-secreta-123\",\n  \"status\": \"ok\",\n  \"versao\": \"1.0.0\"\n}\n",
+    "method": "GET",
+    "path": "/health"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Notebook potente para jogos\",\n      \"estoque\": 10,\n      \"id\": 1,\n      \"nome\": \"Notebook Gamer\",\n      \"preco\": 5999.99\n    },\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Mouse sem fio erg",
+    "method": "GET",
+    "path": "/produtos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool",
+      "total": "int"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Mouse sem fio ergon\\u00f4mico\",\n      \"estoque\": 50,\n      \"id\": 2,\n      \"nome\": \"Mouse Wireless\",\n      \"preco\": 89.9\n    }\n  ],\n  \"sucesso\": true,\n  \"total\": 1\n}\n",
+    "method": "GET",
+    "path": "/produtos/busca?q=Mouse"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool",
+      "total": "int"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Mouse sem fio ergon\\u00f4mico\",\n      \"estoque\": 50,\n      \"id\": 2,\n      \"nome\": \"Mouse Wireless\",\n      \"preco\": 89.9\n    },\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Teclado mec\\u00e2n",
+    "method": "GET",
+    "path": "/produtos/busca?categoria=informatica&preco_min=50&preco_max=300"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool",
+      "total": "int"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Notebook potente para jogos\",\n      \"estoque\": 10,\n      \"id\": 1,\n      \"nome\": \"Notebook Gamer\",\n      \"preco\": 5999.99\n    },\n    {\n      \"ativo\": 1,\n      \"categoria\": \"informatica\",\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"descricao\": \"Mouse sem fio erg",
+    "method": "GET",
+    "path": "/produtos/busca?q=%27%20OR%20%271%27%3D%271"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "ativo": "int",
+        "categoria": "str",
+        "criado_em": "str",
+        "descricao": "str",
+        "estoque": "int",
+        "id": "int",
+        "nome": "str",
+        "preco": "float"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"ativo\": 1,\n    \"categoria\": \"informatica\",\n    \"criado_em\": \"2026-09-17 15:20:18\",\n    \"descricao\": \"Notebook potente para jogos\",\n    \"estoque\": 10,\n    \"id\": 1,\n    \"nome\": \"Notebook Gamer\",\n    \"preco\": 5999.99\n  },\n  \"sucesso\": true\n}\n",
+    "method": "GET",
+    "path": "/produtos/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"erro\": \"Produto n\\u00e3o encontrado\",\n  \"sucesso\": false\n}\n",
+    "method": "GET",
+    "path": "/produtos/9999"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "dados": {
+        "id": "int"
+      },
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"id\": 11\n  },\n  \"mensagem\": \"Produto criado\",\n  \"sucesso\": true\n}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Dados inv\\u00e1lidos\"\n}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Pre\\u00e7o \\u00e9 obrigat\\u00f3rio\"\n}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Categoria inv\\u00e1lida. V\\u00e1lidas: ['informatica', 'moveis', 'vestuario', 'geral', 'eletronicos', 'livros']\"\n}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Pre\\u00e7o n\\u00e3o pode ser negativo\"\n}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"mensagem\": \"Produto atualizado\",\n  \"sucesso\": true\n}\n",
+    "method": "PUT",
+    "path": "/produtos/2"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Produto n\\u00e3o encontrado\"\n}\n",
+    "method": "PUT",
+    "path": "/produtos/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"mensagem\": \"Produto deletado\",\n  \"sucesso\": true\n}\n",
+    "method": "DELETE",
+    "path": "/produtos/11"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Produto n\\u00e3o encontrado\"\n}\n",
+    "method": "DELETE",
+    "path": "/produtos/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"email\": \"admin@loja.com\",\n      \"id\": 1,\n      \"nome\": \"Admin\",\n      \"senha\": \"admin123\",\n      \"tipo\": \"admin\"\n    },\n    {\n      \"criado_em\": \"2026-09-17 15:20:18\",\n      \"email\": \"joao@email.com\",\n      \"id\": 2,\n      \"nome\": \"Jo\\u00e3o Silva\",\n      \"senha\": \"123456\",\n      \"tipo\": \"cliente\"\n    },\n    {\n      \"criado_em\": ",
+    "method": "GET",
+    "path": "/usuarios"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "criado_em": "str",
+        "email": "str",
+        "id": "int",
+        "nome": "str",
+        "senha": "str",
+        "tipo": "str"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"criado_em\": \"2026-09-17 15:20:18\",\n    \"email\": \"admin@loja.com\",\n    \"id\": 1,\n    \"nome\": \"Admin\",\n    \"senha\": \"admin123\",\n    \"tipo\": \"admin\"\n  },\n  \"sucesso\": true\n}\n",
+    "method": "GET",
+    "path": "/usuarios/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Usu\\u00e1rio n\\u00e3o encontrado\"\n}\n",
+    "method": "GET",
+    "path": "/usuarios/9999"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "dados": {
+        "id": "int"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"id\": 4\n  },\n  \"sucesso\": true\n}\n",
+    "method": "POST",
+    "path": "/usuarios"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Nome, email e senha s\\u00e3o obrigat\\u00f3rios\"\n}\n",
+    "method": "POST",
+    "path": "/usuarios"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "email": "str",
+        "id": "int",
+        "nome": "str",
+        "tipo": "str"
+      },
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"email\": \"admin@loja.com\",\n    \"id\": 1,\n    \"nome\": \"Admin\",\n    \"tipo\": \"admin\"\n  },\n  \"mensagem\": \"Login OK\",\n  \"sucesso\": true\n}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 401,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"erro\": \"Email ou senha inv\\u00e1lidos\",\n  \"sucesso\": false\n}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Email e senha s\\u00e3o obrigat\\u00f3rios\"\n}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "dados": {
+        "pedido_id": "int",
+        "total": "float"
+      },
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"pedido_id\": 1,\n    \"total\": 6599.79\n  },\n  \"mensagem\": \"Pedido criado com sucesso\",\n  \"sucesso\": true\n}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"erro\": \"Estoque insuficiente para Notebook Gamer\",\n  \"sucesso\": false\n}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"erro\": \"Produto 9999 n\\u00e3o encontrado\",\n  \"sucesso\": false\n}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Pedido deve ter pelo menos 1 item\"\n}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"criado_em\": \"2026-09-17 15:20:19\",\n      \"id\": 1,\n      \"itens\": [\n        {\n          \"preco_unitario\": 5999.99,\n          \"produto_id\": 1,\n          \"produto_nome\": \"Notebook Gamer\",\n          \"quantidade\": 1\n        },\n        {\n          \"preco_unitario\": 299.9,\n          \"produto_id\": 3,\n          \"produto_nome\": \"Teclado Mec\\u00e2nico\",\n          \"quantidade\": 2\n ",
+    "method": "GET",
+    "path": "/pedidos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"criado_em\": \"2026-09-17 15:20:19\",\n      \"id\": 1,\n      \"itens\": [\n        {\n          \"preco_unitario\": 5999.99,\n          \"produto_id\": 1,\n          \"produto_nome\": \"Notebook Gamer\",\n          \"quantidade\": 1\n        },\n        {\n          \"preco_unitario\": 299.9,\n          \"produto_id\": 3,\n          \"produto_nome\": \"Teclado Mec\\u00e2nico\",\n          \"quantidade\": 2\n ",
+    "method": "GET",
+    "path": "/pedidos/usuario/2"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"mensagem\": \"Status atualizado\",\n  \"sucesso\": true\n}\n",
+    "method": "PUT",
+    "path": "/pedidos/1/status"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\n  \"erro\": \"Status inv\\u00e1lido\"\n}\n",
+    "method": "PUT",
+    "path": "/pedidos/1/status"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "desconto_aplicavel": "float",
+        "faturamento_bruto": "float",
+        "faturamento_liquido": "float",
+        "pedidos_aprovados": "int",
+        "pedidos_cancelados": "int",
+        "pedidos_pendentes": "int",
+        "ticket_medio": "float",
+        "total_pedidos": "int"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": {\n    \"desconto_aplicavel\": 329.99,\n    \"faturamento_bruto\": 6599.79,\n    \"faturamento_liquido\": 6269.8,\n    \"pedidos_aprovados\": 1,\n    \"pedidos_cancelados\": 0,\n    \"pedidos_pendentes\": 0,\n    \"ticket_medio\": 6599.79,\n    \"total_pedidos\": 1\n  },\n  \"sucesso\": true\n}\n",
+    "method": "GET",
+    "path": "/relatorios/vendas"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"dados\": [\n    {\n      \"n\": 4\n    }\n  ],\n  \"sucesso\": true\n}\n",
+    "method": "POST",
+    "path": "/admin/query"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\n  \"mensagem\": \"Banco de dados resetado\",\n  \"sucesso\": true\n}\n",
+    "method": "POST",
+    "path": "/admin/reset-db"
+  }
+]

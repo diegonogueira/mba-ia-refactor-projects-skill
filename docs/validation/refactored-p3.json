@@ -1,0 +1,626 @@
+[
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "message": "str",
+      "version": "str"
+    },
+    "body": "{\"message\":\"Task Manager API\",\"version\":\"1.0\"}\n",
+    "method": "GET",
+    "path": "/"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "status": "str",
+      "timestamp": "str"
+    },
+    "body": "{\"status\":\"ok\",\"timestamp\":\"2026-09-17 13:23:22.753085\"}\n",
+    "method": "GET",
+    "path": "/health"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "category_id": "int",
+        "category_name": "str",
+        "created_at": "str",
+        "description": "str",
+        "due_date": "str",
+        "id": "int",
+        "overdue": "bool",
+        "priority": "int",
+        "status": "str",
+        "tags": [],
+        "title": "str",
+        "updated_at": "str",
+        "user_id": "int",
+        "user_name": "str"
+      }
+    ],
+    "body": "[{\"category_id\":1,\"category_name\":\"Backend\",\"created_at\":\"2026-09-17 16:23:22.156990\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 16:23:22.156269\",\"id\":1,\"overdue\":true,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-17 16:23:22.156992\",\"user_id\":1,\"user_name\":\"Jo\\u00e3o Silva\"},{\"category_id\"",
+    "method": "GET",
+    "path": "/tasks"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "category_id": "int",
+      "created_at": "str",
+      "description": "str",
+      "due_date": "str",
+      "id": "int",
+      "overdue": "bool",
+      "priority": "int",
+      "status": "str",
+      "tags": [],
+      "title": "str",
+      "updated_at": "str",
+      "user_id": "int"
+    },
+    "body": "{\"category_id\":1,\"created_at\":\"2026-09-17 16:23:22.156990\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 16:23:22.156269\",\"id\":1,\"overdue\":true,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-17 16:23:22.156992\",\"user_id\":1}\n",
+    "method": "GET",
+    "path": "/tasks/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Task n\\u00e3o encontrada\"}\n",
+    "method": "GET",
+    "path": "/tasks/9999"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "category_id": "int",
+      "created_at": "str",
+      "description": "str",
+      "due_date": "str",
+      "id": "int",
+      "priority": "int",
+      "status": "str",
+      "tags": [
+        "str"
+      ],
+      "title": "str",
+      "updated_at": "str",
+      "user_id": "int"
+    },
+    "body": "{\"category_id\":1,\"created_at\":\"2026-09-17 16:23:22.768948\",\"description\":\"d\",\"due_date\":\"2030-01-01 00:00:00\",\"id\":11,\"priority\":2,\"status\":\"pending\",\"tags\":[\"a\",\"b\"],\"title\":\"Nova task\",\"updated_at\":\"2026-09-17 16:23:22.768951\",\"user_id\":1}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"T\\u00edtulo muito curto\"}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Dados inv\\u00e1lidos\"}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Status inv\\u00e1lido\"}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Prioridade deve ser entre 1 e 5\"}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Formato de data inv\\u00e1lido. Use YYYY-MM-DD\"}\n",
+    "method": "POST",
+    "path": "/tasks"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "category_id": "int",
+      "created_at": "str",
+      "description": "str",
+      "due_date": "str",
+      "id": "int",
+      "priority": "int",
+      "status": "str",
+      "tags": [],
+      "title": "str",
+      "updated_at": "str",
+      "user_id": "int"
+    },
+    "body": "{\"category_id\":1,\"created_at\":\"2026-09-17 16:23:22.156990\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 16:23:22.156269\",\"id\":1,\"priority\":2,\"status\":\"in_progress\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-17 16:23:22.777341\",\"user_id\":1}\n",
+    "method": "PUT",
+    "path": "/tasks/1"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Status inv\\u00e1lido\"}\n",
+    "method": "PUT",
+    "path": "/tasks/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Task n\\u00e3o encontrada\"}\n",
+    "method": "PUT",
+    "path": "/tasks/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "message": "str"
+    },
+    "body": "{\"message\":\"Task deletada com sucesso\"}\n",
+    "method": "DELETE",
+    "path": "/tasks/2"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Task n\\u00e3o encontrada\"}\n",
+    "method": "DELETE",
+    "path": "/tasks/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "category_id": "int",
+        "created_at": "str",
+        "description": "str",
+        "due_date": "str",
+        "id": "int",
+        "priority": "int",
+        "status": "str",
+        "tags": [],
+        "title": "str",
+        "updated_at": "str",
+        "user_id": "int"
+      }
+    ],
+    "body": "[{\"category_id\":1,\"created_at\":\"2026-09-17 16:23:22.156997\",\"description\":\"Endpoints retornam todos os registros\",\"due_date\":\"2026-09-27 16:23:22.156269\",\"id\":5,\"priority\":3,\"status\":\"pending\",\"tags\":[],\"title\":\"Adicionar pagina\\u00e7\\u00e3o na API\",\"updated_at\":\"2026-09-17 16:23:22.156998\",\"user_id\":1},{\"category_id\":1,\"created_at\":\"2026-09-17 16:23:22.156999\",\"description\":\"Gerar documenta\\u00e7",
+    "method": "GET",
+    "path": "/tasks/search?q=API"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "category_id": "int",
+        "created_at": "str",
+        "description": "str",
+        "due_date": "str",
+        "id": "int",
+        "priority": "int",
+        "status": "str",
+        "tags": [],
+        "title": "str",
+        "updated_at": "str",
+        "user_id": "int"
+      }
+    ],
+    "body": "[{\"category_id\":4,\"created_at\":\"2026-09-17 16:23:22.156996\",\"description\":\"Filtro n\\u00e3o funciona com caracteres especiais\",\"due_date\":\"2026-09-16 16:23:22.156269\",\"id\":4,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Corrigir bug no filtro de busca\",\"updated_at\":\"2026-09-17 16:23:22.156996\",\"user_id\":1}]\n",
+    "method": "GET",
+    "path": "/tasks/search?status=pending&priority=1"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "cancelled": "int",
+      "completion_rate": "float",
+      "done": "int",
+      "in_progress": "int",
+      "overdue": "int",
+      "pending": "int",
+      "total": "int"
+    },
+    "body": "{\"cancelled\":1,\"completion_rate\":10.0,\"done\":1,\"in_progress\":2,\"overdue\":2,\"pending\":6,\"total\":10}\n",
+    "method": "GET",
+    "path": "/tasks/stats"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "active": "bool",
+        "created_at": "str",
+        "email": "str",
+        "id": "int",
+        "name": "str",
+        "role": "str",
+        "task_count": "int"
+      }
+    ],
+    "body": "[{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.156006\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\",\"task_count\":5},{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.156008\",\"email\":\"maria@email.com\",\"id\":2,\"name\":\"Maria Santos\",\"role\":\"user\",\"task_count\":2},{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.156009\",\"email\":\"pedro@email.com\",\"id\":3,\"name\":\"Pedro Oliveira",
+    "method": "GET",
+    "path": "/users"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "active": "bool",
+      "created_at": "str",
+      "email": "str",
+      "id": "int",
+      "name": "str",
+      "role": "str",
+      "tasks": [
+        "object"
+      ]
+    },
+    "body": "{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.156006\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\",\"tasks\":[{\"category_id\":1,\"created_at\":\"2026-09-17 16:23:22.156990\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 16:23:22.156269\",\"id\":1,\"priority\":2,\"status\":\"in_progress\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"",
+    "method": "GET",
+    "path": "/users/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "method": "GET",
+    "path": "/users/9999"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "active": "bool",
+      "created_at": "str",
+      "email": "str",
+      "id": "int",
+      "name": "str",
+      "role": "str"
+    },
+    "body": "{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.842580\",\"email\":\"ana62202746@email.com\",\"id\":4,\"name\":\"Ana\",\"role\":\"user\"}\n",
+    "method": "POST",
+    "path": "/users"
+  },
+  {
+    "status": 409,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Email j\\u00e1 cadastrado\"}\n",
+    "method": "POST",
+    "path": "/users"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Email inv\\u00e1lido\"}\n",
+    "method": "POST",
+    "path": "/users"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Email \\u00e9 obrigat\\u00f3rio\"}\n",
+    "method": "POST",
+    "path": "/users"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "active": "bool",
+      "created_at": "str",
+      "email": "str",
+      "id": "int",
+      "name": "str",
+      "role": "str"
+    },
+    "body": "{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.156008\",\"email\":\"maria@email.com\",\"id\":2,\"name\":\"Maria S.\",\"role\":\"user\"}\n",
+    "method": "PUT",
+    "path": "/users/2"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "method": "PUT",
+    "path": "/users/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "created_at": "str",
+        "description": "str",
+        "due_date": "str",
+        "id": "int",
+        "overdue": "bool",
+        "priority": "int",
+        "status": "str",
+        "title": "str"
+      }
+    ],
+    "body": "[{\"created_at\":\"2026-09-17 16:23:22.156990\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 16:23:22.156269\",\"id\":1,\"overdue\":true,\"priority\":2,\"status\":\"in_progress\",\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"},{\"created_at\":\"2026-09-17 16:23:22.156996\",\"description\":\"Filtro n\\u00e3o funciona com caracteres especiais\",\"due_date\":\"2026-09-16 16:23:22.15626",
+    "method": "GET",
+    "path": "/users/1/tasks"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "method": "GET",
+    "path": "/users/9999/tasks"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "message": "str",
+      "token": "str",
+      "user": {
+        "active": "bool",
+        "created_at": "str",
+        "email": "str",
+        "id": "int",
+        "name": "str",
+        "role": "str"
+      }
+    },
+    "body": "{\"message\":\"Login realizado com sucesso\",\"token\":\"eyJ1c2VyX2lkIjoxfQ.aqwT-g.OqOUGNYOgIG6cn9QsxNLR0oKqbg\",\"user\":{\"active\":true,\"created_at\":\"2026-09-17 16:23:22.156006\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\"}}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 401,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Credenciais inv\\u00e1lidas\"}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Dados inv\\u00e1lidos\"}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "generated_at": "str",
+      "overdue": {
+        "count": "int",
+        "tasks": [
+          "object"
+        ]
+      },
+      "overview": {
+        "total_categories": "int",
+        "total_tasks": "int",
+        "total_users": "int"
+      },
+      "recent_activity": {
+        "tasks_completed_last_7_days": "int",
+        "tasks_created_last_7_days": "int"
+      },
+      "tasks_by_priority": {
+        "critical": "int",
+        "high": "int",
+        "low": "int",
+        "medium": "int",
+        "minimal": "int"
+      },
+      "tasks_by_status": {
+        "cancelled": "int",
+        "done": "int",
+        "in_progress": "int",
+        "pending": "int"
+      },
+      "user_productivity": [
+        "object"
+      ]
+    },
+    "body": "{\"generated_at\":\"2026-09-17 16:23:22.945154\",\"overdue\":{\"count\":2,\"tasks\":[{\"days_overdue\":3,\"due_date\":\"2026-09-14 16:23:22.156269\",\"id\":1,\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"},{\"days_overdue\":1,\"due_date\":\"2026-09-16 16:23:22.156269\",\"id\":4,\"title\":\"Corrigir bug no filtro de busca\"}]},\"overview\":{\"total_categories\":4,\"total_tasks\":10,\"total_users\":4},\"recent_activity\":{\"tasks_complet",
+    "method": "GET",
+    "path": "/reports/summary"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "statistics": {
+        "cancelled": "int",
+        "completion_rate": "float",
+        "done": "int",
+        "high_priority": "int",
+        "in_progress": "int",
+        "overdue": "int",
+        "pending": "int",
+        "total_tasks": "int"
+      },
+      "user": {
+        "email": "str",
+        "id": "int",
+        "name": "str"
+      }
+    },
+    "body": "{\"statistics\":{\"cancelled\":0,\"completion_rate\":0.0,\"done\":0,\"high_priority\":3,\"in_progress\":1,\"overdue\":2,\"pending\":4,\"total_tasks\":5},\"user\":{\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\"}}\n",
+    "method": "GET",
+    "path": "/reports/user/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "method": "GET",
+    "path": "/reports/user/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "color": "str",
+        "created_at": "str",
+        "description": "str",
+        "id": "int",
+        "name": "str",
+        "task_count": "int"
+      }
+    ],
+    "body": "[{\"color\":\"#3498db\",\"created_at\":\"2026-09-17 16:23:22.155360\",\"description\":\"Tarefas de backend\",\"id\":1,\"name\":\"Backend\",\"task_count\":7},{\"color\":\"#2ecc71\",\"created_at\":\"2026-09-17 16:23:22.155366\",\"description\":\"Tarefas de frontend\",\"id\":2,\"name\":\"Frontend\",\"task_count\":0},{\"color\":\"#e74c3c\",\"created_at\":\"2026-09-17 16:23:22.155367\",\"description\":\"Tarefas de infraestrutura\",\"id\":3,\"name\":\"DevOps\"",
+    "method": "GET",
+    "path": "/categories"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "color": "str",
+      "created_at": "str",
+      "description": "str",
+      "id": "int",
+      "name": "str"
+    },
+    "body": "{\"color\":\"#123456\",\"created_at\":\"2026-09-17 16:23:22.958923\",\"description\":\"Testes\",\"id\":5,\"name\":\"QA\"}\n",
+    "method": "POST",
+    "path": "/categories"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Dados inv\\u00e1lidos\"}\n",
+    "method": "POST",
+    "path": "/categories"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "color": "str",
+      "created_at": "str",
+      "description": "str",
+      "id": "int",
+      "name": "str"
+    },
+    "body": "{\"color\":\"#3498db\",\"created_at\":\"2026-09-17 16:23:22.155360\",\"description\":\"Backend tasks\",\"id\":1,\"name\":\"Backend\"}\n",
+    "method": "PUT",
+    "path": "/categories/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Categoria n\\u00e3o encontrada\"}\n",
+    "method": "PUT",
+    "path": "/categories/9999"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "error": "str"
+    },
+    "body": "{\"error\":\"Categoria n\\u00e3o encontrada\"}\n",
+    "method": "DELETE",
+    "path": "/categories/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "message": "str"
+    },
+    "body": "{\"message\":\"Usu\\u00e1rio deletado com sucesso\"}\n",
+    "method": "DELETE",
+    "path": "/users/3"
+  }
+]

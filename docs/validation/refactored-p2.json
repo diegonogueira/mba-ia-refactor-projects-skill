@@ -1,0 +1,86 @@
+[
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "enrollment_id": "int",
+      "msg": "str"
+    },
+    "body": "{\"msg\":\"Sucesso\",\"enrollment_id\":2}",
+    "method": "POST",
+    "path": "/api/checkout"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "enrollment_id": "int",
+      "msg": "str"
+    },
+    "body": "{\"msg\":\"Sucesso\",\"enrollment_id\":3}",
+    "method": "POST",
+    "path": "/api/checkout"
+  },
+  {
+    "status": 400,
+    "json": false,
+    "body": "Pagamento recusado",
+    "ctype": "text/html; charset=utf-8",
+    "method": "POST",
+    "path": "/api/checkout"
+  },
+  {
+    "status": 404,
+    "json": false,
+    "body": "Curso não encontrado",
+    "ctype": "text/html; charset=utf-8",
+    "method": "POST",
+    "path": "/api/checkout"
+  },
+  {
+    "status": 400,
+    "json": false,
+    "body": "Bad Request",
+    "ctype": "text/html; charset=utf-8",
+    "method": "POST",
+    "path": "/api/checkout"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "course": "str",
+        "revenue": "int",
+        "students": [
+          "object"
+        ]
+      }
+    ],
+    "body": "[{\"course\":\"Clean Architecture\",\"revenue\":997,\"students\":[{\"student\":\"Leonan\",\"paid\":997}]},{\"course\":\"Docker\",\"revenue\":994,\"students\":[{\"student\":\"Guilherme\",\"paid\":497},{\"student\":\"Leonan\",\"paid\":497}]}]",
+    "method": "GET",
+    "path": "/api/admin/financial-report"
+  },
+  {
+    "status": 200,
+    "json": false,
+    "body": "Usuário deletado, junto com suas matrículas e pagamentos.",
+    "ctype": "text/html; charset=utf-8",
+    "method": "DELETE",
+    "path": "/api/users/1"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": [
+      {
+        "course": "str",
+        "revenue": "int",
+        "students": []
+      }
+    ],
+    "body": "[{\"course\":\"Clean Architecture\",\"revenue\":0,\"students\":[]},{\"course\":\"Docker\",\"revenue\":497,\"students\":[{\"student\":\"Guilherme\",\"paid\":497}]}]",
+    "method": "GET",
+    "path": "/api/admin/financial-report"
+  }
+]

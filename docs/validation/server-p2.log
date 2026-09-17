@@ -1,0 +1,8 @@
+[2026-09-17T16:23:19.566Z] WARN PAYMENT_GATEWAY_KEY não definida; usando gateway de pagamento simulado
+[2026-09-17T16:23:19.566Z] WARN ADMIN_TOKEN não definido; rotas administrativas estão sem autenticação
+[2026-09-17T16:23:19.569Z] INFO LMS API rodando na porta 3000
+[2026-09-17T16:23:20.021Z] INFO Pagamento de 497 no cartão ****4444: PAID
+[2026-09-17T16:23:20.048Z] INFO Checkout concluído: matrícula 2 no curso 2
+[2026-09-17T16:23:20.050Z] INFO Pagamento de 497 no cartão ****4444: PAID
+[2026-09-17T16:23:20.050Z] INFO Checkout concluído: matrícula 3 no curso 2
+[2026-09-17T16:23:20.051Z] INFO Pagamento de 997 no cartão ****4444: DENIED

@@ -1,0 +1,454 @@
+[
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "endpoints": {
+        "health": "str",
+        "login": "str",
+        "pedidos": "str",
+        "produtos": "str",
+        "relatorios": "str",
+        "usuarios": "str"
+      },
+      "mensagem": "str",
+      "versao": "str"
+    },
+    "body": "{\"endpoints\":{\"health\":\"/health\",\"login\":\"/login\",\"pedidos\":\"/pedidos\",\"produtos\":\"/produtos\",\"relatorios\":\"/relatorios/vendas\",\"usuarios\":\"/usuarios\"},\"mensagem\":\"Bem-vindo \\u00e0 API da Loja\",\"versao\":\"1.0.0\"}\n",
+    "method": "GET",
+    "path": "/"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "ambiente": "str",
+      "counts": {
+        "pedidos": "int",
+        "produtos": "int",
+        "usuarios": "int"
+      },
+      "database": "str",
+      "status": "str",
+      "versao": "str"
+    },
+    "body": "{\"ambiente\":\"producao\",\"counts\":{\"pedidos\":0,\"produtos\":10,\"usuarios\":3},\"database\":\"connected\",\"status\":\"ok\",\"versao\":\"1.0.0\"}\n",
+    "method": "GET",
+    "path": "/health"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Notebook potente para jogos\",\"estoque\":10,\"id\":1,\"nome\":\"Notebook Gamer\",\"preco\":5999.99},{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9},{\"ativo\":1,\"categoria\":\"informatica\",\"criad",
+    "method": "GET",
+    "path": "/produtos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool",
+      "total": "int"
+    },
+    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9}],\"sucesso\":true,\"total\":1}\n",
+    "method": "GET",
+    "path": "/produtos/busca?q=Mouse"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool",
+      "total": "int"
+    },
+    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9},{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Teclado mec\\u00e2nico RGB\",\"estoque\":30,\"id\":3,\"nome\":\"Teclado Mec\\u00e2nico\",\"preco\":299.9},{\"ativo\":1,\"categoria\":\"informatica\",\"cr",
+    "method": "GET",
+    "path": "/produtos/busca?categoria=informatica&preco_min=50&preco_max=300"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [],
+      "sucesso": "bool",
+      "total": "int"
+    },
+    "body": "{\"dados\":[],\"sucesso\":true,\"total\":0}\n",
+    "method": "GET",
+    "path": "/produtos/busca?q=%27%20OR%20%271%27%3D%271"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "ativo": "int",
+        "categoria": "str",
+        "criado_em": "str",
+        "descricao": "str",
+        "estoque": "int",
+        "id": "int",
+        "nome": "str",
+        "preco": "float"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Notebook potente para jogos\",\"estoque\":10,\"id\":1,\"nome\":\"Notebook Gamer\",\"preco\":5999.99},\"sucesso\":true}\n",
+    "method": "GET",
+    "path": "/produtos/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\",\"sucesso\":false}\n",
+    "method": "GET",
+    "path": "/produtos/9999"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "dados": {
+        "id": "int"
+      },
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"id\":11},\"mensagem\":\"Produto criado\",\"sucesso\":true}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Dados inv\\u00e1lidos\"}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Pre\\u00e7o \\u00e9 obrigat\\u00f3rio\"}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Categoria inv\\u00e1lida. V\\u00e1lidas: ['informatica', 'moveis', 'vestuario', 'geral', 'eletronicos', 'livros']\"}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Pre\\u00e7o n\\u00e3o pode ser negativo\"}\n",
+    "method": "POST",
+    "path": "/produtos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"mensagem\":\"Produto atualizado\",\"sucesso\":true}\n",
+    "method": "PUT",
+    "path": "/produtos/2"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\"}\n",
+    "method": "PUT",
+    "path": "/produtos/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"mensagem\":\"Produto deletado\",\"sucesso\":true}\n",
+    "method": "DELETE",
+    "path": "/produtos/11"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\"}\n",
+    "method": "DELETE",
+    "path": "/produtos/9999"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"joao@email.com\",\"id\":2,\"nome\":\"Jo\\u00e3o Silva\",\"tipo\":\"cliente\"},{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"maria@email.com\",\"id\":3,\"nome\":\"Maria Santos\",\"tipo\":\"cliente\"}],\"sucesso\":true}\n",
+    "method": "GET",
+    "path": "/usuarios"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "criado_em": "str",
+        "email": "str",
+        "id": "int",
+        "nome": "str",
+        "tipo": "str"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},\"sucesso\":true}\n",
+    "method": "GET",
+    "path": "/usuarios/1"
+  },
+  {
+    "status": 404,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "method": "GET",
+    "path": "/usuarios/9999"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "dados": {
+        "id": "int"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"id\":4},\"sucesso\":true}\n",
+    "method": "POST",
+    "path": "/usuarios"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Nome, email e senha s\\u00e3o obrigat\\u00f3rios\"}\n",
+    "method": "POST",
+    "path": "/usuarios"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "email": "str",
+        "id": "int",
+        "nome": "str",
+        "tipo": "str"
+      },
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},\"mensagem\":\"Login OK\",\"sucesso\":true}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 401,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"erro\":\"Email ou senha inv\\u00e1lidos\",\"sucesso\":false}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Email e senha s\\u00e3o obrigat\\u00f3rios\"}\n",
+    "method": "POST",
+    "path": "/login"
+  },
+  {
+    "status": 201,
+    "json": true,
+    "shape": {
+      "dados": {
+        "pedido_id": "int",
+        "total": "float"
+      },
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"pedido_id\":1,\"total\":6599.79},\"mensagem\":\"Pedido criado com sucesso\",\"sucesso\":true}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"erro\":\"Estoque insuficiente para Notebook Gamer\",\"sucesso\":false}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"erro\":\"Produto 9999 n\\u00e3o encontrado\",\"sucesso\":false}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Pedido deve ter pelo menos 1 item\"}\n",
+    "method": "POST",
+    "path": "/pedidos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 16:23:17\",\"id\":1,\"itens\":[{\"preco_unitario\":5999.99,\"produto_id\":1,\"produto_nome\":\"Notebook Gamer\",\"quantidade\":1},{\"preco_unitario\":299.9,\"produto_id\":3,\"produto_nome\":\"Teclado Mec\\u00e2nico\",\"quantidade\":2}],\"status\":\"pendente\",\"total\":6599.79,\"usuario_id\":2}],\"sucesso\":true}\n",
+    "method": "GET",
+    "path": "/pedidos"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": [
+        "object"
+      ],
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 16:23:17\",\"id\":1,\"itens\":[{\"preco_unitario\":5999.99,\"produto_id\":1,\"produto_nome\":\"Notebook Gamer\",\"quantidade\":1},{\"preco_unitario\":299.9,\"produto_id\":3,\"produto_nome\":\"Teclado Mec\\u00e2nico\",\"quantidade\":2}],\"status\":\"pendente\",\"total\":6599.79,\"usuario_id\":2}],\"sucesso\":true}\n",
+    "method": "GET",
+    "path": "/pedidos/usuario/2"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "mensagem": "str",
+      "sucesso": "bool"
+    },
+    "body": "{\"mensagem\":\"Status atualizado\",\"sucesso\":true}\n",
+    "method": "PUT",
+    "path": "/pedidos/1/status"
+  },
+  {
+    "status": 400,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Status inv\\u00e1lido\"}\n",
+    "method": "PUT",
+    "path": "/pedidos/1/status"
+  },
+  {
+    "status": 200,
+    "json": true,
+    "shape": {
+      "dados": {
+        "desconto_aplicavel": "float",
+        "faturamento_bruto": "float",
+        "faturamento_liquido": "float",
+        "pedidos_aprovados": "int",
+        "pedidos_cancelados": "int",
+        "pedidos_pendentes": "int",
+        "ticket_medio": "float",
+        "total_pedidos": "int"
+      },
+      "sucesso": "bool"
+    },
+    "body": "{\"dados\":{\"desconto_aplicavel\":329.99,\"faturamento_bruto\":6599.79,\"faturamento_liquido\":6269.8,\"pedidos_aprovados\":1,\"pedidos_cancelados\":0,\"pedidos_pendentes\":0,\"ticket_medio\":6599.79,\"total_pedidos\":1},\"sucesso\":true}\n",
+    "method": "GET",
+    "path": "/relatorios/vendas"
+  },
+  {
+    "status": 403,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Endpoint administrativo desabilitado ou token inv\\u00e1lido\"}\n",
+    "method": "POST",
+    "path": "/admin/query"
+  },
+  {
+    "status": 403,
+    "json": true,
+    "shape": {
+      "erro": "str"
+    },
+    "body": "{\"erro\":\"Endpoint administrativo desabilitado ou token inv\\u00e1lido\"}\n",
+    "method": "POST",
+    "path": "/admin/reset-db"
+  }
+]
