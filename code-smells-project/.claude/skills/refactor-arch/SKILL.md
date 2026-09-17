@@ -13,7 +13,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(npm audit *)
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   phases: analysis, audit, refactoring
 ---
 
@@ -29,7 +29,8 @@ Automated architecture audit and MVC refactoring for any web backend. You act as
 4. **Every finding must cite an exact `path:line` or `path:start-end`** taken from a real read of the file with line numbers (Read tool or `grep -n`). Never estimate line numbers. Never invent findings.
 5. **Preserve the public contract** (routes, HTTP methods, request field names, success status codes, response field names, port and start command). The only allowed changes are the security/integrity exceptions listed in `references/mvc-guidelines.md` → "Contract preservation", and each one must be reported.
 6. **Phase 3 is only complete when validation passes**: the app boots and every endpoint from the Phase 1 inventory responds like the baseline. If something cannot be fixed, say so explicitly — never report a check as passed without having run it.
-7. **Write the free-text parts** (descriptions, impact, recommendations) in the language the user is using; if the invocation has no other text, use Brazilian Portuguese. Keep the fixed labels of the templates in English exactly as written.
+7. **Stay inside the project.** The project is the directory where the skill was invoked. Do not read, search or modify files outside it (parent folders, sibling projects, other repositories); the only exceptions are version-control metadata (`git status`, ignore rules) and the temporary validation directory described in `references/validation-guide.md`.
+8. **Write the free-text parts** (descriptions, impact, recommendations) in the language the user is using; if the invocation has no other text, use Brazilian Portuguese. Keep the fixed labels of the templates in English exactly as written.
 
 ## Reference files (load on demand, per phase)
 
@@ -72,7 +73,7 @@ Read `references/project-analysis.md`, then:
 6. **Map the current architecture**: which files hold routing, HTTP handling, business rules, data access, configuration; classify it using the categories in the reference.
 7. **Infer the domain** from entities, routes, seed data and README.
 
-Print the Phase 1 block exactly as defined in `references/report-template.md` → "Phase 1 output". Continue straight to Phase 2 (no confirmation needed here).
+Print the Phase 1 block exactly as defined in `references/report-template.md` → "Phase 1 output". Continue straight to Phase 2 in the same turn (no confirmation needed here).
 
 ## PHASE 2 — ARCHITECTURE AUDIT (read-only)
 
@@ -84,7 +85,7 @@ Read `references/anti-patterns-catalog.md` and `references/report-template.md`, 
 4. **Consolidate**: one finding per anti-pattern per root cause; when the same anti-pattern repeats, list every location in the `File:` line instead of creating near-duplicate findings.
 5. **Deprecated APIs**: compare the APIs used in the code with the dependency versions detected in Phase 1 using the catalog's deprecated-API table. Report them as findings and also fill the report's "Deprecated APIs" table (write `None detected` if there are none). When a lockfile exists, `npm audit --package-lock-only` (or an equivalent read-only audit) may be used as evidence.
 6. **Sort** findings CRITICAL → HIGH → MEDIUM → LOW; inside a severity, by file path then line.
-7. **Print** the report exactly in the "Phase 2 audit report" format, with correct counters (the summary counts must equal the findings listed).
+7. **Print** the report exactly in the "Phase 2 audit report" format (raw Markdown, not wrapped in an outer code fence), with correct counters (the summary counts must equal the findings listed).
 8. **Ask for confirmation** by printing, as the very last line of your message:
 
    `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]`
@@ -93,7 +94,7 @@ Read `references/anti-patterns-catalog.md` and `references/report-template.md`, 
 
 ## PHASE 3 — REFACTORING (only after explicit confirmation)
 
-Read `references/mvc-guidelines.md`, `references/refactoring-playbook.md` and `references/validation-guide.md`, then execute the steps below in order. Use a task list to track them.
+Read `references/mvc-guidelines.md`, `references/refactoring-playbook.md` and `references/validation-guide.md`, then execute the steps below in order. Track them with a task list when that tool is available; otherwise announce each step as you start it.
 
 ### 3.1 Baseline (before changing any project file)
 Following the validation guide: prepare the runtime (virtualenv / `npm install`), boot the **original** app, run the smoke test covering **every endpoint of the Phase 1 inventory** and store the baseline results **outside the project** (e.g. `${TMPDIR:-/tmp}/refactor-arch/<project-name>/`). Stop the server. If the original app cannot boot, record the reason — that becomes the first thing to fix.
