@@ -13,7 +13,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(npm audit *)
 metadata:
-  version: 1.1.0
+  version: 1.2.0
   phases: analysis, audit, refactoring
 ---
 
@@ -29,7 +29,7 @@ Automated architecture audit and MVC refactoring for any web backend. You act as
 4. **Every finding must cite an exact `path:line` or `path:start-end`** taken from a real read of the file with line numbers (Read tool or `grep -n`). Never estimate line numbers. Never invent findings.
 5. **Preserve the public contract** (routes, HTTP methods, request field names, success status codes, response field names, port and start command). The only allowed changes are the security/integrity exceptions listed in `references/mvc-guidelines.md` → "Contract preservation", and each one must be reported.
 6. **Phase 3 is only complete when validation passes**: the app boots and every endpoint from the Phase 1 inventory responds like the baseline. If something cannot be fixed, say so explicitly — never report a check as passed without having run it.
-7. **Stay inside the project.** The project is the directory where the skill was invoked. Do not read, search or modify files outside it (parent folders, sibling projects, other repositories); the only exceptions are version-control metadata (`git status`, ignore rules) and the temporary validation directory described in `references/validation-guide.md`.
+7. **Stay inside the project.** The project is the directory where the skill was invoked. Do not list, read, search or modify anything outside it (no `..`, parent folders, sibling projects, other repositories). Exceptions: version-control metadata (`git status`, `git check-ignore`), the temporary validation directory described in `references/validation-guide.md`, and network access to package registries (dependency audit in Phase 2, installs in Phase 3).
 8. **Write the free-text parts** (descriptions, impact, recommendations) in the language the user is using; if the invocation has no other text, use Brazilian Portuguese. Keep the fixed labels of the templates in English exactly as written.
 
 ## Reference files (load on demand, per phase)
@@ -83,7 +83,11 @@ Read `references/anti-patterns-catalog.md` and `references/report-template.md`, 
 2. **Verify** each candidate by reading the exact lines. Discard false positives (see each entry's "Not a finding when").
 3. **Classify** with the catalog's severity rules (CRITICAL, HIGH, MEDIUM, LOW). When in doubt between two levels, use the definitions at the top of the catalog.
 4. **Consolidate**: one finding per anti-pattern per root cause; when the same anti-pattern repeats, list every location in the `File:` line instead of creating near-duplicate findings.
-5. **Deprecated APIs**: compare the APIs used in the code with the dependency versions detected in Phase 1 using the catalog's deprecated-API table. Report them as findings and also fill the report's "Deprecated APIs" table (write `None detected` if there are none). When a lockfile exists, `npm audit --package-lock-only` (or an equivalent read-only audit) may be used as evidence.
+5. **Deprecated APIs and vulnerable dependencies** — always do both checks:
+   - *Code*: compare the APIs used in the code with the dependency versions detected in Phase 1 using the catalog's deprecated-API table (AP-18).
+   - *Dependencies*: run the read-only dependency audit for **every** manifest, as described in AP-18 → "Dependency audit" (e.g. `npm audit --package-lock-only`; the PyPI JSON API `vulnerabilities` field for each pinned Python package). If the registry cannot be reached, write that in the report instead of assuming there are no issues.
+
+   Report what you find as AP-18 findings and in the report's "Deprecated APIs" table (write `None detected` only when both checks came back clean).
 6. **Sort** findings CRITICAL → HIGH → MEDIUM → LOW; inside a severity, by file path then line.
 7. **Print** the report exactly in the "Phase 2 audit report" format (raw Markdown, not wrapped in an outer code fence), with correct counters (the summary counts must equal the findings listed).
 8. **Ask for confirmation** by printing, as the very last line of your message:

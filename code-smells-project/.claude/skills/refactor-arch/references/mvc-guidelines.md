@@ -25,7 +25,7 @@ The target is a pragmatic MVC for HTTP APIs: **Models** own data and domain rule
 | **Model** (`models/`) | Entities; data access with parameterized queries or ORM; transactions; domain rules that depend only on the entity's data (e.g. `is_overdue()`, `can_cancel()`, stock check/decrement); DB connection/session management (`models/database.*`) | Import the web framework request/response objects; build HTTP responses; read env vars directly (receive config) |
 | **View** (`views/`) | Route table: URL + method → controller function (Flask Blueprint / Express Router); response presenters/serializers with an **allowlist** of public fields | Contain SQL/ORM calls, business rules or validation logic |
 | **Controller** (`controllers/`) | Read request data (body, params, query); call validators; call model/service methods; translate results/errors into status codes and views; keep each action short (≈ 5–25 lines) | Run SQL/ORM queries directly; contain business calculations; send e-mails/payments inline; catch-all `try/except` that returns `str(e)` |
-| **Service** (`services/`, optional) | Use cases that coordinate **several models** or **external side effects** (checkout = user + enrollment + payment + audit; notifications; payment gateway) | Know about HTTP (request/response objects, status codes) |
+| **Service** (`services/`, optional) | Use cases that coordinate **several models** or **external side effects** (place order = customer + stock + payment + audit log; notifications; payment gateway) | Know about HTTP (request/response objects, status codes) |
 | **Middleware** (`middlewares/`) | Centralized error handling; cross-cutting guards (admin token, auth), request logging | Business rules |
 | **Config** (`config/`) | Read environment variables once, validate, expose typed settings with safe defaults | Contain real secrets as defaults |
 | **Utils** (`utils/`, optional) | Pure helpers and shared constants/validators without framework or DB imports | Become a new God module; hold state |
@@ -39,12 +39,14 @@ Rule of thumb for "where does this line go?":
 ## 2. Dependency rules
 
 ```
-views → controllers → services → models → database
-   \________________________________↗ (controllers may call models directly when no service is needed)
+routes (views/*_routes) → controllers → services → models → database
+                              │    \________________↗ (controllers may call models directly when no service is needed)
+                              └──→ presenters (views/serializers)  — the controller selects/renders the view
 middlewares, config, utils: may be imported by any layer; they import no layer above them
 ```
 
-- Imports only point **downwards**. Models never import controllers/views; services never import controllers.
+- Imports point **downwards**. Models and services never import controllers, routes or presenters; services never import controllers.
+- Controllers may import the View layer's **presenters/serializers** (choosing and rendering the view is the controller's job in MVC), but never the route modules. Presenters import nothing above models.
 - The composition root (`app.py` / `app.js`) is the only module that knows every layer and wires them.
 - Pass dependencies (db handle, settings, services) as parameters/constructor arguments or via the framework's app context — not by importing mutable globals.
 
@@ -148,8 +150,10 @@ Follow the framework's own conventions when they already implement MVC; the goal
 - Non-secret values keep their original defaults (port, DB path/URI, feature flags).
 - Secrets (`SECRET_KEY`, API keys, SMTP/DB passwords) have **no real default**: if the variable is missing, generate an ephemeral random value for development (e.g. `secrets.token_hex(32)`, `crypto.randomBytes(32)`) and log a warning, or leave the integration disabled.
 - `DEBUG` defaults to `false`; enable via env var.
+- `HOST` defaults to `127.0.0.1` (bind to all interfaces only when `HOST=0.0.0.0` is set explicitly, e.g. in containers); report the new default under "Contract Changes". Keep the original port as default.
 - CORS origins configurable (default: allow all only if the original did, but through config).
-- Add `.env.example` with every variable and fake values; never commit a real `.env`.
+- Add `.env.example` with every variable and fake values; never commit a real `.env`. If nothing loads `.env` automatically, say so in the file (e.g. "export these variables") instead of "copy to .env".
+- Write comments and docs you create (README updates, `.env.example`, docstrings) in the same language as the project's existing documentation.
 
 ## 8. Error handling
 

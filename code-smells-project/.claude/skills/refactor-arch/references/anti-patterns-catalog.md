@@ -118,7 +118,7 @@ Escalation rules:
 - Plaintext: password inserted as received (`INSERT INTO users ... password` with the raw value) or compared in SQL (`WHERE email = ? AND senha = ?`).
 - Weak/fast hashes: `hashlib\.(md5|sha1|sha256)\(` or `createHash\(["'](md5|sha1|sha256)` used for passwords, no salt.
 - Home-made "crypto": loops with `base64`, `substring`, string reversal, XOR.
-- Default passwords assigned when missing (`pwd || "123456"`).
+- Default passwords assigned when missing (`password || "changeme"`).
 - Very small minimum password length (< 8) — mention as part of the finding.
 
 **Not a finding when:** `bcrypt`, `argon2`, `scrypt`, `pbkdf2` (with salt and iterations), `werkzeug.security.generate_password_hash`, `crypto.scrypt` are used.
@@ -132,7 +132,7 @@ Escalation rules:
 - Route handlers receiving a query/command from the request: `request.*\[?["']sql["']`, `req\.body\.(sql|query|cmd)` then `execute(`/`exec(`.
 - Routes under `/admin`, `/debug`, `/reset`, `/internal` with no auth decorator/middleware.
 - `DELETE FROM` for every table inside a handler.
-- Tokens built from predictable values: `["']fake-?jwt|token["']?\s*[:=].*\+\s*str\(|token.*\$\{.*id`.
+- Tokens built from predictable values (fixed prefix + user id, timestamps, base64 of the id): `token["']?\s*[:=].*\+\s*str\(|token.*\$\{.*id|b64encode\(.*id`.
 - Role taken from the request body on self-registration (`role = data.get('role'`, `req.body.role`).
 
 **Not a finding when:** a guard (decorator/middleware) validates a signed token/session and role before the handler runs.
@@ -208,7 +208,7 @@ Escalation rules:
 
 **Detection signals**
 - `DELETE FROM <parent>` with child tables referencing it (`<parent>_id` columns) and no `ON DELETE CASCADE`, no manual cleanup, no transaction.
-- Response or comment admitting leftovers (e.g. "dirty data remains").
+- Response text or comments admitting leftovers after the delete.
 - ORM relationships without `cascade` while the delete handler manually loops over children (or forgets them).
 - Error callback ignored on delete (`(err) => { res.send(...) }` without checking `err`).
 
@@ -301,6 +301,16 @@ Report each deprecated API with the **modern replacement** (also fill the report
 
 **Detection signals:** grep each left-column API (`utcnow\(`, `\.query\.get\(`, `new Buffer\(`, `url\.parse\(`, `req\.param\(`, `before_first_request`, `body-parser`). Check the manifest versions first — only report what applies to the detected versions. For lockfiles, read `"deprecated":` entries in `package-lock.json`.
 
+**Dependency audit (mandatory, read-only — never install anything in Phase 2):**
+
+| Ecosystem | Command / source | What to report |
+|---|---|---|
+| npm | `npm audit --package-lock-only` (add `--json` for details); `grep -n '"deprecated"' package-lock.json` | Vulnerable packages with severity and fixed version; deprecated packages and which direct dependency pulls them |
+| Python (`requirements.txt` with pins) | For each `name==version`: `curl -s https://pypi.org/pypi/<name>/<version>/json` and read the `vulnerabilities` array (`aliases`, `fixed_in`). `pip-audit -r requirements.txt` is an alternative when already installed | Vulnerable pins with CVE ids and the first fixed version; unpinned packages as a reproducibility note |
+| Others | `go list -m -u all` / `govulncheck`, `bundle audit`, `composer audit`, `dotnet list package --vulnerable` | Same |
+
+Severity: HIGH when the vulnerable package is used at runtime by the application (e.g. web framework, CORS middleware) and a fixed version exists; MEDIUM for build-time/transitive-only or unused packages; mention unused-but-declared dependencies under AP-22 too.
+
 ---
 
 ## AP-19 — Inadequate middleware usage / inconsistent responses
@@ -330,7 +340,7 @@ Report each deprecated API with the **modern replacement** (also fill the report
 
 **Detection signals**
 - 1–3 letter variables outside short loops/lambdas: `\b(let|const|var)\s+[a-z]{1,3}\s*=`, Python `^\s+[a-z]{1,2}\s*=`
-- Cryptic abbreviations (`usr`, `eml`, `pwd`, `cc`, `cid`, `d`, `t`, `u`), generic names (`data`, `result`, `manager`, `utils`, `process`).
+- Cryptic abbreviations (`nm`, `ml`, `qt`, `tmp2`, `d`, `t`, `u`), generic names (`data`, `result`, `manager`, `utils`, `process`).
 - Shadowing builtins (`id`, `type`, `list`, `filter`) as variables/parameters.
 - Mixed languages for the same concept.
 

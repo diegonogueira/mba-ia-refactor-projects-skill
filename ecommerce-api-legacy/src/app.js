@@ -1,22 +1,14 @@
-const { loadSettings } = require('./config/settings');
-const { createApp } = require('./createApp');
-const { openDatabase } = require('./models/database');
-const { initializeDatabase } = require('./models/schema');
-const { createLogger } = require('./utils/logger');
+const express = require('express');
+const AppManager = require('./AppManager');
+const { config } = require('./utils');
 
-async function main() {
-    const settings = loadSettings();
-    const logger = createLogger(settings.logLevel);
+const app = express();
+app.use(express.json());
 
-    const db = openDatabase(settings.databasePath);
-    await initializeDatabase(db);
+const manager = new AppManager();
+manager.initDb();
+manager.setupRoutes(app);
 
-    createApp({ db, settings, logger }).listen(settings.port, () => {
-        logger.info(`LMS API rodando na porta ${settings.port}`);
-    });
-}
-
-main().catch((err) => {
-    console.error('Falha ao iniciar a aplicação:', err);
-    process.exit(1);
+app.listen(config.port, () => {
+    console.log(`Frankenstein LMS rodando na porta ${config.port}...`);
 });

@@ -398,7 +398,7 @@ function adminGuard(settings) {
 ```
 Use guards on routes that were already "admin"/debug by nature only when allowed by the contract rules (see mvc-guidelines §9); otherwise list authentication as a remaining item.
 
-Predictable tokens (`'fake-jwt-token-' + id`) → sign them with the framework's utilities (e.g. `itsdangerous.URLSafeTimedSerializer(secret_key).dumps({"user_id": id})`, or HMAC with `crypto.createHmac('sha256', secret)`), keeping the same response field.
+Predictable tokens (`'token-' + str(user.id)`) → sign them with the framework's utilities (e.g. `itsdangerous.URLSafeTimedSerializer(secret_key).dumps({"user_id": id})`, or HMAC with `crypto.createHmac('sha256', secret)`), keeping the same response field.
 
 ---
 
@@ -917,7 +917,7 @@ def is_admin(self):
     else:
         return False
 
-if type(tags) == list: ...
+if type(items) == list: ...
 ```
 
 After:
@@ -930,7 +930,7 @@ logger.info("Order created: id=%s", order.id)
 def is_admin(self) -> bool:
     return self.role == "admin"
 
-if isinstance(tags, list): ...
+if isinstance(items, list): ...
 ```
 Delete functions/modules/config keys with no references (confirm with `grep -rn name`). Unused but meaningful services (e.g. notification) should be either wired into the use case that needs them or removed — never left orphaned.
 
