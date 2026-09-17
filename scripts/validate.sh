@@ -3,22 +3,42 @@
 # sobe cada API, exercita todos os endpoints (scripts/smoke_test.py) e compara
 # com a execução do código ORIGINAL (docs/validation/baseline-pN.json).
 #
-# Uso:  scripts/validate.sh [1|2|3|all]      (padrão: all)
+# Uso:  scripts/validate.sh [1|2|3|all] [--save]
+#   --save  grava resultados, comparações e logs em docs/validation/ (por padrão
+#           ficam num diretório temporário e o repositório não é alterado)
+#
+# Termina com código != 0 se algum projeto não subir, se o log do servidor tiver
+# traceback ou se surgir diferença em relação ao original que não esteja listada
+# em docs/validation/expected-differences.json (mudanças de contrato documentadas).
+#
 # Requisitos: python3 (>= 3.10), node (>= 20.17) + npm, curl. Usa `uv` se existir.
-set -euo pipefail
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TARGET="all"
+SAVE=0
+for arg in "$@"; do
+  case "$arg" in
+    1|2|3|all) TARGET="$arg" ;;
+    --save) SAVE=1 ;;
+    *) echo "uso: $0 [1|2|3|all] [--save]"; exit 2 ;;
+  esac
+done
+
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/refactor-arch-validate.XXXXXX")"
-OUT="$ROOT/docs/validation"
+if [[ $SAVE -eq 1 ]]; then OUT="$ROOT/docs/validation"; else OUT="$WORK/results"; fi
 mkdir -p "$OUT"
+BASELINES="$ROOT/docs/validation"
+EXPECTED="$ROOT/docs/validation/expected-differences.json"
 SERVER_PID=""
+FAILURES=()
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
     kill -- "-$SERVER_PID" 2>/dev/null || kill "$SERVER_PID" 2>/dev/null || true
   fi
 }
-trap cleanup EXIT
+trap 'cleanup; rm -rf "$WORK/p1" "$WORK/p2" "$WORK/p3"' EXIT
 
 copy_project() { # <dir> <dest>
   mkdir -p "$2"
@@ -36,7 +56,7 @@ python_env() { # <dest>
 start_server() { # <dir> <port> <log> <cmd...>
   local dir=$1 port=$2 log=$3; shift 3
   if curl -s -o /dev/null "http://127.0.0.1:$port/"; then
-    echo "ERRO: a porta $port já está em uso" >&2; exit 1
+    echo "  ✗ a porta $port já está em uso"; return 1
   fi
   if command -v setsid >/dev/null 2>&1; then
     (cd "$dir" && exec setsid "$@" >"$log" 2>&1 </dev/null) &
@@ -48,7 +68,7 @@ start_server() { # <dir> <port> <log> <cmd...>
     curl -s -o /dev/null "http://127.0.0.1:$port/" && { echo "  ✓ servidor respondeu na porta $port"; return 0; }
     sleep 0.5
   done
-  echo "  ✗ servidor não subiu; log:" >&2; cat "$log" >&2; exit 1
+  echo "  ✗ servidor não subiu; log:"; cat "$log"; return 1
 }
 
 stop_server() {
@@ -68,49 +88,59 @@ open(path, "w", encoding="utf-8").write(text)
 PY
 }
 
-run_checks() { # <n> <port>
-  python3 "$ROOT/scripts/smoke_test.py" "p$1" "http://127.0.0.1:$2" "$OUT/refactored-p$1.json"
-  echo
-  python3 "$ROOT/scripts/compare_results.py" "$OUT/baseline-p$1.json" "$OUT/refactored-p$1.json" | tee "$OUT/comparison-p$1.md"
-}
-
-check_log() { # <n> — chamado depois de parar o servidor
-  sanitize_log "$OUT/server-p$1.log"
-  if grep -qiE "Traceback|UnhandledPromiseRejection|Error:" "$OUT/server-p$1.log"; then
-    echo "  ✗ o log do servidor contém erros (veja docs/validation/server-p$1.log)"; exit 1
+check_project() { # <n> <port> — smoke test + comparação com o baseline + log
+  local n=$1 port=$2 ok=0
+  python3 "$ROOT/scripts/smoke_test.py" "p$n" "http://127.0.0.1:$port" "$OUT/refactored-p$n.json" >/dev/null || ok=1
+  stop_server
+  python3 "$ROOT/scripts/compare_results.py" "$BASELINES/baseline-p$n.json" "$OUT/refactored-p$n.json" \
+    --expected "$EXPECTED" "p$n" > "$OUT/comparison-p$n.md" || ok=1
+  tail -n 1 "$OUT/comparison-p$n.md" | sed 's/^/  /'
+  grep "NÃO ESPERADO" "$OUT/comparison-p$n.md" | sed 's/^/  ✗ /' || true
+  sanitize_log "$OUT/server-p$n.log"
+  if grep -qiE "Traceback|UnhandledPromiseRejection|Error:" "$OUT/server-p$n.log"; then
+    echo "  ✗ o log do servidor contém erros ($OUT/server-p$n.log)"; ok=1
+  else
+    echo "  ✓ log do servidor sem tracebacks"
   fi
-  echo "  ✓ log do servidor sem tracebacks (docs/validation/server-p$1.log)"
+  return $ok
 }
 
 validate_1() {
   echo "=== Projeto 1: code-smells-project (Python/Flask) ==="
-  local d="$WORK/p1"; copy_project code-smells-project "$d"; python_env "$d"
-  start_server "$d" 5000 "$OUT/server-p1.log" "$d/.venv/bin/python" app.py
-  run_checks 1 5000; stop_server; check_log 1
+  local d="$WORK/p1"; copy_project code-smells-project "$d"; python_env "$d" || return 1
+  start_server "$d" 5000 "$OUT/server-p1.log" "$d/.venv/bin/python" app.py || { stop_server; return 1; }
+  check_project 1 5000
 }
 
 validate_2() {
   echo "=== Projeto 2: ecommerce-api-legacy (Node.js/Express) ==="
   local d="$WORK/p2"; copy_project ecommerce-api-legacy "$d"
-  (cd "$d" && npm ci --no-audit --no-fund >/dev/null)
-  start_server "$d" 3000 "$OUT/server-p2.log" node src/app.js
-  run_checks 2 3000; stop_server; check_log 2
+  (cd "$d" && npm ci --no-audit --no-fund >/dev/null 2>&1) || { echo "  ✗ npm ci falhou"; return 1; }
+  start_server "$d" 3000 "$OUT/server-p2.log" node src/app.js || { stop_server; return 1; }
+  check_project 2 3000
 }
 
 validate_3() {
   echo "=== Projeto 3: task-manager-api (Python/Flask) ==="
-  local d="$WORK/p3"; copy_project task-manager-api "$d"; python_env "$d"
-  (cd "$d" && .venv/bin/python seed.py)
-  start_server "$d" 5000 "$OUT/server-p3.log" "$d/.venv/bin/python" app.py
-  run_checks 3 5000; stop_server; check_log 3
+  local d="$WORK/p3"; copy_project task-manager-api "$d"; python_env "$d" || return 1
+  (cd "$d" && .venv/bin/python seed.py 2>/dev/null | sed 's/^/  /') || return 1
+  start_server "$d" 5000 "$OUT/server-p3.log" "$d/.venv/bin/python" app.py || { stop_server; return 1; }
+  check_project 3 5000
 }
 
-case "${1:-all}" in
-  1) validate_1 ;;
-  2) validate_2 ;;
-  3) validate_3 ;;
-  all) validate_1; validate_2; validate_3 ;;
-  *) echo "uso: $0 [1|2|3|all]"; exit 2 ;;
+run() { # <n>
+  if ! "validate_$1"; then FAILURES+=("projeto $1"); fi
+}
+
+case "$TARGET" in
+  all) run 1; run 2; run 3 ;;
+  *) run "$TARGET" ;;
 esac
-rm -rf "$WORK"
-echo "Resultados em docs/validation/"
+
+echo
+echo "Resultados: $OUT"
+if [[ ${#FAILURES[@]} -gt 0 ]]; then
+  echo "✗ Falhou: ${FAILURES[*]}"
+  exit 1
+fi
+echo "✓ Todos os projetos validados"

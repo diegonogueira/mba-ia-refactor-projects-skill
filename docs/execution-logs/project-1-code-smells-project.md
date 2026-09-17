@@ -1,18 +1,21 @@
 # Log de execução — Projeto 1: `code-smells-project` (Python/Flask)
 
-Execução real da skill `refactor-arch` com o Claude Code CLI (`claude` 2.1.273, modelo `claude-opus-5[1m]`), dentro de `code-smells-project/`.
-Em modo headless (`-p`) a pausa da Fase 2 encerra o turno; a confirmação é enviada retomando a mesma sessão.
+Execução real da skill `refactor-arch` **v1.2.0** com o Claude Code CLI (`claude` 2.1.273, modelo `claude-opus-5[1m]`), dentro de `code-smells-project/`.
+No modo headless (`-p`), a pausa da Fase 2 encerra o turno, e a confirmação é enviada retomando a mesma sessão.
+
+> **Interrupção externa:** a Fase 3 foi interrompida pelo limite de uso da conta (`You've hit your session limit`) após 12 turnos. Depois que o limite foi renovado, a **mesma sessão** foi retomada com a mensagem abaixo, e a skill continuou do ponto em que parou (as métricas somam as duas invocações).
 
 ```bash
 cd code-smells-project
-claude -p "/refactor-arch" --strict-mcp-config --output-format stream-json --verbose     # Fases 1 e 2 (para e pergunta)
-claude -p "y" --resume f2b201e7-958d-4d2c-b506-fa8629e6fa03 --strict-mcp-config --output-format stream-json --verbose   # Fase 3
+claude -p "/refactor-arch" --strict-mcp-config --output-format stream-json --verbose   # Fases 1 e 2 (para e pergunta)
+claude -p "y" --resume af8ff879-a7ae-47da-8c87-e824e7365578 --strict-mcp-config --output-format stream-json --verbose   # Fase 3
+claude -p "A execução foi interrompida pelo limite de uso da sessão (nenhuma ação sua falhou). Continue a Fase 3 exatamente de onde parou." --resume af8ff879-a7ae-47da-8c87-e824e7365578 --strict-mcp-config --output-format stream-json --verbose
 ```
 
-| Etapa | Turnos | Duração | Ferramentas usadas |
-|---|---|---|---|
-| Fases 1 + 2 (somente leitura) | 7 | 5.7 min | 6 |
-| Fase 3 (após `y`) | 54 | 15.3 min | 53 |
+| Etapa | Turnos | Duração | Custo (`total_cost_usd`) | Ferramentas usadas |
+|---|---|---|---|---|
+| Fases 1 + 2 (somente leitura) | 11 | 3.8 min | US$ 1.41 | 10 |
+| Fase 3 (após `y`) | 62 | 14.5 min | US$ 7.54 | 60 |
 
 ## Fase 1 — saída
 
@@ -20,41 +23,41 @@ claude -p "y" --resume f2b201e7-958d-4d2c-b506-fa8629e6fa03 --strict-mcp-config 
 ================================
 PHASE 1: PROJECT ANALYSIS
 ================================
-Language:      Python (versão do runtime não declarada; interpretador local python3 3.14.7)
+Language:      Python
 Framework:     Flask 3.1.1
 Dependencies:  flask-cors 5.0.1
-Domain:        E-commerce API — "API da Loja" (produtos, usuarios, pedidos, itens_pedido)
-Architecture:  Monolítica — tudo em 4 arquivos na raiz, sem separação real de camadas (SQL + regras em models, SQL em rotas)
+Domain:        E-commerce API (produtos, usuarios, pedidos, itens_pedido, relatórios de vendas)
+Architecture:  Monolítica — tudo em 4 arquivos na raiz, sem separação real de camadas (SQL em rotas/controllers, regras em models)
 Source files:  4 files analyzed (~780 lines of code)
-Database:      SQLite via sqlite3 (stdlib, SQL cru) (arquivo loja.db; schema e seed criados na 1ª chamada de get_db())
+Database:      SQLite via sqlite3, SQL puro (arquivo loja.db, schema + seed criados na 1ª chamada de get_db())
 DB tables:     produtos, usuarios, pedidos, itens_pedido
-Entry point:   app.py → pip install -r requirements.txt && python app.py (port 5000)
+Entry point:   app.py → python app.py (port 5000)
 Endpoints:     19 routes
-  GET    /                                  → index (app.py:33)
-  GET    /produtos                          → controllers.listar_produtos (controllers.py:5)
-  GET    /produtos/busca                    → controllers.buscar_produtos (controllers.py:111)
-  GET    /produtos/<int:id>                 → controllers.buscar_produto (controllers.py:14)
-  POST   /produtos                          → controllers.criar_produto (controllers.py:24)
-  PUT    /produtos/<int:id>                 → controllers.atualizar_produto (controllers.py:64)
-  DELETE /produtos/<int:id>                 → controllers.deletar_produto (controllers.py:98)
-  GET    /usuarios                          → controllers.listar_usuarios (controllers.py:128)
-  GET    /usuarios/<int:id>                 → controllers.buscar_usuario (controllers.py:136)
-  POST   /usuarios                          → controllers.criar_usuario (controllers.py:146)
-  POST   /login                             → controllers.login (controllers.py:167)
-  POST   /pedidos                           → controllers.criar_pedido (controllers.py:188)
-  GET    /pedidos                           → controllers.listar_todos_pedidos (controllers.py:229)
-  GET    /pedidos/usuario/<int:usuario_id>  → controllers.listar_pedidos_usuario (controllers.py:222)
-  PUT    /pedidos/<int:pedido_id>/status    → controllers.atualizar_status_pedido (controllers.py:237)
-  GET    /relatorios/vendas                 → controllers.relatorio_vendas (controllers.py:257)
-  GET    /health                            → controllers.health_check (controllers.py:264)
-  POST   /admin/reset-db                    → reset_database (app.py:48)
-  POST   /admin/query                       → executar_query (app.py:60)
+  GET    /produtos                           → listar_produtos (controllers.py:5)
+  GET    /produtos/busca                     → buscar_produtos (controllers.py:111)
+  GET    /produtos/<int:id>                  → buscar_produto (controllers.py:14)
+  POST   /produtos                           → criar_produto (controllers.py:24)
+  PUT    /produtos/<int:id>                  → atualizar_produto (controllers.py:64)
+  DELETE /produtos/<int:id>                  → deletar_produto (controllers.py:98)
+  GET    /usuarios                           → listar_usuarios (controllers.py:128)
+  GET    /usuarios/<int:id>                  → buscar_usuario (controllers.py:136)
+  POST   /usuarios                           → criar_usuario (controllers.py:146)
+  POST   /login                              → login (controllers.py:167)
+  POST   /pedidos                            → criar_pedido (controllers.py:188)
+  GET    /pedidos                            → listar_todos_pedidos (controllers.py:229)
+  GET    /pedidos/usuario/<int:usuario_id>   → listar_pedidos_usuario (controllers.py:222)
+  PUT    /pedidos/<int:pedido_id>/status     → atualizar_status_pedido (controllers.py:237)
+  GET    /relatorios/vendas                  → relatorio_vendas (controllers.py:257)
+  GET    /health                             → health_check (controllers.py:264)
+  GET    /                                   → index (app.py:33)
+  POST   /admin/reset-db                     → reset_database (app.py:48)
+  POST   /admin/query                        → executar_query (app.py:60)
 ================================
 ```
 
 ## Fase 2 — saída
 
-O relatório completo (verbatim) está em [`reports/audit-project-1.md`](../../reports/audit-project-1.md). A mensagem terminou com:
+O relatório completo, sem alterações, está em [`reports/audit-project-1.md`](../../reports/audit-project-1.md). A mensagem terminou com:
 
 ```text
 Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]
@@ -64,7 +67,7 @@ Resposta enviada pelo usuário: `y`
 
 ## Fase 3 — saída
 
-> Títulos da saída rebaixados um nível para caber neste documento; conteúdo sem outras alterações.
+> Os títulos da saída foram rebaixados um nível para caber neste documento. O conteúdo não foi alterado.
 
 ```text
 ================================
@@ -76,230 +79,254 @@ PHASE 3: REFACTORING COMPLETE
 
 ```text
 code-smells-project/
-├── app.py                          # entry point: python app.py (settings → create_app → app.run)
-├── requirements.txt                # flask 3.1.3, flask-cors 6.0.5
-├── .env.example                    # todas as variáveis, só com valores fictícios
-├── README.md                       # instruções de execução, configuração e estrutura
-└── src/                            # (+ __init__.py em cada pacote)
-    ├── app.py                      # composition root: create_app() liga config, models, services, controllers, views e middlewares
+├── app.py                          # ponto de entrada fino: main() → create_app() + app.run (mantém `python app.py`)
+├── requirements.txt                # flask==3.1.3, flask-cors==6.0.5
+├── .env.example                    # variáveis documentadas com valores fictícios
+├── README.md                       # instruções de execução e configuração atualizadas
+└── src/
+    ├── __init__.py
+    ├── app.py                      # composition root: create_app(settings) — config, CORS, blueprints, error handlers, banco
     ├── config/
-    │   ├── settings.py             # Settings lidas do ambiente (SECRET_KEY, FLASK_DEBUG, HOST, PORT, DATABASE_PATH, ADMIN_*)
-    │   └── logging_config.py       # configuração do logger
+    │   ├── __init__.py
+    │   └── settings.py             # Settings imutável lida do ambiente, com padrões seguros; API_VERSION
     ├── models/
-    │   ├── database.py             # conexão por requisição (flask.g), transaction() com BEGIN IMMEDIATE, schema com FKs
-    │   ├── seed.py                 # dados de demonstração (senhas gravadas com hash)
-    │   ├── produto_model.py        # CRUD e busca parametrizados; bloqueia remoção de produto com pedidos
-    │   ├── usuario_model.py        # hash scrypt; autenticação com migração de senha legada
-    │   ├── pedido_model.py         # criação transacional com baixa condicional de estoque; listagem via JOIN
-    │   ├── relatorio_model.py      # uma query de agregação + faixas de desconto nomeadas
-    │   ├── sistema_model.py        # contagens do health check
-    │   └── admin_model.py          # reset transacional; SELECT em conexão somente leitura
+    │   ├── __init__.py
+    │   ├── database.py             # conexão por requisição (flask.g), conexão somente leitura, transaction(), schema + seed com hash
+    │   ├── produto_model.py        # SQL parametrizado, regras do produto (categorias, limites), exclusão bloqueada se houver pedidos
+    │   ├── usuario_model.py        # hash scrypt, autenticação com migração de senha legada, e-mail único
+    │   ├── pedido_model.py         # criação atômica (BEGIN IMMEDIATE + update condicional), listagem com JOIN, status
+    │   ├── relatorio_model.py      # relatório em 1 query agregada + faixas de desconto nomeadas
+    │   └── sistema_model.py        # contagens do health, reset e consulta somente leitura (admin)
     ├── services/
-    │   ├── pedido_service.py       # caso de uso: valida usuário, cria pedido, notifica
-    │   └── notification_service.py # e-mail/SMS/push simulados via logger
+    │   ├── __init__.py
+    │   ├── pedido_service.py       # casos de uso de pedido: model + notificações
+    │   └── notificacao_service.py  # e-mail/SMS/push simulados via logger
     ├── controllers/
-    │   ├── produto_controller.py   # inclui validar_produto(), usado na criação e na atualização
-    │   ├── usuario_controller.py   # usuários e login
-    │   ├── pedido_controller.py    # inclui validar_item()
+    │   ├── __init__.py
+    │   ├── validators.py           # presença e tipo dos dados de entrada (400 com mensagens do contrato)
+    │   ├── produto_controller.py
+    │   ├── usuario_controller.py
+    │   ├── pedido_controller.py
     │   ├── relatorio_controller.py
-    │   ├── sistema_controller.py   # index e health
-    │   └── admin_controller.py     # aceita só um único SELECT
+    │   └── sistema_controller.py   # index, health, reset-db, query
     ├── views/
-    │   ├── produto_routes.py       # Blueprints: só URL → controller
+    │   ├── __init__.py
+    │   ├── serializers.py          # allowlist de campos públicos (sem senha)
+    │   ├── produto_routes.py       # blueprints: só URL + método → controller
     │   ├── usuario_routes.py
     │   ├── pedido_routes.py
     │   ├── relatorio_routes.py
-    │   ├── sistema_routes.py
-    │   ├── admin_routes.py         # aplica admin_only
-    │   └── serializers.py          # allowlist de campos (usuário sem senha)
+    │   └── sistema_routes.py       # rotas /admin/* envolvidas por admin_only
     ├── middlewares/
-    │   ├── error_handler.py        # AppError / HTTPException / Exception → {"erro": ...}
-    │   └── admin_guard.py          # flag + header X-Admin-Token (hmac.compare_digest)
+    │   ├── __init__.py
+    │   ├── error_handler.py        # AppError/HTTPException/Exception → JSON {"erro", "sucesso": false}
+    │   └── admin_guard.py          # flag ADMIN_ENDPOINTS_ENABLED + X-Admin-Token (hmac.compare_digest)
     └── utils/
-        ├── errors.py               # ValidationError 400, Unauthorized 401, Forbidden 403, NotFound 404, Conflict 409
-        └── validators.py           # validadores genéricos de entrada
+        ├── __init__.py
+        └── errors.py               # ValidationError 400, Unauthorized 401, Forbidden 403, NotFound 404, Conflict 409
 ```
+
+Removidos: `controllers.py`, `database.py`, `models.py` (todo o conteúdo foi migrado).
 
 ### Findings Addressed
 
 | Finding | Severity | Transformation | Where it was fixed |
 |---|---|---|---|
-| God Class / God Module (AP-03) | CRITICAL | T-03, T-11 | `src/` inteiro; `controllers.py`, `models.py` e `database.py` removidos |
-| Hardcoded Credentials and Secrets (AP-01) | CRITICAL | T-01 | `src/config/settings.py`, `.env.example`, `src/controllers/sistema_controller.py` (contas de demonstração: ver Remaining Items) |
-| Unprotected Destructive/Debug Endpoints (AP-06) | CRITICAL | T-06 | `src/middlewares/admin_guard.py`, `src/views/admin_routes.py`, `src/controllers/admin_controller.py`, `src/models/admin_model.py` |
-| Insecure Password Storage (AP-05) | CRITICAL | T-04 | `src/models/usuario_model.py`, `src/models/seed.py` |
-| Sensitive Data Exposure — responses (AP-04) | CRITICAL | T-05 | `src/views/serializers.py`, `src/models/usuario_model.py`, `src/controllers/sistema_controller.py` |
-| SQL Injection (AP-02) | CRITICAL | T-02 | `src/models/*_model.py` |
-| Tight Coupling Without Dependency Injection (AP-08) | HIGH | T-11 | `src/app.py`, `app.py` |
-| Insecure Runtime Configuration (AP-10) | HIGH | T-01 | `src/config/settings.py`, `src/app.py`, `app.py` |
-| Broken Authentication (AP-06) | HIGH | — | **Não corrigido**: exige mudar o contrato (ver Remaining Items) |
-| Business Logic in Routes/Controllers (AP-07) | HIGH | T-03, T-13 | `src/services/pedido_service.py`, `src/services/notification_service.py`, `src/models/pedido_model.py`, `src/models/relatorio_model.py` |
-| Missing Input Validation — order items (AP-14) | HIGH | T-12 | `src/controllers/pedido_controller.py`, `src/services/pedido_service.py` |
-| Mutable Global State (AP-09) | HIGH | T-18 | `src/models/database.py` |
-| Non-Atomic Multi-Step Writes (AP-11) | HIGH | T-09 | `src/models/database.py`, `src/models/pedido_model.py` |
-| Deprecated / Vulnerable Dependencies (AP-18) — **achado na re-auditoria** (`pip-audit`: CVE-2026-27205 no flask, CVE-2024-6866/6844/6839 no flask-cors) | HIGH | T-14 | `requirements.txt` |
-| Missing Input Validation — types, null bodies (AP-14) | MEDIUM | T-12 | `src/utils/validators.py`, `src/controllers/*` (formato de e-mail e tamanho de senha: ver Remaining Items) |
-| Swallowed / Generic Exception Handling (AP-15) | MEDIUM | T-07 | `src/middlewares/error_handler.py`, `src/utils/errors.py` |
-| Inadequate Middleware Usage / Inconsistent Responses (AP-19) | MEDIUM | T-07 | `src/middlewares/error_handler.py` (parcial, ver Remaining Items) |
-| Duplicated Code (AP-16) | MEDIUM | T-13 | `src/controllers/produto_controller.py`, `src/views/serializers.py`, `src/models/pedido_model.py` |
-| Sensitive Data Exposure — PII in logs (AP-04) | MEDIUM | T-05, T-16 | `src/controllers/usuario_controller.py` |
-| N+1 Queries (AP-13) | MEDIUM | T-08 | `src/models/pedido_model.py`, `src/models/relatorio_model.py`, `src/models/sistema_model.py` |
-| Broken Referential Integrity on Delete (AP-12) | MEDIUM | T-17 | `src/models/produto_model.py`, `src/models/database.py` |
-| Magic Numbers and Strings (AP-20) | LOW | T-15 | `src/models/relatorio_model.py`, `src/models/produto_model.py`, `src/models/pedido_model.py`, `src/config/settings.py` |
-| Print Logging Instead of a Logger (AP-23) | LOW | T-16 | `src/config/logging_config.py` e `logging` em todos os módulos |
-| Poor Naming (AP-21) | LOW | T-15 | `src/views/*_routes.py` (`produto_id`, `usuario_id`, `pedido_id`), `src/models/pedido_model.py` |
-| Verbose / Non-idiomatic Conditionals (AP-24) | LOW | T-16 | `src/controllers/pedido_controller.py` |
-| Dead Code and Unused Imports (AP-22) | LOW | T-16 | árvore inteira (`ruff` F401/F841 sem ocorrências) |
+| AP-03 God Module | CRITICAL | T-03 | `src/models/*`, `src/services/*`, `src/controllers/*`, `src/views/*`, `src/app.py` |
+| AP-01 Hardcoded Credentials and Secrets | CRITICAL | T-01, T-04 | `src/config/settings.py`, `.env.example`, `src/models/database.py` (seed com hash, `SEED_DATABASE`) |
+| AP-06 Unprotected Destructive Endpoints | CRITICAL | T-06 | `src/middlewares/admin_guard.py`, `src/views/sistema_routes.py`, `src/models/sistema_model.py` |
+| AP-04 Sensitive Data Exposure — respostas | CRITICAL | T-05 | `src/views/serializers.py`, `src/models/usuario_model.py`, `src/controllers/sistema_controller.py` |
+| AP-05 Insecure Password Storage | CRITICAL | T-04 | `src/models/usuario_model.py`, `src/models/database.py` |
+| AP-02 SQL Injection | CRITICAL | T-02 | todos os `src/models/*_model.py` |
+| AP-08 Tight Coupling / No Composition Root | HIGH | T-11 | `src/app.py`, `app.py`, `src/models/database.py` |
+| AP-10 Insecure Runtime Configuration | HIGH | T-01 | `src/config/settings.py`, `app.py`, `src/app.py` |
+| AP-06 Broken Authentication | HIGH | — (não aplicado) | Remaining Items |
+| AP-07 Business Logic in Controllers | HIGH | T-03, T-13 | `src/controllers/*`, `src/services/pedido_service.py`, `src/services/notificacao_service.py` |
+| AP-14 Missing Input Validation — itens do pedido | HIGH | T-12, T-09 | `src/controllers/validators.py`, `src/models/pedido_model.py` |
+| AP-09 Mutable Global State | HIGH | T-18 | `src/models/database.py` |
+| AP-11 Non-Atomic Multi-Step Writes | HIGH | T-09 | `src/models/database.py` (`transaction`), `src/models/pedido_model.py` |
+| AP-18 Vulnerable Dependencies | HIGH | T-14 | `requirements.txt` |
+| AP-14 Missing Input Validation — tipos/consistência | MEDIUM | T-12 | `src/controllers/validators.py`, `src/models/produto_model.py` (`validar` no create e no update) |
+| AP-15 Generic Exception Handling | MEDIUM | T-07 | `src/middlewares/error_handler.py`, `src/utils/errors.py` |
+| AP-19 Inconsistent Response Envelopes | MEDIUM | T-07 | `src/middlewares/error_handler.py` |
+| AP-16 Code Duplication | MEDIUM | T-13 | `src/views/serializers.py`, `src/controllers/validators.py`, `src/models/pedido_model.py` (`listar`) |
+| AP-04 Sensitive Data Exposure — PII em logs | MEDIUM | T-05 | `src/controllers/usuario_controller.py` (loga só `usuario_id`) |
+| AP-13 N+1 Queries | MEDIUM | T-08 | `src/models/pedido_model.py`, `src/models/relatorio_model.py`, `src/models/sistema_model.py` |
+| AP-12 Broken Referential Integrity | MEDIUM | T-17 | `src/models/produto_model.py` (`deletar`), `src/models/pedido_model.py`, `src/models/database.py` (FKs) |
+| AP-23 print Logging | LOW | T-16 | `logging` em todos os módulos; `src/services/notificacao_service.py` |
+| AP-20 Magic Numbers and Strings | LOW | T-15 | `src/models/relatorio_model.py`, `src/models/produto_model.py`, `src/models/pedido_model.py`, `src/config/settings.py` |
+| AP-21 Poor Naming | LOW | T-15 | `produto_id`/`usuario_id` nas rotas e controllers; sem `cursor2`/`cursor3`/`prod` |
+| AP-24 Verbose Conditionals | LOW | T-16 | `src/controllers/validators.py`, `src/models/relatorio_model.py` (`COALESCE`) |
+| AP-22 Dead Code and Unused Imports | LOW | T-16 | módulos antigos removidos; pyflakes limpo |
 
 ### Contract Changes
 
-- **GET /health:** saíram `secret_key`, `debug` e `db_path`. `ambiente` agora vem de `APP_ENV`, com default `producao`, igual ao valor anterior. (exceção 1)
-- **GET /usuarios e GET /usuarios/<id>:** saiu o campo `senha`. (exceção 1)
-- **POST /admin/query e POST /admin/reset-db:** respondem `403` por padrão. Só funcionam com `ADMIN_ENDPOINTS_ENABLED=true` e o header `X-Admin-Token` correto. `/admin/query` aceita só um único `SELECT`, executado numa conexão somente leitura; outro SQL ou SQL inválido → `400`. (exceção 2)
-- **Entradas que davam 500 agora dão 400:**
-  - `GET /produtos/busca` com `preco_min`/`preco_max` não numérico;
-  - `POST`/`PUT /produtos` com JSON malformado ou ausente, `preco` não numérico, `estoque` não inteiro, `nome`/`descricao` que não são texto;
-  - `POST /login` e `PUT /pedidos/<id>/status` com body `null` ou que não é objeto;
-  - `POST /usuarios` com campos que não são texto;
-  - `POST /pedidos` com itens malformados.
-
-  (exceção 3)
-- **Erros inesperados:** mensagem genérica `"Erro interno do servidor"` em vez de `str(e)`. Rota ou método inexistente (404/405) passa a responder JSON `{"erro": ...}` em vez de HTML. (exceção 4)
-- **POST /login e GET /produtos/busca:** payloads de SQL injection deixam de funcionar (login → `401`; busca devolve só correspondências literais). Nomes com apóstrofo em `POST /produtos` passam a dar `201` em vez de `500`.
-- **POST /pedidos:** agora respondem `400`:
-  - `quantidade` ≤ 0 ou não inteira;
-  - quantidade total pedida por produto maior que o estoque (itens duplicados);
-  - `usuario_id` inexistente (`"Usuário não encontrado"`).
-
-  (exceção 6)
-- **PUT /produtos/<id>:** aplica as mesmas validações da criação (nome com 2–200 caracteres, categoria da lista) → `400`. (exceção 6)
-- **POST /usuarios:** e-mail já cadastrado → `409 "Email já cadastrado"`. (exceção 5)
-- **PUT /pedidos/<id>/status:** pedido inexistente → `404 "Pedido não encontrado"` (antes respondia `200`). (exceção 5)
-- **DELETE /produtos/<id>:** produto com pedidos → `409 "Produto possui pedidos e não pode ser removido"` (antes apagava e deixava itens órfãos). (exceção 5)
-- **Senhas:** passam a ser gravadas com hash scrypt. Senhas legadas em texto puro continuam autenticando e são migradas para hash no primeiro login. (exceção 7)
-- **Dependências:** `flask` 3.1.1 → 3.1.3 e `flask-cors` 5.0.1 → 6.0.5, para corrigir vulnerabilidades. Headers CORS idênticos aos do original.
-- Rotas, métodos, nomes de campos, envelopes de sucesso, porta `5000` e `python app.py` continuam iguais.
+- **GET /health** — a resposta não traz mais `secret_key`, `debug` e `db_path`. O campo `ambiente` agora vem de `APP_ENV` (padrão `producao`).
+- **GET /usuarios, GET /usuarios/<id>** — o campo `senha` foi removido das respostas.
+- **POST /admin/query, POST /admin/reset-db** — ficam desabilitados por padrão e respondem 403.
+  - Para habilitar: `ADMIN_ENDPOINTS_ENABLED=true` e header `X-Admin-Token` igual a `ADMIN_TOKEN`.
+  - `/admin/query` aceita só uma consulta `SELECT`, executada numa conexão somente leitura. Escrita, múltiplos comandos ou SQL inválido retornam 400.
+- **Todas as respostas de erro** — envelope padronizado `{"erro": <mensagem>, "sucesso": false}`. O status e as mensagens originais foram mantidos; `sucesso` foi adicionado onde faltava.
+  - Rota ou método inexistente agora retorna 404/405 em JSON, não em HTML.
+  - Erro inesperado retorna `"Erro interno do servidor"`, sem o texto da exceção.
+- **Entradas que davam 500 agora dão 400**: `preco` não numérico, `preco_min`/`preco_max` não numéricos, corpo que não é JSON, campos `null`, `dados.get` sobre corpo ausente.
+- **POST /produtos, PUT /produtos/<id>** — nomes com apóstrofo (ex.: `Pão d'água`) passam a funcionar (antes: 500 de sintaxe SQL). O PUT agora aplica as mesmas regras do POST (tamanho do nome e categoria válida) e responde 400 quando violadas.
+- **POST /pedidos** — passa a responder 400 em três casos novos:
+  - `quantidade` não inteira ou ≤ 0.
+  - `usuario_id` inexistente (`Usuário N não encontrado`).
+  - Itens repetidos que somados excedem o estoque.
+- **DELETE /produtos/<id>** — produto referenciado por pedidos retorna 409 `Produto possui pedidos e não pode ser removido`. Antes: 200 e itens órfãos.
+- **PUT /pedidos/<id>/status** — pedido inexistente retorna 404. Antes: 200.
+- **POST /usuarios** — e-mail já cadastrado retorna 409; e-mail com formato inválido retorna 400.
+- **POST /login** — payloads de SQL injection não autenticam mais (401). As senhas são gravadas com hash scrypt, e senhas legadas em texto puro continuam válidas: são migradas para hash no primeiro login bem-sucedido.
+- **Servidor** — `HOST` padrão agora é `127.0.0.1` (antes `0.0.0.0`; use `HOST=0.0.0.0` em containers) e o debug fica desligado por padrão (`FLASK_DEBUG`). A porta 5000 e o comando `python app.py` não mudaram.
+- **Dependências** — `flask` 3.1.1 → 3.1.3 e `flask-cors` 5.0.1 → 6.0.5. Os headers CORS foram comparados e são idênticos aos do original.
+- **Schema** — bancos novos declaram foreign keys em `pedidos` e `itens_pedido`. Bancos existentes não são alterados.
 
 ### How to Run
 
 ```bash
 pip install -r requirements.txt
-python app.py                      # http://localhost:5000 — cria loja.db com dados de demonstração
+export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"   # opcional: sem ela é gerado um valor efêmero
+python app.py                                   # http://127.0.0.1:5000
 
-# Configuração opcional (ver .env.example)
-export SECRET_KEY='valor-aleatorio-longo' FLASK_DEBUG=false PORT=5000 DATABASE_PATH=loja.db SEED_DATABASE=true
-# Endpoints /admin/* (desabilitados por padrão)
-ADMIN_ENDPOINTS_ENABLED=true ADMIN_TOKEN='token-longo' python app.py   # enviar header X-Admin-Token
+# opcionais: HOST=0.0.0.0 PORT=5000 FLASK_DEBUG=false DATABASE_PATH=loja.db SEED_DATABASE=true
+#            CORS_ORIGINS="https://app.exemplo.com" APP_ENV=producao
+#            ADMIN_ENDPOINTS_ENABLED=true ADMIN_TOKEN=<token>   # habilita /admin/* com header X-Admin-Token
+# alternativa: flask --app "src.app:create_app" run
 ```
 
 ### Validation
 
 ```text
-  ✓ Application boots without errors (python app.py, port 5000; Python 3.14.7, flask 3.1.3, flask-cors 6.0.5; debug off; no tracebacks in logs)
-  ✓ All endpoints respond correctly (56/56 checks match the baseline: 33 identical + 23 documented contract changes; 19/19 routes of the Phase 1 inventory covered)
-  ✓ Value parity on identical data: 24/24 responses equal to the original code (reports at 0%/2%/5%/10% tiers, order listing, search, product CRUD, login, health counts)
-  ✓ SQL injection probes: login "' OR 1=1 --" → 401; search "zzz%') OR 1=1 --" → 0 results
-  ✓ Sensitive data: /usuarios without senha; /health without secret_key/debug/db_path
-  ✓ Admin endpoints: 403 by default, without token and with a wrong token; with token SELECT → 200, DELETE and "SELECT 1; DELETE" → 400; reset → 200 (11/11 probes)
-  ✓ Order integrity: negative quantity, duplicated-item oversell and unknown user → 400 with stock unchanged (produto 4 = 15, produto 6 = 8)
-  ✓ Concurrency: 20 parallel orders for stock 8 → exactly 8×201, 12×400, final stock 0
-  ✓ Passwords stored as scrypt hashes; on a legacy plaintext DB login still works and the hash is upgraded
-  ✓ CORS headers (GET and preflight) identical to the original
-  ✓ pip-audit on requirements.txt: "No known vulnerabilities found" (was 4 advisories before the upgrade)
-  ✓ Re-audit greps clean: no SQL concatenation with input, no hardcoded SECRET_KEY/debug, no print, no data access in controllers/views, no unused imports (ruff)
-  ✗ Zero CRITICAL/HIGH anti-patterns remaining — 2 intentionally kept: no authentication on management routes (HIGH) and demo seed accounts with known passwords (see Remaining Items)
+  ✓ Application boots without errors (python app.py, port 5000; "Debug mode: off", bind 127.0.0.1; logs sem traceback) — Python 3.12.13, mesmo runtime do baseline
+  ✓ All endpoints respond correctly (49/49 checks consistentes com o baseline, cobrindo 19/19 endpoints: 18 idênticos + 31 diferenças, todas explicadas pelas Contract Changes; 0 regressões)
+      • 11 só ganharam "sucesso": false no erro (mesmo status e mensagem) • 3 sem campos sensíveis • 3 admin 403
+      • 2 de 500→400 • 1 de 500→201 (apóstrofo) • 2 probes de injection bloqueados • 3 de integridade/regra (400, 400, 409)
+      • 1 404 em JSON • 5 valores derivados (menos pedidos gravados porque os inválidos foram rejeitados)
+  ✓ Route table: 19/19 rotas do inventário da Fase 1 registradas (flask routes)
+  ✓ Execução final repetida após o último ajuste: 49/49 idêntica à rodada anterior do app refatorado
+  ✓ SQL injection: busca "' OR '1'='1" retorna 0 (baseline: 10); payload UNION não vaza usuários; login "admin@loja.com' --" → 401 (baseline: 200)
+  ✓ Senhas: ausentes em GET /usuarios; seed gravado com scrypt; login com senha legada em texto puro → 200 e migrada para hash; senha legada errada → 401, sem migração
+  ✓ Admin: desabilitado → 403; habilitado sem token/token errado → 403; token + SELECT → 200; escrita/múltiplos comandos → 400; SELECT inválido → 400 genérico; reset → 200
+  ✓ Estoque: 10 pedidos concorrentes para estoque 1 → 1×201, 9×400, estoque final 0; quantidade negativa → 400; itens repetidos acima do estoque → 400 sem pedido criado
+  ✓ Atomicidade: falha forçada (trigger) após o INSERT em pedidos → 500 genérico, nenhum pedido gravado, estoque intacto; pedido seguinte → 201
+  ✓ Erros: exceção inesperada → 500 sem texto interno; health com falha de banco → {"status": "erro"}; 404/405 em JSON; JSON malformado → 400
+  ✓ Integridade: DELETE de produto com pedidos → 409; e-mail duplicado → 409; status de pedido inexistente → 404; PUT com categoria inválida → 400
+  ✓ Config: padrões seguros (debug off, 127.0.0.1, 5000, admin desabilitado); SECRET_KEY aleatória quando ausente; CORS_ORIGINS restringe origens; SEED_DATABASE=false não cria usuários
+  ✓ CORS: headers de GET/OPTIONS com Origin idênticos aos do app original
+  ✓ Dependências: flask 3.1.3, flask-cors 6.0.5, werkzeug 3.1.8 sem vulnerabilidades no PyPI
+  ✓ pyflakes: nenhum import ou variável sem uso
+  ✓ Re-audit: 0 CRITICAL; nenhum HIGH corrigível restante
+  ✗ AP-06 HIGH (rotas de gestão sem autenticação) continua aberto de propósito: exige decisão de produto e mudança de contrato (ver Remaining Items)
 ```
+
+Falsos positivos da re-auditoria, verificados:
+- `HEADER_TOKEN = "X-Admin-Token"` é o nome de um header, não um segredo.
+- As f-strings em SQL interpolam só constantes (`COLUNAS`, `COLUNAS_PUBLICAS`, marcadores `?`, fragmentos fixos de `WHERE`); todos os valores vão como parâmetros.
+- O acerto de `print(` era `Blueprint(`.
 
 ### Remaining Items
 
-- **Autenticação e autorização (AP-06, HIGH):** criar, alterar e remover produtos, listar usuários, listar pedidos de todos os clientes, mudar status e ver o relatório continuam públicos, e o login não emite token. Adicionar autenticação obrigatória muda o contrato e é decisão de produto. Recomendação: token assinado com `itsdangerous` usando `SECRET_KEY`, mais um guard de `tipo == "admin"`.
-- **Contas de demonstração do seed (AP-01):** `admin@loja.com`/`admin123` e as outras contas continuam em `src/models/seed.py`, porque o README documenta esses dados de exemplo. Agora são gravadas com hash; use `SEED_DATABASE=false` em produção.
-- **Bancos legados:** num `loja.db` criado pela versão anterior, as senhas ficam em texto puro até cada usuário fazer login. As novas FKs e o `UNIQUE(email)` só valem para bancos criados depois da refatoração (`CREATE TABLE IF NOT EXISTS` não altera tabelas existentes); nos bancos antigos, as checagens da aplicação cobrem os mesmos casos. Se existir um banco real, vale rodar um script único de migração.
-- **Envelope de erro (AP-19, parcial):** `"sucesso": false` continua só nas rotas que já tinham esse campo. Padronizar em todas as respostas de erro muda o corpo das respostas e precisa de alinhamento com os clientes.
-- **Política de credenciais (AP-14/AP-05):** não adicionei validação de formato de e-mail nem tamanho mínimo de senha, porque isso muda o que a API aceita hoje. É decisão de produto.
-- **Cancelamento de pedido:** a notificação diz "Devolver estoque", mas o estoque não é devolvido. Mantive o comportamento original; definir a regra de reposição é decisão de negócio.
-- **Defaults de rede:** `HOST=0.0.0.0` e `CORS_ORIGINS=*` foram mantidos porque o original se comportava assim. Agora são configuráveis; restrinja em produção e use um servidor WSGI (`gunicorn app:app`) em vez do servidor de desenvolvimento.
-- **Lacuna da Phase 2:** as vulnerabilidades de dependências não entraram no relatório de auditoria (lá saiu `None detected`) porque não havia evidência de ferramenta sem instalar nada. O `pip-audit` encontrou os problemas na re-auditoria, e eles foram corrigidos acima.
+- **Autenticação e autorização (AP-06 HIGH):** `POST /login` não emite token e rotas de gestão (`PUT`/`DELETE /produtos`, `GET /usuarios`, `GET /pedidos`, `PUT /pedidos/<id>/status`, `GET /relatorios/vendas`) continuam públicas. Exigir autenticação muda o contrato e precisa de decisão de produto. Recomendação: token assinado (`itsdangerous`) emitido no login e guard por papel `admin`.
+- **Política de senha:** não há tamanho mínimo para novas contas, porque as senhas do seed têm 6 caracteres e a regra muda o contrato de cadastro. Recomendação: mínimo de 8 caracteres para novos usuários.
+- **Cancelamento de pedido:** o status `cancelado` só registra `"Devolver estoque"` no log, sem devolver o estoque, e não há regras de transição entre status. Implementar isso muda regra de negócio: decisão de produto.
+- **Credenciais de demonstração:** com `SEED_DATABASE=true` (padrão, igual ao original), o banco novo recebe `admin@loja.com`/`admin123` (com hash). Defina `SEED_DATABASE=false` em produção.
+- **CORS:** o padrão `*` foi mantido para preservar o comportamento original. Restrinja com `CORS_ORIGINS` em produção.
+- **Bancos existentes:** um `loja.db` criado antes da refatoração não ganha as foreign keys (`CREATE TABLE IF NOT EXISTS`). A integridade continua garantida pelas verificações nos models.
 
 ```text
 ================================
 ```
 
-Não fiz commit de nada: as mudanças estão no working tree (`git status`: `README.md`, `app.py` e `requirements.txt` modificados; `controllers.py`, `models.py` e `database.py` removidos; `src/` e `.env.example` novos). Os artefatos de validação (venvs, baseline e resultados em JSON, logs) ficaram fora do projeto, em `/tmp/refactor-arch/code-smells-project/`, e podem ser apagados.
+Os artefatos de validação estão em `/tmp/refactor-arch/code-smells-project/run-20260917-134435/`: baseline, resultados, scripts e logs. Os arquivos que já existiam em `/tmp/refactor-arch/code-smells-project/`, de uma execução anterior, não foram alterados.
+
+Nenhum processo ficou rodando, e os `__pycache__` e bancos gerados foram removidos do projeto. Não fiz commit: as alterações estão no working tree sem staging. O `git status` mostra outras alterações fora deste projeto (`README.md` e `reports/` na raiz, `scripts/`, `ecommerce-api-legacy/`) que não foram feitas por mim.
 
 ## Linha do tempo das ferramentas
 
 <details>
-<summary>Fases 1 e 2 — 6 chamadas (nenhuma escrita em arquivo)</summary>
+<summary>Fases 1 e 2 — 10 chamadas (nenhuma escrita em arquivo)</summary>
 
 | # | Ferramenta | Entrada (resumida) |
 |---|---|---|
-| 1 | Bash | `cat .claude/skills/refactor-arch/references/project-analysis.md && echo ---- && cat .claude/skills/refactor-arch/references/report-template.md` |
-| 2 | Bash | `cat -n app.py && echo ---- && cat -n controllers.py && echo ---- && cat -n database.py && echo ---- && cat -n requirements.txt && echo ---- && cat ...` |
-| 3 | Bash | `cat -n models.py` |
-| 4 | Bash | `cat .claude/skills/refactor-arch/references/anti-patterns-catalog.md` |
-| 5 | Bash | `python3 --version; ls -a; cat .gitignore 2>/dev/null; git check-ignore -v loja.db __pycache__ .venv 2>/dev/null; echo "--- AP-01"; grep -rniE '(sec...` |
-| 6 | Bash | `grep -n '^## \\|^### ' .claude/skills/refactor-arch/references/refactoring-playbook.md \| head -40; git -C . rev-parse --show-toplevel` |
+| 1 | Bash | `cat .claude/skills/refactor-arch/references/project-analysis.md && ls -la && ls -la .claude .claude/skills/refactor-arch .claude/skills/refactor-ar...` |
+| 2 | Read | `<repo>/code-smells-project/app.py` |
+| 3 | Read | `<repo>/code-smells-project/controllers.py` |
+| 4 | Read | `<repo>/code-smells-project/database.py` |
+| 5 | Read | `<repo>/code-smells-project/models.py` |
+| 6 | Bash | `cat -n README.md requirements.txt && wc -l *.py && cat .claude/skills/refactor-arch/references/report-template.md` |
+| 7 | Bash | `cat .claude/skills/refactor-arch/references/anti-patterns-catalog.md` |
+| 8 | Bash | `echo "--- AP-01" && grep -rniE '(secret\|password\|passwd\|pwd\|pass\|api[_-]?key\|token\|senha)\w*["'"'"']?\s*[\]:=]+\s*["'"'"'][^"'"'"']{3,}["'"'"']' --...` |
+| 9 | Bash | `for p in flask/3.1.1 flask-cors/5.0.1; do echo "== $p"; curl -s --max-time 20 https://pypi.org/pypi/$p/json \| python3 -c 'import json,sys; d=json.l...` |
+| 10 | Bash | `grep -n . requirements.txt && grep -rnE 'utcnow\|utcfromtimestamp\|before_first_request\|JSONEncoder\|_app_ctx_stack\|__version__\|url_quote\|url_parse\|pk...` |
 
 </details>
 
 <details>
-<summary>Fase 3 — 53 chamadas</summary>
+<summary>Fase 3 — 60 chamadas</summary>
 
 | # | Ferramenta | Entrada (resumida) |
 |---|---|---|
 | 1 | Bash | `cd <repo>/code-smells-project/.claude/skills/refactor-arch/references && cat mvc-guidelines.md validation-guide.md` |
-| 2 | Bash | `cat refactoring-playbook.md` |
-| 3 | Read | `~/.claude/projects/-home-diego-projects-mba-mba-ia-refactor-projects-skill-code-smells-project/f2b201e7-958d-4d2c-b506-fa8629e6fa03/tool-results/b5...` |
-| 4 | Bash | `cd <repo> && cat .gitignore; echo ---; which uv uvx curl; ls $TMP/refactor-arch 2>/dev/null; ss -ltnp 2>/dev/null \| grep ':5000' \|\| echo "port 5000...` |
-| 5 | Bash | `VALIDATION_DIR=$TMP/refactor-arch/code-smells-project; mkdir -p "$VALIDATION_DIR" && cd "$VALIDATION_DIR" && uv venv --python 3.14 .venv 2>&1 \| tai...` |
-| 6 | Write | `$TMP/refactor-arch/code-smells-project/smoke_test.py` |
-| 7 | Write | `$TMP/refactor-arch/code-smells-project/compare.py` |
-| 8 | Bash | `V=$TMP/refactor-arch/code-smells-project; cd <repo>/code-smells-project && test ! -e loja.db && setsid $V/.venv/bin/python app.py > $V/server-basel...` |
-| 9 | Bash | `ps -o pid,pgid,sid,cmd -p 412479,412492; PGID=$(ps -o pgid= -p 412479 \| tr -d ' '); kill -- -"$PGID"; sleep 1; ss -ltnp \| grep ':5000' \|\| echo "ser...` |
-| 10 | Bash | `V=$TMP/refactor-arch/code-smells-project; grep -n "Traceback" $V/server-baseline.log \| head; $V/.venv/bin/python - <<'EOF' import json b = json.loa...` |
-| 11 | Bash | `git status --porcelain --ignored . && rm -f loja.db && git status --porcelain --ignored .; mkdir -p src/config src/models src/services src/controll...` |
-| 12 | Write | `<repo>/code-smells-project/src/config/settings.py` |
-| 13 | Write | `<repo>/code-smells-project/src/config/logging_config.py` |
-| 14 | Write | `<repo>/code-smells-project/.env.example` |
-| 15 | Write | `<repo>/code-smells-project/src/utils/errors.py` |
-| 16 | Write | `<repo>/code-smells-project/src/utils/validators.py` |
+| 2 | Bash | `cat <repo>/code-smells-project/.claude/skills/refactor-arch/references/refactoring-playbook.md` |
+| 3 | Read | `~/.claude/projects/-home-diego-projects-mba-mba-ia-refactor-projects-skill-code-smells-project/af8ff879-a7ae-47da-8c87-e824e7365578/tool-results/bx...` |
+| 4 | Bash | `cd <repo>/code-smells-project && VALIDATION_DIR="${TMPDIR:-/tmp}/refactor-arch/$(basename "$PWD")" && mkdir -p "$VALIDATION_DIR" && echo "$VALIDATI...` |
+| 5 | Bash | `RUN_DIR=$TMP/refactor-arch/code-smells-project/run-$(date +%Y%m%d-%H%M%S) && mkdir -p "$RUN_DIR" && echo "$RUN_DIR" > $TMP/refactor-arch/code-smell...` |
+| 6 | Bash | `cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN` |
+| 7 | Write | `$TMP/refactor-arch/code-smells-project/run-20260917-134435/smoke_test.py` |
+| 8 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && ls loja.db 2>/dev/null; setsid "$RUN_DIR/.venv-baseline/bin/python" app.py > "...` |
+| 9 | Bash | `ps -o pid,pgid,sid,cmd -p 495520,495526; PGID=$(ps -o pgid= -p 495520 \| tr -d ' '); echo "pgid=$PGID"; kill -- -"$PGID"; sleep 1; ss -ltnp \| grep '...` |
+| 10 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && mv loja.db "$RUN_DIR/baseline-final.db" && find . -name __pycache__ -not -path...` |
+| 11 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && cd "$RUN_DIR" && uv venv -q .venv-refactored --python 3.12 && uv pip install -...` |
+| 12 | Bash | `git status --porcelain --ignored . && ls -la && cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN && ss -ltn \| grep ':5000 ' \|\| echo "port 500...` |
+| 13 | Bash | `mkdir -p src/config src/models src/services src/controllers src/views src/middlewares src/utils && for d in src src/config src/models src/services ...` |
+| 14 | Write | `<repo>/code-smells-project/src/config/settings.py` |
+| 15 | Write | `<repo>/code-smells-project/.env.example` |
+| 16 | Write | `<repo>/code-smells-project/src/utils/errors.py` |
 | 17 | Write | `<repo>/code-smells-project/src/models/database.py` |
-| 18 | Write | `<repo>/code-smells-project/src/models/seed.py` |
-| 19 | Write | `<repo>/code-smells-project/src/models/produto_model.py` |
-| 20 | Write | `<repo>/code-smells-project/src/models/usuario_model.py` |
-| 21 | Write | `<repo>/code-smells-project/src/models/pedido_model.py` |
-| 22 | Write | `<repo>/code-smells-project/src/models/relatorio_model.py` |
-| 23 | Write | `<repo>/code-smells-project/src/models/sistema_model.py` |
-| 24 | Write | `<repo>/code-smells-project/src/models/admin_model.py` |
-| 25 | Write | `<repo>/code-smells-project/src/services/notification_service.py` |
-| 26 | Write | `<repo>/code-smells-project/src/services/pedido_service.py` |
-| 27 | Write | `<repo>/code-smells-project/src/views/serializers.py` |
-| 28 | Write | `<repo>/code-smells-project/src/controllers/produto_controller.py` |
-| 29 | Write | `<repo>/code-smells-project/src/controllers/usuario_controller.py` |
-| 30 | Write | `<repo>/code-smells-project/src/controllers/pedido_controller.py` |
-| 31 | Write | `<repo>/code-smells-project/src/controllers/relatorio_controller.py` |
-| 32 | Write | `<repo>/code-smells-project/src/controllers/sistema_controller.py` |
-| 33 | Write | `<repo>/code-smells-project/src/controllers/admin_controller.py` |
-| 34 | Bash | `cd <repo>/code-smells-project/src/views && cat > produto_routes.py <<'EOF' from flask import Blueprint def build_produto_blueprint(controller) -> B...` |
-| 35 | Write | `<repo>/code-smells-project/src/middlewares/error_handler.py` |
-| 36 | Write | `<repo>/code-smells-project/src/middlewares/admin_guard.py` |
-| 37 | Write | `<repo>/code-smells-project/src/app.py` |
-| 38 | Bash | `cd <repo>/code-smells-project && cat > app.py <<'EOF' """Entry point: mantém python app.py funcionando; a montagem da aplicação fica em src/app.p...` |
-| 39 | Bash | `git reset -q HEAD -- controllers.py models.py database.py && rm -rf __pycache__ && git status --short .` |
-| 40 | Bash | `V=$TMP/refactor-arch/code-smells-project; cd <repo>/code-smells-project && test ! -e loja.db && echo "fresh db" setsid $V/.venv/bin/python app.py >...` |
-| 41 | Bash | `PID=$(ss -ltnpH 'sport = :5000' \| grep -o 'pid=[0-9]*' \| head -1 \| cut -d= -f2); PGID=$(ps -o pgid= -p "$PID" \| tr -d ' '); ps -o pid,pgid,cmd -g "...` |
-| 42 | Bash | `V=$TMP/refactor-arch/code-smells-project; $V/.venv/bin/python - <<'EOF' import json b = json.load(open("$TMP/refactor-arch/code-smells-project/base...` |
-| 43 | Write | `$TMP/refactor-arch/code-smells-project/parity.py` |
-| 44 | Bash | `V=$TMP/refactor-arch/code-smells-project; ROOT=<repo> stop_port() { local PID PGID; PID=$(ss -ltnpH "sport = :$1" \| grep -o 'pid=[0-9]*' \| head -1 ...` |
-| 45 | Write | `$TMP/refactor-arch/code-smells-project/probes.py` |
-| 46 | Bash | `V=$TMP/refactor-arch/code-smells-project; ROOT=<repo> stop_port() { local PID PGID; PID=$(ss -ltnpH "sport = :$1" \| grep -o 'pid=[0-9]*' \| head -1 ...` |
-| 47 | Bash | `echo "== AP-01 secrets"; grep -rnEi "(secret\|password\|passwd\|api[_-]?key\|token\|senha)\w*['\"]?\s*[:=]\s*['\"][^'\"]{6,}['\"]" --include=*.py src/ a...` |
-| 48 | Bash | `echo "== print"; grep -rnE "(^\|[^a-z_])print\(" --include=*.py src/ app.py \|\| echo "none"; echo "== id shadowing"; grep -rnE "def \w+\(.*\bid\b\|^\s...` |
-| 49 | Bash | `cd $TMP/refactor-arch/code-smells-project && timeout 180 uvx --quiet pip-audit -r <repo>/code-smells-project/requirements.txt 2>&1 \| tail -15` |
-| 50 | Bash | `cd $TMP/refactor-arch/code-smells-project && timeout 180 uvx --quiet pip-audit -r <repo>/code-smells-project/requirements.txt --desc --format json ...` |
-| 51 | Bash | `printf 'flask==3.1.3\nflask-cors==6.0.5\n' > requirements.txt && cat requirements.txt && cd $TMP/refactor-arch/code-smells-project && uv venv --qui...` |
-| 52 | Bash | `V=$TMP/refactor-arch/code-smells-project; ROOT=<repo>; P=$ROOT/code-smells-project stop_port() { local PID PGID; PID=$(ss -ltnpH "sport = :$1" \| gr...` |
-| 53 | Bash | `cd $TMP/refactor-arch/code-smells-project && timeout 180 uvx --quiet pip-audit -r <repo>/code-smells-project/requirements.txt 2>&1 \| tail -3 cd <re...` |
+| 18 | Write | `<repo>/code-smells-project/src/models/produto_model.py` |
+| 19 | Write | `<repo>/code-smells-project/src/models/usuario_model.py` |
+| 20 | Write | `<repo>/code-smells-project/src/models/pedido_model.py` |
+| 21 | Write | `<repo>/code-smells-project/src/models/relatorio_model.py` |
+| 22 | Write | `<repo>/code-smells-project/src/models/sistema_model.py` |
+| 23 | Edit | `<repo>/code-smells-project/src/models/database.py` |
+| 24 | Write | `<repo>/code-smells-project/src/services/notificacao_service.py` |
+| 25 | Write | `<repo>/code-smells-project/src/services/pedido_service.py` |
+| 26 | Write | `<repo>/code-smells-project/src/controllers/validators.py` |
+| 27 | Write | `<repo>/code-smells-project/src/controllers/produto_controller.py` |
+| 28 | Write | `<repo>/code-smells-project/src/controllers/usuario_controller.py` |
+| 29 | Write | `<repo>/code-smells-project/src/controllers/pedido_controller.py` |
+| 30 | Write | `<repo>/code-smells-project/src/controllers/relatorio_controller.py` |
+| 31 | Write | `<repo>/code-smells-project/src/controllers/sistema_controller.py` |
+| 32 | Write | `<repo>/code-smells-project/src/views/serializers.py` |
+| 33 | Write | `<repo>/code-smells-project/src/views/produto_routes.py` |
+| 34 | Write | `<repo>/code-smells-project/src/views/usuario_routes.py` |
+| 35 | Write | `<repo>/code-smells-project/src/views/pedido_routes.py` |
+| 36 | Write | `<repo>/code-smells-project/src/views/relatorio_routes.py` |
+| 37 | Write | `<repo>/code-smells-project/src/views/sistema_routes.py` |
+| 38 | Write | `<repo>/code-smells-project/src/middlewares/error_handler.py` |
+| 39 | Write | `<repo>/code-smells-project/src/middlewares/admin_guard.py` |
+| 40 | Write | `<repo>/code-smells-project/src/app.py` |
+| 41 | Write | `<repo>/code-smells-project/app.py` |
+| 42 | Bash | `git rm -q controllers.py database.py models.py && printf 'flask==3.1.3\nflask-cors==6.0.5\n' > requirements.txt && cat requirements.txt && git stat...` |
+| 43 | Bash | `git reset -q -- controllers.py database.py models.py && git status --short .` |
+| 44 | Write | `<repo>/code-smells-project/README.md` |
+| 45 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && ls loja.db 2>/dev/null; "$RUN_DIR/server.sh" start "$RUN_DIR/.venv-refactored/...` |
+| 46 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && cat > "$RUN_DIR/compare.py" <<'EOF' import json, sys base = json.load(open(sys...` |
+| 47 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && mkdir -p "$RUN_DIR/original" && for f in app.py controllers.py database.py mod...` |
+| 48 | Write | `$TMP/refactor-arch/code-smells-project/run-20260917-134435/extra_checks.py` |
+| 49 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && cp "$RUN_DIR/legacy-plaintext.db" "$RUN_DIR/extra.db" && "$RUN_DIR/server.sh" ...` |
+| 50 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && mv loja.db "$RUN_DIR/refactored-final.db" && cat > "$RUN_DIR/cors_probe.sh" <<...` |
+| 51 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && cat > "$RUN_DIR/testclient_checks.py" <<'EOF' import dataclasses, os, sqlite3,...` |
+| 52 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && DATABASE_PATH="$RUN_DIR/routes.db" SECRET_KEY=x "$RUN_DIR/.venv-refactored/bin...` |
+| 53 | Bash | `P="--include=*.py app.py src" && echo "== AP-01 secrets" && grep -rnEi "(secret\|password\|passwd\|senha\|api[_-]?key\|token)\w*['\"]?\s*[\]:=]+\s*['\"]...` |
+| 54 | Read | `<repo>/code-smells-project/src/models/pedido_model.py` |
+| 55 | Edit | `<repo>/code-smells-project/src/models/pedido_model.py` |
+| 56 | Bash | `PYTHONDONTWRITEBYTECODE=1 uvx --quiet pyflakes app.py src; echo "pyflakes exit=$?"; echo "== builtin shadowing (id/type/list/filter/input as names)...` |
+| 57 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && ls loja.db 2>/dev/null; echo "=== smoke (fresh DB, default config, python app....` |
+| 58 | Bash | `RUN_DIR=$(cat $TMP/refactor-arch/code-smells-project/CURRENT_RUN) && cat > "$RUN_DIR/rollback_check.py" <<'EOF' import dataclasses, logging, os, sq...` |
+| 59 | Bash | `pgrep -af "refactor-arch/code-smells-project/run-20260917-134435" \|\| echo "no server processes left"; ss -ltn \| grep ':5000 ' \|\| echo "port 5000 fr...` |
+| 60 | Bash | `cd <repo> && git status --porcelain \| grep -v '^.. code-smells-project/' ; echo "---"; ls $TMP/refactor-arch/code-smells-project/run-20260917-13443...` |
 
 </details>

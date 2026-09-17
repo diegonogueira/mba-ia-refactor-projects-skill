@@ -1,18 +1,21 @@
 # Log de execução — Projeto 3: `task-manager-api` (Python/Flask)
 
-Execução real da skill `refactor-arch` com o Claude Code CLI (`claude` 2.1.273, modelo `claude-opus-5[1m]`), dentro de `task-manager-api/`.
-Em modo headless (`-p`) a pausa da Fase 2 encerra o turno; a confirmação é enviada retomando a mesma sessão.
+Execução real da skill `refactor-arch` **v1.2.0** com o Claude Code CLI (`claude` 2.1.273, modelo `claude-opus-5[1m]`), dentro de `task-manager-api/`.
+No modo headless (`-p`), a pausa da Fase 2 encerra o turno, e a confirmação é enviada retomando a mesma sessão.
+
+> **Interrupção externa:** a primeira tentativa de enviar `y` bateu no limite de uso da conta (`You've hit your session limit`) antes de qualquer ação da skill. O `y` foi reenviado na mesma sessão depois que o limite foi renovado.
 
 ```bash
 cd task-manager-api
-claude -p "/refactor-arch" --strict-mcp-config --output-format stream-json --verbose     # Fases 1 e 2 (para e pergunta)
-claude -p "y" --resume 0934520c-8917-4339-9c6f-a520b79884a6 --strict-mcp-config --output-format stream-json --verbose   # Fase 3
+claude -p "/refactor-arch" --strict-mcp-config --output-format stream-json --verbose   # Fases 1 e 2 (para e pergunta)
+claude -p "y" --resume a2f7fa21-81bb-4e40-90fd-9529573e7307 --strict-mcp-config --output-format stream-json --verbose   # Fase 3
+claude -p "y" --resume a2f7fa21-81bb-4e40-90fd-9529573e7307 --strict-mcp-config --output-format stream-json --verbose   # reenvio após o limite
 ```
 
-| Etapa | Turnos | Duração | Ferramentas usadas |
-|---|---|---|---|
-| Fases 1 + 2 (somente leitura) | 18 | 7.0 min | 17 |
-| Fase 3 (após `y`) | 71 | 14.7 min | 70 |
+| Etapa | Turnos | Duração | Custo (`total_cost_usd`) | Ferramentas usadas |
+|---|---|---|---|---|
+| Fases 1 + 2 (somente leitura) | 11 | 5.4 min | US$ 1.76 | 10 |
+| Fase 3 (após `y`) | 64 | 16.6 min | US$ 10.64 | 62 |
 
 ## Fase 1 — saída
 
@@ -20,44 +23,44 @@ claude -p "y" --resume 0934520c-8917-4339-9c6f-a520b79884a6 --strict-mcp-config 
 ================================
 PHASE 1: PROJECT ANALYSIS
 ================================
-Language:      Python (runtime não declarado no projeto; interpretador local 3.14.7)
+Language:      Python (runtime não declarado; python3 local 3.14.7)
 Framework:     Flask 3.0.0
-Dependencies:  flask-sqlalchemy 3.1.1, flask-cors 4.0.0, marshmallow 3.20.1 (não importado), requests 2.31.0 (não importado), python-dotenv 1.0.0 (não importado)
-Domain:        Task Manager API (tasks, users, categories, reports)
-Architecture:  Parcialmente em camadas — models/routes/services/utils existem, mas as rotas concentram validação, regras e queries
-Source files:  15 files analyzed (~1158 lines of code; 3 empty __init__.py)
-Database:      SQLite via Flask-SQLAlchemy / SQLAlchemy ORM (sqlite:///tasks.db → instance/tasks.db; db.create_all() no import de app.py; seed em seed.py)
-DB tables:     users, categories, tasks
-Entry point:   app.py → python app.py (port 5000; setup: pip install -r requirements.txt && python seed.py)
+Dependencies:  Flask-SQLAlchemy 3.1.1, Flask-CORS 4.0.0, marshmallow 3.20.1 (nunca importado), requests 2.31.0 (nunca importado), python-dotenv 1.0.0 (nunca importado)
+Domain:        Task Manager API (tasks, users, categories)
+Architecture:  Parcialmente em camadas — models/routes/services/utils existem, mas rotas concentram regra de negócio e acesso a dados
+Source files:  15 files analyzed (3 empty __init__.py) (~1158 lines of code)
+Database:      SQLite via Flask-SQLAlchemy / SQLAlchemy ORM (sqlite:///tasks.db → instance/tasks.db; schema via db.create_all() no import de app.py)
+DB tables:     tasks, users, categories
+Entry point:   app.py → python app.py (port 5000); setup: pip install -r requirements.txt && python seed.py
 Endpoints:     22 routes
-  GET    /health                        → health          (app.py:22)
-  GET    /                              → index           (app.py:26)
-  GET    /tasks                         → get_tasks       (routes/task_routes.py:11)
-  GET    /tasks/<int:task_id>           → get_task        (routes/task_routes.py:65)
-  POST   /tasks                         → create_task     (routes/task_routes.py:85)
-  PUT    /tasks/<int:task_id>           → update_task     (routes/task_routes.py:156)
-  DELETE /tasks/<int:task_id>           → delete_task     (routes/task_routes.py:225)
-  GET    /tasks/search                  → search_tasks    (routes/task_routes.py:240)
-  GET    /tasks/stats                   → task_stats      (routes/task_routes.py:273)
-  GET    /users                         → get_users       (routes/user_routes.py:10)
-  GET    /users/<int:user_id>           → get_user        (routes/user_routes.py:27)
-  POST   /users                         → create_user     (routes/user_routes.py:42)
-  PUT    /users/<int:user_id>           → update_user     (routes/user_routes.py:92)
-  DELETE /users/<int:user_id>           → delete_user     (routes/user_routes.py:134)
-  GET    /users/<int:user_id>/tasks     → get_user_tasks  (routes/user_routes.py:153)
-  POST   /login                         → login           (routes/user_routes.py:185)
-  GET    /reports/summary               → summary_report  (routes/report_routes.py:12)
-  GET    /reports/user/<int:user_id>    → user_report     (routes/report_routes.py:103)
-  GET    /categories                    → get_categories  (routes/report_routes.py:157)
-  POST   /categories                    → create_category (routes/report_routes.py:167)
-  PUT    /categories/<int:cat_id>       → update_category (routes/report_routes.py:190)
-  DELETE /categories/<int:cat_id>       → delete_category (routes/report_routes.py:211)
+  GET    /                         → index (app.py:27)
+  GET    /health                   → health (app.py:23)
+  GET    /tasks                    → get_tasks (routes/task_routes.py:12)
+  GET    /tasks/<int:task_id>      → get_task (routes/task_routes.py:66)
+  POST   /tasks                    → create_task (routes/task_routes.py:86)
+  PUT    /tasks/<int:task_id>      → update_task (routes/task_routes.py:157)
+  DELETE /tasks/<int:task_id>      → delete_task (routes/task_routes.py:226)
+  GET    /tasks/search             → search_tasks (routes/task_routes.py:241)
+  GET    /tasks/stats              → task_stats (routes/task_routes.py:274)
+  GET    /users                    → get_users (routes/user_routes.py:11)
+  GET    /users/<int:user_id>      → get_user (routes/user_routes.py:28)
+  POST   /users                    → create_user (routes/user_routes.py:43)
+  PUT    /users/<int:user_id>      → update_user (routes/user_routes.py:93)
+  DELETE /users/<int:user_id>      → delete_user (routes/user_routes.py:135)
+  GET    /users/<int:user_id>/tasks → get_user_tasks (routes/user_routes.py:154)
+  POST   /login                    → login (routes/user_routes.py:186)
+  GET    /reports/summary          → summary_report (routes/report_routes.py:13)
+  GET    /reports/user/<int:user_id> → user_report (routes/report_routes.py:104)
+  GET    /categories               → get_categories (routes/report_routes.py:158)
+  POST   /categories               → create_category (routes/report_routes.py:168)
+  PUT    /categories/<int:cat_id>  → update_category (routes/report_routes.py:191)
+  DELETE /categories/<int:cat_id>  → delete_category (routes/report_routes.py:212)
 ================================
 ```
 
 ## Fase 2 — saída
 
-O relatório completo (verbatim) está em [`reports/audit-project-3.md`](../../reports/audit-project-3.md). A mensagem terminou com:
+O relatório completo, sem alterações, está em [`reports/audit-project-3.md`](../../reports/audit-project-3.md). A mensagem terminou com:
 
 ```text
 Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]
@@ -67,7 +70,9 @@ Resposta enviada pelo usuário: `y`
 
 ## Fase 3 — saída
 
-> Títulos da saída rebaixados um nível para caber neste documento; conteúdo sem outras alterações.
+> Os títulos da saída foram rebaixados um nível para caber neste documento. O conteúdo não foi alterado.
+
+Passo 3.7 — Relatório final.
 
 ```text
 ================================
@@ -79,239 +84,209 @@ PHASE 3: REFACTORING COMPLETE
 
 ```text
 task-manager-api/
-├── app.py                         # ponto de entrada: create_app() + app.run → continua sendo `python app.py`
-├── seed.py                        # CLI: create_app() + seed_database() → continua sendo `python seed.py`
-├── requirements.txt
-├── .env.example                   # variáveis de ambiente documentadas (valores fictícios)
-├── README.md
+├── app.py                                  # entrada fina: create_app() + app.run (mantém `python app.py`)
+├── seed.py                                 # script de seed, agora usando a factory
+├── requirements.txt                        # flask 3.1.3, flask-sqlalchemy, flask-cors 6.0.5, python-dotenv
+├── .env.example                            # todas as variáveis, só com valores fake
+├── README.md                               # instruções de execução, config e estrutura
 └── src/
-    ├── app.py                     # composition root: config, CORS, banco, services, controllers, blueprints, error handlers
-    ├── config/
-    │   ├── settings.py            # Settings lidos do ambiente (SECRET_KEY, FLASK_DEBUG, HOST, PORT, DATABASE_URL, CORS_ORIGINS, LOG_LEVEL)
-    │   └── logging_config.py
+    ├── app.py                              # composition root: create_app() liga tudo
+    ├── config/settings.py                  # Settings lidas do ambiente, sem segredo default
     ├── models/
-    │   ├── database.py            # extensão db, create_all, commit com rollback, PersistenceMixin (find/list/count/create/update/delete)
-    │   ├── task_model.py          # Task + constantes de domínio, is_overdue(), buscas, contagens com GROUP BY e eager loading
-    │   ├── user_model.py          # User + hash scrypt com upgrade do MD5 legado; exclusão em cascata das tasks
-    │   ├── category_model.py      # Category
-    │   └── seed.py                # dados de exemplo em uma única transação
+    │   ├── database.py                     # db, init_database(), commit() e PersistableMixin
+    │   ├── task_model.py                   # entidade + is_overdue (híbrido Python/SQL) + consultas agregadas
+    │   ├── user_model.py                   # entidade + hash de senha (scrypt) e migração do MD5 legado
+    │   ├── category_model.py               # entidade + consultas
+    │   └── seed.py                         # dados de exemplo em uma única transação
     ├── services/
-    │   ├── report_service.py      # estatísticas de tasks, resumo geral e relatório por usuário
-    │   └── auth_service.py        # verificação de credenciais + token assinado (itsdangerous)
+    │   ├── auth_service.py                 # autenticação e emissão de token assinado
+    │   └── report_service.py               # relatórios que cruzam tasks, usuários e categorias
     ├── controllers/
-    │   ├── task_controller.py
-    │   ├── user_controller.py     # usuários + login
+    │   ├── task_controller.py              # fluxo da requisição (5–15 linhas por ação)
+    │   ├── user_controller.py
     │   ├── category_controller.py
     │   ├── report_controller.py
     │   ├── health_controller.py
-    │   ├── validators.py          # validação de payload/query com as mensagens originais
-    │   └── lookups.py             # buscas que viram 404 quando não encontram
+    │   └── validators/                     # validação de payload por domínio (task, user, category)
     ├── views/
-    │   ├── task_routes.py         # Blueprints: só ligam URL + método ao controller
+    │   ├── task_routes.py                  # blueprint: URL + método → controller
     │   ├── user_routes.py
-    │   ├── category_routes.py
+    │   ├── category_routes.py              # /categories saiu do módulo de relatórios
     │   ├── report_routes.py
     │   ├── health_routes.py
-    │   └── serializers.py         # respostas com lista explícita de campos (sem hash de senha)
-    ├── middlewares/
-    │   └── error_handler.py       # AppError / HTTPException / Exception → {"error": ...}
-    └── utils/
-        ├── errors.py              # hierarquia de erros (400/401/403/404/409/500)
-        ├── dates.py               # utc_now()
-        └── calculations.py        # calculate_percentage()
+    │   └── serializers.py                  # allowlist dos campos públicos
+    ├── middlewares/error_handler.py        # handler central: todo erro sai em JSON
+    └── utils/                              # errors.py, validators.py, datetime_utils.py, math_utils.py
 ```
 
 ### Findings Addressed
 
 | Finding | Severity | Transformation | Where it was fixed |
 |---|---|---|---|
-| Hardcoded credentials and secrets (AP-01) | CRITICAL | T-01 | `src/config/settings.py`, `.env.example`; `NotificationService` (com credenciais SMTP) removido |
-| Sensitive data exposure (AP-04) | CRITICAL | T-05 | `src/views/serializers.py` |
-| Insecure password storage (AP-05) | CRITICAL | T-04 | `src/models/user_model.py`, `src/models/seed.py` |
-| Tight coupling / no composition root (AP-08) | HIGH | T-11 | `src/app.py`, `app.py`, `seed.py` |
-| Insecure runtime configuration (AP-10) | HIGH | T-01 | `src/config/settings.py`, `app.py` |
-| Deprecated APIs and dependencies — vulnerable pinned packages (AP-18) | HIGH | T-14 | `requirements.txt` (flask 3.1.3, flask-cors 6.0.5; `marshmallow`, `requests` e `python-dotenv` removidos; `itsdangerous` declarado) |
-| God module — reports and categories (AP-03) | HIGH | T-03 | `src/controllers/category_controller.py`, `src/views/category_routes.py`, `src/controllers/report_controller.py`, `src/services/report_service.py` |
-| Business logic in routes (AP-07) | HIGH | T-03, T-13 | `src/controllers/*`, `src/models/*_model.py`, `src/services/*` |
-| Broken authentication (AP-06) | HIGH | T-06 (parcial) | `src/services/auth_service.py`: o token agora é assinado; autenticação nas rotas continua pendente (ver Remaining Items) |
-| Deprecated APIs — `datetime.utcnow()` (AP-18) | MEDIUM | T-14 | `src/utils/dates.py` |
-| Duplicated code (AP-16) | MEDIUM | T-13 | `Task.is_overdue()` e constantes em `src/models/*_model.py`, `src/controllers/validators.py`, `src/views/serializers.py`, `PersistenceMixin` |
-| N+1 queries (AP-13) | MEDIUM | T-08 | `src/models/task_model.py` (`joinedload`, `GROUP BY`) |
-| Deprecated APIs — legacy `Query.get()` (AP-18) | MEDIUM | T-14 | `src/models/database.py` (`db.session.get`, `db.select`) |
-| Missing input validation (AP-14) | MEDIUM | T-12 | `src/controllers/validators.py` |
-| Swallowed exceptions / no error handler (AP-15) | MEDIUM | T-07 | `src/middlewares/error_handler.py`, `src/utils/errors.py`, `commit()` em `src/models/database.py` |
-| Dead code and unused imports/dependencies (AP-22) | LOW | T-16 | `utils/helpers.py`, `services/notification_service.py`, métodos de model sem uso e dependências removidos; `calculate_percentage` aproveitado em `src/utils/calculations.py` |
-| Magic numbers and strings (AP-20) | LOW | T-15, T-01 | constantes em `src/models/*_model.py`, `RECENT_ACTIVITY_DAYS`, `src/config/settings.py` |
-| Poor naming (AP-21) | LOW | T-15 | todo o `src/` (`count_by_priority`, `PRIORITY_LABELS`, `category_routes.py`) |
-| Verbose conditionals (AP-24) | LOW | T-16 | `Task.is_overdue()`, `isinstance` em `src/controllers/validators.py` |
-| print logging (AP-23) | LOW | T-16 | `logging` em controllers e models, `src/config/logging_config.py` |
+| AP-01 Hardcoded credentials and secrets | CRITICAL | T-01 | `src/config/settings.py`, `.env.example` (o serviço SMTP com senha fixa foi removido) |
+| AP-04 Sensitive data exposure | CRITICAL | T-05 | `src/views/serializers.py`, `src/controllers/user_controller.py` |
+| AP-05 Insecure password storage | CRITICAL | T-04 | `src/models/user_model.py`, `src/services/auth_service.py` |
+| AP-08 Tight coupling / no composition root | HIGH | T-11 | `src/app.py`, `app.py`, `seed.py`, `src/models/database.py` |
+| AP-10 Insecure runtime configuration | HIGH | T-01 | `src/config/settings.py`, `src/app.py` |
+| AP-18 Vulnerable dependencies (runtime) | HIGH | T-14 | `requirements.txt` |
+| AP-03 God module | HIGH | T-03 | `src/views/category_routes.py`, `src/views/report_routes.py`, `src/controllers/*` |
+| AP-07 Business logic in routes | HIGH | T-03, T-13 | `src/controllers/*`, `src/models/*_model.py`, `src/services/report_service.py` |
+| AP-06 Broken authentication | HIGH (parcial) | T-06 | `src/services/auth_service.py` (token assinado; ver Remaining Items) |
+| AP-18 Deprecated `datetime.utcnow()` | MEDIUM | T-14 | `src/utils/datetime_utils.py` e todos os models |
+| AP-16 Duplicated code | MEDIUM | T-13 | `src/models/task_model.py` (`is_overdue` único), `src/views/serializers.py`, `src/controllers/validators/*` |
+| AP-18 Vulnerable dependencies (não usadas) | MEDIUM | T-14, T-16 | `requirements.txt` (marshmallow e requests removidos) |
+| AP-13 N+1 queries | MEDIUM | T-08 | `src/models/task_model.py` (`selectinload`, `GROUP BY`, contagens em SQL) |
+| AP-18 Legacy `Query.get()` | MEDIUM | T-14 | `src/models/*_model.py` (`db.session.get` / `db.select`) |
+| AP-14 Missing input validation | MEDIUM | T-12 | `src/controllers/validators/*`, `src/utils/validators.py` |
+| AP-15 Swallowed exceptions | MEDIUM | T-07 | `src/middlewares/error_handler.py`, `src/utils/errors.py`, `src/models/database.py` |
+| AP-22 Dead code and unused deps | LOW | T-16 | remoção de `utils/helpers.py`, `services/notification_service.py` e imports; `requirements.txt` |
+| AP-20 Magic numbers and strings | LOW | T-15 | constantes em `src/models/*_model.py` e `src/config/settings.py` |
+| AP-21 Poor naming | LOW | T-15 | `src/services/report_service.py`, `src/models/task_model.py` |
+| AP-24 Verbose conditionals | LOW | T-16 | `src/models/task_model.py`, `src/utils/validators.py` |
+| AP-23 print logging | LOW | T-16 | `logging` nos controllers e services (prints do `seed.py` são saída de CLI) |
 
 ### Contract Changes
 
-- **GET /users/<id>, POST /users, PUT /users/<id>, POST /login (campo `user`):** o campo `password` (hash MD5) saiu das respostas. Os outros campos e valores continuam iguais.
-- **POST /login:** o `token` agora é assinado com `itsdangerous` (`eyJ1c2VyX2lkIjoxfQ.…`) em vez de `fake-jwt-token-<id>`. O nome do campo e o tipo (string) são os mesmos.
-- **Entradas inválidas que davam 500 (página HTML do debugger) agora dão 400 com `{"error": ...}`:**
-  - GET /tasks/search com `priority`/`user_id` não numérico → `Filtro priority inválido` / `Filtro user_id inválido`.
-  - POST/PUT /tasks com `priority` não inteiro → `Prioridade deve ser entre 1 e 5`.
-  - POST/PUT /tasks com `title` que não é texto → `Título inválido`.
-  - POST /users com e-mail que não é texto → `Email inválido`.
-  - PUT /users/<id> com `active` não booleano: antes era 500 `Erro ao atualizar`, agora é 400 `Campo active deve ser booleano`.
-  - PUT /categories/<id> com corpo que não é objeto JSON → `Dados inválidos`.
-- **Valores que antes eram gravados e agora são recusados com 400:**
-  - `description`, `name` e `tags` com tipo errado (`tags` aceita texto ou lista de textos).
-  - `priority` float ou booleano.
-  - `name` vazio em PUT /users/<id> e PUT /categories/<id> (`Nome é obrigatório`).
-  - `color` fora do formato `#RRGGBB` em POST/PUT /categories (`Cor inválida. Use o formato #RRGGBB`).
-  - `user_id`/`category_id` vazios ou `0` passam a ser gravados como `null`.
-- **Erros fora das rotas agora respondem em JSON `{"error": ...}` em vez de HTML do Werkzeug:** JSON malformado ou corpo não-JSON dá 400 `Dados inválidos` (Content-Type errado antes dava 415 em HTML), rota inexistente dá 404, método não permitido dá 405 (com header `Allow`) e erro inesperado dá 500 `Erro interno`.
-- **Formato das senhas guardadas:** senhas novas usam scrypt. Hashes MD5 já existentes continuam autenticando e são convertidos no primeiro login. As senhas do seed continuam as mesmas.
-- **Defaults de execução:** o servidor agora sobe em `127.0.0.1` com debug desligado (antes: `0.0.0.0` com `debug=True`). `HOST=0.0.0.0` e `FLASK_DEBUG=true` voltam ao comportamento anterior. Porta 5000, comandos de start e localização do banco (`instance/tasks.db`) não mudaram.
+- **Respostas de usuário sem `password`** — `GET /users/<id>`, `POST /users`, `PUT /users/<id>` e `POST /login` não devolvem mais o hash de senha (exceção 1).
+- **Entradas que derrubavam a API agora retornam 400** com mensagem de validação, em vez de 500 (exceção 3): `GET /tasks/search?priority=abc`, `POST /tasks` com `priority` não inteira ou `title` não textual, `PUT /tasks/<id>` com `priority` não inteira, `POST /users` com `password` não textual, `PUT /users/<id>` com `active` inválido e `PUT /categories/<id>` com corpo `null`.
+- **Corpo não-JSON** — `POST /tasks` com `Content-Type: text/plain` devolve 400 `{"error": "Dados inválidos"}` em vez de 415 em HTML.
+- **Erros HTTP em JSON** — 404 de rota inexistente e 405 de método não permitido passam de página HTML para `{"error": "..."}` (o cabeçalho `Allow` do 405 foi preservado).
+- **Erros inesperados** devolvem `{"error": "Erro interno"}` com log no servidor, em vez de stack trace ou do debugger do Werkzeug (exceção 4).
+- **`POST /login`: formato do `token`** — passa de `fake-jwt-token-<id>` (previsível) para um token assinado com a `SECRET_KEY`. O campo e o status continuam iguais (exceção 7).
+- **Formato do hash de senha** — novas senhas usam scrypt (Werkzeug). Hashes MD5 já gravados continuam autenticando e são migrados no primeiro login bem-sucedido (exceção 7).
+- **Defaults do servidor** — `HOST` passa a `127.0.0.1` e o debug a desligado; ambos configuráveis por variável de ambiente. A porta (5000) e o comando (`python app.py`) não mudaram.
 
 ### How to Run
 
 ```bash
 pip install -r requirements.txt
-export SECRET_KEY="<valor-aleatório-longo>"   # sem ela, o app gera uma chave temporária e avisa no log
+cp .env.example .env     # opcional: SECRET_KEY, DATABASE_URL, HOST, PORT, FLASK_DEBUG, CORS_ORIGINS, LOG_LEVEL
 python seed.py
-python app.py                                  # http://127.0.0.1:5000
-# opcionais: HOST=0.0.0.0  PORT=5000  FLASK_DEBUG=false  DATABASE_URL=sqlite:///tasks.db
-#            CORS_ORIGINS=https://app.exemplo.com  LOG_LEVEL=INFO   (ver .env.example)
+python app.py            # http://127.0.0.1:5000
+
+# para expor na rede e/ou ligar o debug:
+HOST=0.0.0.0 FLASK_DEBUG=true python app.py
 ```
 
 ### Validation
 
 ```text
-  ✓ Application boots without errors (python seed.py && python app.py, port 5000; Python 3.14.7; seed rodado com -W error::DeprecationWarning; log sem traceback nem warning)
-  ✓ All endpoints respond correctly (80/80 checks match the baseline: 64 idênticos em status, shape e valores + 16 mudanças de contrato documentadas; 22/22 rotas cobertas)
-  ✓ Validação completa refeita do zero depois da última alteração de código, com o mesmo resultado
-  ✓ Nenhuma das 80 respostas contém hash de senha; logins com as senhas do seed continuam retornando 200
-  ✓ Hash MD5 legado: senha errada → 401, senha certa → 200 e hash convertido para scrypt
-  ✓ Testes de injeção (' OR '1'='1 na busca, ' OR 1=1 -- no login) → [] e 401, igual ao baseline
-  ✓ Entradas que davam 500 em HTML com debugger agora retornam 400 em JSON (7 checks); 405 retorna JSON com header Allow
-  ✓ Integridade preservada: DELETE /categories/5 anula o category_id das tasks; DELETE /users/4 remove as tasks do usuário
-  ✓ N+1 removido (medido com SQLite em memória e 50 tasks): /tasks 1 query, /users 2, /categories 2, /tasks/stats 3, /reports/summary 10
-  ✓ Re-auditoria: nenhum sinal restante de AP-01, AP-02, AP-04, AP-07 a AP-10 ou AP-13 a AP-24; ocorrências justificadas: senhas de exemplo do seed e MD5 usado só para verificar hash legado
-  ✓ ruff (F, E9, B, SIM, UP): sem imports não usados nem erros; só a sugestão de estilo UP017, não aplicada
-  ✓ Novas versões fixadas sem alertas no PyPI (flask 3.1.3, flask-cors 6.0.5, flask-sqlalchemy 3.1.1, itsdangerous 2.2.0)
-  ✗ Zero CRITICAL/HIGH anti-patterns remaining: AP-06 continua parcialmente aberto (rotas sem autenticação e role escolhida pelo cliente), porque exigir login muda o contrato público
+  ✓ Application boots without errors (python app.py, port 5000) — log sem traceback e sem warning
+  ✓ All endpoints respond correctly (91/91 checagens conferidas: 75 idênticas ao baseline + 16 mudanças de contrato documentadas; 22/22 endpoints do inventário da Fase 1)
+  ✓ Valores conferidos, não só formato: listagens, /tasks/stats, /reports/summary e /reports/user/1 devolvem os mesmos números do baseline
+  ✓ Sonda de injeção: busca com ' OR '1'='1 devolve lista vazia e login com o mesmo payload devolve 401 (igual ao baseline)
+  ✓ Hash MD5 legado ainda autentica, é migrado para scrypt no primeiro login e senha errada devolve 401
+  ✓ Token de login deixou de ser previsível (assinado com a SECRET_KEY)
+  ✓ Nenhuma resposta 500 e nenhuma resposta HTML no smoke test (baseline: 7 e 9)
+  ✓ Zero DeprecationWarning/LegacyAPIWarning no seed e no servidor (baseline: 5 e 27); boot passa com -W error::DeprecationWarning
+  ✓ Re-auditoria: sem acesso a dados em controllers/views, sem except genérico, sem segredo em código, sem debug=True; pyflakes sem apontamentos
+  ✓ Zero CRITICAL remanescente; o único HIGH pendente é o AP-06 (autenticação obrigatória), listado abaixo
 ```
+
+Observação sobre o ambiente: baseline e refatorado rodaram no mesmo interpretador (Python 3.12.13, virtualenv criado com `uv`), mas com as dependências de cada versão — a atualização do Flask e do Flask-CORS é justamente um dos achados corrigidos.
 
 ### Remaining Items
 
-- **Autenticação e autorização (AP-06, HIGH):** todas as rotas continuam públicas, inclusive `DELETE /users/<id>`, e `POST /users` / `PUT /users/<id>` ainda aceitam `role` enviado pelo cliente. O token agora é assinado, mas nenhuma rota o exige. Exigir token e restringir a mudança de `role` a administradores muda o contrato e precisa de decisão de produto.
-- **Tamanho mínimo de senha = 4 (AP-05):** mantido para não quebrar o contrato nem as senhas do seed (`1234`, `abcd`, `pass`). Aumentar o mínimo é decisão de produto.
-- **Troca dos segredos expostos:** a senha SMTP `senha123` e a antiga `SECRET_KEY` `super-secret-key-123` continuam no histórico do git e precisam ser trocadas fora do código.
-- **CORS:** o default continua `*`, como no original, agora via configuração. Em produção, restrinja com `CORS_ORIGINS`.
-- **`NotificationService` removido:** ele nunca foi usado (nenhuma rota o importava). Se notificações por e-mail forem desejadas, dá para reintroduzi-lo como service injetado pelo `create_app()`, com credenciais SMTP vindas do ambiente.
-- **Sem testes automatizados:** o projeto não tem suíte de testes. A validação usou um smoke test externo.
+- **Autenticação obrigatória (AP-06, HIGH, parcial)** — o token agora é assinado, mas nenhuma rota o verifica e `POST /users` ainda aceita `role: "admin"`. Exigir autenticação e restringir a escolha de role quebraria o contrato atual (endpoints hoje públicos), então depende de decisão de produto. Recomendação: middleware de guarda validando o token e papel, com `POST /users` restrito a `role: "user"` no auto-cadastro.
+- **Senha mínima de 4 caracteres** — mantida como está para não rejeitar credenciais que a API aceitava; o recomendado é 8.
+- **`hashlib.md5` ainda aparece em `src/models/user_model.py:42`** — usado só para conferir hashes legados e migrá-los; nenhuma senha nova é gravada em MD5.
+- **CORS continua liberando todas as origens por padrão** (comportamento original preservado), mas agora é configurável via `CORS_ORIGINS`.
+- **Cor da categoria** — validamos apenas o tipo, não o formato hexadecimal, para não rejeitar valores que a API antiga aceitava (`is_valid_color` do código antigo nunca era chamado).
+- **Werkzeug e SQLAlchemy seguem sem versão fixada** (dependências transitivas); um lockfile daria instalações reprodutíveis.
+- **Sem testes automatizados no projeto** — a validação usou um smoke test mantido fora do repositório (`/tmp/refactor-arch/task-manager-api/run2/`). Vale portar esses casos para `pytest`.
 
 ```text
 ================================
 ```
 
-Nada foi commitado; as mudanças estão no working tree. O smoke test, os resultados (`baseline.json`, `refactored.json`), o script de comparação e os virtualenvs ficaram em `/tmp/refactor-arch/task-manager-api/`, fora do projeto.
+Dois pontos fora do escopo do refactor, para você conferir: o `git status` mostra alterações **fora** do projeto (`../README.md`, `../reports/audit-project-3.md`, `../scripts/*` e arquivos novos em `../docs/`) que não foram feitas por mim, e o diretório `/tmp/refactor-arch/task-manager-api/` tinha artefatos de uma execução anterior — usei o subdiretório `run2/` para não misturar os resultados.
 
 ## Linha do tempo das ferramentas
 
 <details>
-<summary>Fases 1 e 2 — 17 chamadas (nenhuma escrita em arquivo)</summary>
+<summary>Fases 1 e 2 — 10 chamadas (nenhuma escrita em arquivo)</summary>
 
 | # | Ferramenta | Entrada (resumida) |
 |---|---|---|
-| 1 | Bash | `cat .claude/skills/refactor-arch/references/project-analysis.md && echo ---------- && cat .claude/skills/refactor-arch/references/report-template.md` |
-| 2 | Bash | `for f in requirements.txt README.md app.py database.py models/__init__.py models/category.py models/task.py models/user.py; do echo "===== $f"; cat...` |
-| 3 | Bash | `for f in routes/__init__.py routes/task_routes.py routes/user_routes.py routes/report_routes.py services/__init__.py services/notification_service....` |
-| 4 | Read | `<repo>/task-manager-api/routes/task_routes.py` |
-| 5 | Read | `<repo>/task-manager-api/routes/user_routes.py` |
-| 6 | Read | `<repo>/task-manager-api/routes/report_routes.py` |
-| 7 | Read | `<repo>/task-manager-api/utils/helpers.py` |
-| 8 | Read | `<repo>/task-manager-api/seed.py` |
-| 9 | Bash | `cat -n utils/__init__.py; ls -la; git status --short --ignored .; cat .gitignore 2>/dev/null; wc -l $(git ls-files '*.py') \| tail -1` |
-| 10 | Bash | `cat .claude/skills/refactor-arch/references/anti-patterns-catalog.md` |
-| 11 | Bash | `S="app.py database.py models routes services utils seed.py" echo "== AP-01"; grep -rniE "(secret\|password\|passwd\|pwd\|pass\|api[_-]?key\|token\|private...` |
-| 12 | Bash | `S="app.py database.py models routes services utils seed.py" echo "== AP-15"; grep -rnE "except:\|except Exception\|errorhandler\|str\(e\)" $S echo "==...` |
-| 13 | Bash | `sed -n '38,60p' services/notification_service.py \| cat -n \| sed 's/^ *\([0-9]*\)/\1+37/' ; wc -l services/notification_service.py echo "== import u...` |
-| 14 | Bash | `cd <repo>/task-manager-api/.claude/skills/refactor-arch/references && grep -n "^#\\|^## \\|^### " mvc-guidelines.md refactoring-playbook.md validatio...` |
-| 15 | Bash | `sed -n '161,199p' mvc-guidelines.md; echo -----; sed -n '345,405p' refactoring-playbook.md; echo ----; sed -n '939,975p' refactoring-playbook.md` |
-| 16 | Bash | `for p in "flask/3.0.0" "flask-sqlalchemy/3.1.1" "flask-cors/4.0.0" "marshmallow/3.20.1" "requests/2.31.0" "python-dotenv/1.0.0"; do echo "== $p"; c...` |
-| 17 | Bash | `sed -n '32,107p' refactoring-playbook.md` |
+| 1 | Bash | `cat -n .claude/skills/refactor-arch/references/project-analysis.md; echo ----; cat -n .claude/skills/refactor-arch/references/report-template.md` |
+| 2 | Bash | `for f in app.py database.py requirements.txt README.md seed.py models/__init__.py models/category.py models/task.py models/user.py; do echo "===== ...` |
+| 3 | Bash | `for f in routes/__init__.py routes/report_routes.py routes/task_routes.py routes/user_routes.py services/__init__.py services/notification_service....` |
+| 4 | Read | `~/.claude/projects/-home-diego-projects-mba-mba-ia-refactor-projects-skill-task-manager-api/a2f7fa21-81bb-4e40-90fd-9529573e7307/tool-results/bxjh1...` |
+| 5 | Bash | `cat -n .claude/skills/refactor-arch/references/anti-patterns-catalog.md` |
+| 6 | Bash | `wc -l app.py database.py seed.py models/*.py routes/*.py services/*.py utils/*.py; ls -la .claude; git rev-parse --show-toplevel; git check-ignore ...` |
+| 7 | Bash | `P='--include=*.py --exclude-dir=.claude' echo "## AP-01"; grep -rniE "(secret\|password\|passwd\|pwd\|pass\|api[_-]?key\|token\|private[_-]?key\|credential...` |
+| 8 | Bash | `P='--include=*.py --exclude-dir=.claude' echo "## AP-11/12 commits & deletes"; grep -rniE "commit\(\|\.delete\(\|cascade\|ondelete" $P . echo "## AP-1...` |
+| 9 | Bash | `P='--include=*.py --exclude-dir=.claude' echo "## AP-20"; grep -rnE "timedelta\(days=\|<= *2\|> *200\|< *3\|< *4\|port=\|#000000\|'sqlite:" $P . echo "## ...` |
+| 10 | Bash | `for pkg in flask==3.0.0 flask-sqlalchemy==3.1.1 flask-cors==4.0.0 marshmallow==3.20.1 requests==2.31.0 python-dotenv==1.0.0; do n=${pkg%%==*}; v=${...` |
 
 </details>
 
 <details>
-<summary>Fase 3 — 70 chamadas</summary>
+<summary>Fase 3 — 62 chamadas</summary>
 
 | # | Ferramenta | Entrada (resumida) |
 |---|---|---|
-| 1 | Bash | `cd <repo>/task-manager-api/.claude/skills/refactor-arch/references && sed -n '1,160p' mvc-guidelines.md && sed -n '199,260p' mvc-guidelines.md && e...` |
-| 2 | Bash | `sed -n '1,31p;108,344p;405,1000p' refactoring-playbook.md` |
-| 3 | Bash | `cd <repo>/task-manager-api && VALIDATION_DIR="${TMPDIR:-/tmp}/refactor-arch/task-manager-api"; echo "$VALIDATION_DIR"; ls -la "$VALIDATION_DIR" 2>&...` |
-| 4 | Bash | `for p in flask flask-cors flask-sqlalchemy itsdangerous sqlalchemy werkzeug; do curl -s --max-time 20 "https://pypi.org/pypi/$p/json" \| python3 -c ...` |
-| 5 | Bash | `VALIDATION_DIR=$TMP/refactor-arch/task-manager-api; mkdir -p "$VALIDATION_DIR" && cd <repo>/task-manager-api && uv venv -q --python /usr/bin/python...` |
-| 6 | Write | `$TMP/refactor-arch/task-manager-api/smoke_test.py` |
-| 7 | Bash | `V=$TMP/refactor-arch/task-manager-api; cd <repo>/task-manager-api && ls instance 2>&1; "$V/venv-baseline/bin/python" seed.py 2>&1 \| tail -8; ls -la...` |
-| 8 | Bash | `V=$TMP/refactor-arch/task-manager-api; cd "$V" && python3 smoke_test.py http://127.0.0.1:5000 "$V/baseline.json"; kill -- -"$(cat "$V/server.pid")"...` |
-| 9 | Bash | `ps -o pid,pgid,cmd -p 438470,438474 2>/dev/null; PGID=$(ps -o pgid= -p 438470 \| tr -d ' '); kill -- -"$PGID"; sleep 1; ss -ltnp 2>/dev/null \| grep ...` |
-| 10 | Bash | `cd $TMP/refactor-arch/task-manager-api && python3 - <<'EOF' import json r = json.load(open("baseline.json")) for i, c in enumerate(r): b = c["body"...` |
-| 11 | Bash | `git status --porcelain --ignored . && rm -rf instance && find . -path ./.claude -prune -o -name __pycache__ -type d -print -exec rm -rf {} + && git...` |
-| 12 | Bash | `mkdir -p src/config src/models src/services src/controllers src/views src/middlewares src/utils && touch src/__init__.py src/config/__init__.py src...` |
-| 13 | Write | `<repo>/task-manager-api/src/config/settings.py` |
-| 14 | Write | `<repo>/task-manager-api/src/config/logging_config.py` |
-| 15 | Write | `<repo>/task-manager-api/.env.example` |
-| 16 | Write | `<repo>/task-manager-api/src/utils/errors.py` |
-| 17 | Write | `<repo>/task-manager-api/src/utils/dates.py` |
-| 18 | Write | `<repo>/task-manager-api/src/utils/calculations.py` |
-| 19 | Write | `<repo>/task-manager-api/src/models/database.py` |
-| 20 | Write | `<repo>/task-manager-api/src/models/task_model.py` |
-| 21 | Write | `<repo>/task-manager-api/src/models/user_model.py` |
-| 22 | Write | `<repo>/task-manager-api/src/models/category_model.py` |
-| 23 | Write | `<repo>/task-manager-api/src/models/__init__.py` |
-| 24 | Edit | `<repo>/task-manager-api/src/models/database.py` |
-| 25 | Edit | `<repo>/task-manager-api/src/models/task_model.py` |
-| 26 | Edit | `<repo>/task-manager-api/src/models/category_model.py` |
-| 27 | Bash | `sed -i 's/^from src.models.database import PersistenceMixin, commit, db$/from src.models.database import PersistenceMixin, db/' src/models/category...` |
-| 28 | Edit | `<repo>/task-manager-api/src/models/task_model.py` |
-| 29 | Write | `<repo>/task-manager-api/src/services/report_service.py` |
-| 30 | Write | `<repo>/task-manager-api/src/services/auth_service.py` |
-| 31 | Write | `<repo>/task-manager-api/src/controllers/validators.py` |
-| 32 | Write | `<repo>/task-manager-api/src/controllers/lookups.py` |
-| 33 | Write | `<repo>/task-manager-api/src/models/database.py` |
-| 34 | Write | `<repo>/task-manager-api/src/models/category_model.py` |
-| 35 | Write | `<repo>/task-manager-api/src/models/user_model.py` |
-| 36 | Edit | `<repo>/task-manager-api/src/models/task_model.py` |
-| 37 | Write | `<repo>/task-manager-api/src/views/serializers.py` |
-| 38 | Write | `<repo>/task-manager-api/src/controllers/task_controller.py` |
-| 39 | Write | `<repo>/task-manager-api/src/controllers/user_controller.py` |
-| 40 | Write | `<repo>/task-manager-api/src/controllers/category_controller.py` |
-| 41 | Write | `<repo>/task-manager-api/src/controllers/report_controller.py` |
-| 42 | Write | `<repo>/task-manager-api/src/controllers/health_controller.py` |
-| 43 | Write | `<repo>/task-manager-api/src/views/task_routes.py` |
-| 44 | Write | `<repo>/task-manager-api/src/views/user_routes.py` |
-| 45 | Write | `<repo>/task-manager-api/src/views/category_routes.py` |
-| 46 | Write | `<repo>/task-manager-api/src/views/report_routes.py` |
-| 47 | Write | `<repo>/task-manager-api/src/views/health_routes.py` |
-| 48 | Write | `<repo>/task-manager-api/src/middlewares/error_handler.py` |
-| 49 | Write | `<repo>/task-manager-api/src/app.py` |
-| 50 | Write | `<repo>/task-manager-api/src/models/seed.py` |
-| 51 | Write | `<repo>/task-manager-api/seed.py` |
-| 52 | Write | `<repo>/task-manager-api/app.py` |
-| 53 | Bash | `rm -r database.py models routes services utils && git status --short . && find . -path ./.claude -prune -o -type f -print \| sort` |
-| 54 | Write | `<repo>/task-manager-api/requirements.txt` |
-| 55 | Write | `<repo>/task-manager-api/README.md` |
-| 56 | Bash | `V=$TMP/refactor-arch/task-manager-api; cd <repo>/task-manager-api && uv venv -q --python /usr/bin/python3.14 "$V/venv-refactored" && uv pip install...` |
-| 57 | Bash | `V=$TMP/refactor-arch/task-manager-api; cd <repo>/task-manager-api && ss -ltnp 2>/dev/null \| grep -E ':5000\b' \|\| echo "port 5000 free" PYTHONWARNIN...` |
-| 58 | Bash | `V=$TMP/refactor-arch/task-manager-api; cd "$V" && python3 smoke_test.py http://127.0.0.1:5000 "$V/refactored.json" \| tail -3; grep -iE "warning\|tra...` |
-| 59 | Write | `$TMP/refactor-arch/task-manager-api/compare.py` |
-| 60 | Bash | `cd $TMP/refactor-arch/task-manager-api && python3 compare.py baseline.json refactored.json` |
-| 61 | Bash | `cd $TMP/refactor-arch/task-manager-api && python3 - <<'EOF' import json VOL = {"created_at", "updated_at", "due_date", "generated_at", "timestamp",...` |
-| 62 | Bash | `V=$TMP/refactor-arch/task-manager-api; kill -- -"$(cat "$V/server.pgid")"; sleep 1; ss -ltnp 2>/dev/null \| grep -E ':5000\b' \|\| echo "server stoppe...` |
-| 63 | Bash | `S="src app.py seed.py" echo "== AP-01 secrets"; grep -rnEi "(secret\|password\|passwd\|pwd\|pass\|api[_-]?key\|token\|private[_-]?key\|credential)\w*['\"]?...` |
-| 64 | Bash | `uvx --quiet ruff@latest check --no-cache --select F,E9,B,UP,SIM,PLW --target-version py312 src app.py seed.py 2>&1 \| tail -30; git status --porcela...` |
-| 65 | Bash | `for name in $(grep -rhoE "^\s*def [a-z_][a-zA-Z0-9_]*\|^[A-Z_]{3,} =" src \| sed -E 's/^\s*def //; s/ =//' \| sort -u); do n=$(grep -rnw "$name" src a...` |
-| 66 | Bash | `SECRET_KEY=test LOG_LEVEL=WARNING $TMP/refactor-arch/task-manager-api/venv-refactored/bin/python -W error::DeprecationWarning - <<'EOF' from sqlalc...` |
-| 67 | Edit | `<repo>/task-manager-api/src/app.py` |
-| 68 | Bash | `SECRET_KEY=test LOG_LEVEL=WARNING $TMP/refactor-arch/task-manager-api/venv-refactored/bin/python -W error::DeprecationWarning - <<'EOF' from sqlalc...` |
-| 69 | Bash | `V=$TMP/refactor-arch/task-manager-api; cd <repo>/task-manager-api && rm -rf instance && "$V/venv-refactored/bin/python" -W error::DeprecationWarnin...` |
-| 70 | Bash | `rm -rf instance && find . -path ./.claude -prune -o -name __pycache__ -type d -exec rm -rf {} + ; git status --porcelain --ignored . ; pgrep -af "v...` |
+| 1 | Bash | `cd <repo>/task-manager-api/.claude/skills/refactor-arch/references && cat -n mvc-guidelines.md` |
+| 2 | Bash | `cat -n validation-guide.md` |
+| 3 | Bash | `cat -n refactoring-playbook.md` |
+| 4 | Read | `~/.claude/projects/-home-diego-projects-mba-mba-ia-refactor-projects-skill-task-manager-api/a2f7fa21-81bb-4e40-90fd-9529573e7307/tool-results/bvfrf...` |
+| 5 | Bash | `cd <repo>/task-manager-api && git check-ignore -v .venv/ __pycache__/ instance/ instance/tasks.db .env 2>&1; echo "---"; which uv python3; uv --ver...` |
+| 6 | Bash | `VALIDATION_DIR=$TMP/refactor-arch/task-manager-api && mkdir -p "$VALIDATION_DIR" && uv venv .venv 2>&1 \| tail -2 && uv pip install --python .venv/b...` |
+| 7 | Write | `$TMP/refactor-arch/task-manager-api/smoke_test.py` |
+| 8 | Write | `$TMP/refactor-arch/task-manager-api/run.sh` |
+| 9 | Bash | `ls -la $TMP/refactor-arch/task-manager-api/; head -20 $TMP/refactor-arch/task-manager-api/smoke_test.py` |
+| 10 | Bash | `V=$TMP/refactor-arch/task-manager-api/run2 && mkdir -p "$V" && mv $TMP/refactor-arch/task-manager-api/run.sh "$V/run.sh" && sed -i "s#^VALIDATION_D...` |
+| 11 | Write | `$TMP/refactor-arch/task-manager-api/run2/smoke_test.py` |
+| 12 | Bash | `$TMP/refactor-arch/task-manager-api/run2/run.sh baseline 2>&1` |
+| 13 | Bash | `V=$TMP/refactor-arch/task-manager-api/run2; grep -E "Warning\|Traceback\|Error" $V/server-baseline.log \| sort \| uniq -c \| sort -rn \| head -15; echo -...` |
+| 14 | Bash | `for n in flask flask-cors python-dotenv flask-sqlalchemy; do curl -s --max-time 20 "https://pypi.org/pypi/$n/json" \| python3 -c ' import json,sys d...` |
+| 15 | Bash | `for pkg in flask-cors/6.0.5 python-dotenv/1.2.3; do curl -s --max-time 20 "https://pypi.org/pypi/$pkg/json" \| python3 -c 'import json,sys; d=json.l...` |
+| 16 | Bash | `mkdir -p src/config src/models src/services src/controllers/validators src/views src/middlewares src/utils && for f in src/__init__.py src/config/_...` |
+| 17 | Write | `<repo>/task-manager-api/src/config/settings.py` |
+| 18 | Write | `<repo>/task-manager-api/.env.example` |
+| 19 | Write | `<repo>/task-manager-api/src/utils/errors.py` |
+| 20 | Write | `<repo>/task-manager-api/src/utils/datetime_utils.py` |
+| 21 | Write | `<repo>/task-manager-api/src/utils/math_utils.py` |
+| 22 | Write | `<repo>/task-manager-api/src/utils/validators.py` |
+| 23 | Write | `<repo>/task-manager-api/src/models/database.py` |
+| 24 | Write | `<repo>/task-manager-api/src/models/task_model.py` |
+| 25 | Write | `<repo>/task-manager-api/src/models/user_model.py` |
+| 26 | Write | `<repo>/task-manager-api/src/models/category_model.py` |
+| 27 | Write | `<repo>/task-manager-api/src/models/__init__.py` |
+| 28 | Write | `<repo>/task-manager-api/src/models/seed.py` |
+| 29 | Write | `<repo>/task-manager-api/src/services/auth_service.py` |
+| 30 | Write | `<repo>/task-manager-api/src/services/report_service.py` |
+| 31 | Write | `<repo>/task-manager-api/src/controllers/validators/task_validator.py` |
+| 32 | Write | `<repo>/task-manager-api/src/controllers/validators/user_validator.py` |
+| 33 | Write | `<repo>/task-manager-api/src/controllers/validators/category_validator.py` |
+| 34 | Write | `<repo>/task-manager-api/src/views/serializers.py` |
+| 35 | Write | `<repo>/task-manager-api/src/controllers/task_controller.py` |
+| 36 | Write | `<repo>/task-manager-api/src/controllers/user_controller.py` |
+| 37 | Write | `<repo>/task-manager-api/src/controllers/category_controller.py` |
+| 38 | Write | `<repo>/task-manager-api/src/controllers/report_controller.py` |
+| 39 | Write | `<repo>/task-manager-api/src/controllers/health_controller.py` |
+| 40 | Write | `<repo>/task-manager-api/src/views/task_routes.py` |
+| 41 | Write | `<repo>/task-manager-api/src/views/user_routes.py` |
+| 42 | Write | `<repo>/task-manager-api/src/views/category_routes.py` |
+| 43 | Write | `<repo>/task-manager-api/src/views/report_routes.py` |
+| 44 | Write | `<repo>/task-manager-api/src/views/health_routes.py` |
+| 45 | Write | `<repo>/task-manager-api/src/middlewares/error_handler.py` |
+| 46 | Write | `<repo>/task-manager-api/src/app.py` |
+| 47 | Bash | `cat > app.py <<'EOF' """Ponto de entrada da aplicação: mantém python app.py funcionando.""" from src.app import create_app from src.config.settin...` |
+| 48 | Bash | `cat > README.md <<'EOF' # task-manager-api API de Task Manager em Python/Flask, organizada em MVC: **Models** (dados e regras de domínio), **Views*...` |
+| 49 | Bash | `uv pip sync --python .venv/bin/python requirements.txt 2>&1 \| tail -12 && .venv/bin/python -c " from src.app import create_app app = create_app() p...` |
+| 50 | Bash | `uv pip install --python .venv/bin/python -r requirements.txt 2>&1 \| tail -8 && uv pip uninstall --python .venv/bin/python marshmallow requests 2>&1...` |
+| 51 | Bash | `uv pip list --python .venv/bin/python && .venv/bin/python -W error::DeprecationWarning -c " from src.app import create_app app = create_app() rules...` |
+| 52 | Bash | `$TMP/refactor-arch/task-manager-api/run2/run.sh refactored 2>&1 \| tail -50` |
+| 53 | Write | `$TMP/refactor-arch/task-manager-api/run2/compare.py` |
+| 54 | Bash | `python3 $TMP/refactor-arch/task-manager-api/run2/compare.py 2>&1 \| head -120` |
+| 55 | Bash | `V=$TMP/refactor-arch/task-manager-api/run2; echo "== warnings/tracebacks no log refatorado:"; grep -cE "Warning\|Traceback" $V/server-refactored.log...` |
+| 56 | Bash | `cat > $TMP/refactor-arch/task-manager-api/run2/legacy_login_check.py <<'EOF' """Verifica que um hash MD5 legado ainda autentica e é migrado no prim...` |
+| 57 | Bash | `cd <repo>/task-manager-api P='--include=*.py --exclude-dir=.venv --exclude-dir=.claude --exclude-dir=__pycache__' echo "== AP-01 segredos/credencia...` |
+| 58 | Bash | `uvx pyflakes app.py seed.py src/ 2>&1 \| head -20 \|\| echo "pyflakes indisponível"; echo "== linhas por arquivo:"; find . -name '*.py' -not -path './...` |
+| 59 | Bash | `uvx pyflakes app.py seed.py $(find src -name '*.py') ; echo "pyflakes exit=$? (0 = nenhum problema)"` |
+| 60 | Bash | `ss -ltnp 2>/dev/null \| grep -E ':5000\b' && echo "AINDA HÁ PROCESSO NA PORTA 5000" \|\| echo "porta 5000 livre"; pgrep -af "python app.py" \|\| echo "n...` |
+| 61 | Bash | `rmdir models services routes utils 2>/dev/null; find . -not -path './.venv*' -not -path './.claude*' -not -path './.git*' \| sort \| sed 's\|^\./\|\|' \|...` |
+| 62 | Bash | `V=$TMP/refactor-arch/task-manager-api/run2; echo "baseline DeprecationWarning/LegacyAPIWarning: $(grep -cE 'DeprecationWarning\|LegacyAPIWarning' $V...` |
 
 </details>

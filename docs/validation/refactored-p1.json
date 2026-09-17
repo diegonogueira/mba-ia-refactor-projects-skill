@@ -45,7 +45,7 @@
       ],
       "sucesso": "bool"
     },
-    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Notebook potente para jogos\",\"estoque\":10,\"id\":1,\"nome\":\"Notebook Gamer\",\"preco\":5999.99},{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9},{\"ativo\":1,\"categoria\":\"informatica\",\"criad",
+    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 18:07:27\",\"descricao\":\"Notebook potente para jogos\",\"estoque\":10,\"id\":1,\"nome\":\"Notebook Gamer\",\"preco\":5999.99},{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 18:07:27\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9},{\"ativo\":1,\"categoria\":\"informatica\",\"criad",
     "method": "GET",
     "path": "/produtos"
   },
@@ -59,7 +59,7 @@
       "sucesso": "bool",
       "total": "int"
     },
-    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9}],\"sucesso\":true,\"total\":1}\n",
+    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 18:07:27\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9}],\"sucesso\":true,\"total\":1}\n",
     "method": "GET",
     "path": "/produtos/busca?q=Mouse"
   },
@@ -73,7 +73,7 @@
       "sucesso": "bool",
       "total": "int"
     },
-    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9},{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Teclado mec\\u00e2nico RGB\",\"estoque\":30,\"id\":3,\"nome\":\"Teclado Mec\\u00e2nico\",\"preco\":299.9},{\"ativo\":1,\"categoria\":\"informatica\",\"cr",
+    "body": "{\"dados\":[{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 18:07:27\",\"descricao\":\"Mouse sem fio ergon\\u00f4mico\",\"estoque\":50,\"id\":2,\"nome\":\"Mouse Wireless\",\"preco\":89.9},{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 18:07:27\",\"descricao\":\"Teclado mec\\u00e2nico RGB\",\"estoque\":30,\"id\":3,\"nome\":\"Teclado Mec\\u00e2nico\",\"preco\":299.9},{\"ativo\":1,\"categoria\":\"informatica\",\"cr",
     "method": "GET",
     "path": "/produtos/busca?categoria=informatica&preco_min=50&preco_max=300"
   },
@@ -105,7 +105,7 @@
       },
       "sucesso": "bool"
     },
-    "body": "{\"dados\":{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 16:23:17\",\"descricao\":\"Notebook potente para jogos\",\"estoque\":10,\"id\":1,\"nome\":\"Notebook Gamer\",\"preco\":5999.99},\"sucesso\":true}\n",
+    "body": "{\"dados\":{\"ativo\":1,\"categoria\":\"informatica\",\"criado_em\":\"2026-09-17 18:07:27\",\"descricao\":\"Notebook potente para jogos\",\"estoque\":10,\"id\":1,\"nome\":\"Notebook Gamer\",\"preco\":5999.99},\"sucesso\":true}\n",
     "method": "GET",
     "path": "/produtos/1"
   },
@@ -138,9 +138,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Dados inv\\u00e1lidos\"}\n",
+    "body": "{\"erro\":\"Dados inv\\u00e1lidos\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/produtos"
   },
@@ -148,9 +149,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Pre\\u00e7o \\u00e9 obrigat\\u00f3rio\"}\n",
+    "body": "{\"erro\":\"Pre\\u00e7o \\u00e9 obrigat\\u00f3rio\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/produtos"
   },
@@ -158,9 +160,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Categoria inv\\u00e1lida. V\\u00e1lidas: ['informatica', 'moveis', 'vestuario', 'geral', 'eletronicos', 'livros']\"}\n",
+    "body": "{\"erro\":\"Categoria inv\\u00e1lida. V\\u00e1lidas: ['informatica', 'moveis', 'vestuario', 'geral', 'eletronicos', 'livros']\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/produtos"
   },
@@ -168,9 +171,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Pre\\u00e7o n\\u00e3o pode ser negativo\"}\n",
+    "body": "{\"erro\":\"Pre\\u00e7o n\\u00e3o pode ser negativo\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/produtos"
   },
@@ -189,9 +193,10 @@
     "status": 404,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\"}\n",
+    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\",\"sucesso\":false}\n",
     "method": "PUT",
     "path": "/produtos/9999"
   },
@@ -210,9 +215,10 @@
     "status": 404,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\"}\n",
+    "body": "{\"erro\":\"Produto n\\u00e3o encontrado\",\"sucesso\":false}\n",
     "method": "DELETE",
     "path": "/produtos/9999"
   },
@@ -225,7 +231,7 @@
       ],
       "sucesso": "bool"
     },
-    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"joao@email.com\",\"id\":2,\"nome\":\"Jo\\u00e3o Silva\",\"tipo\":\"cliente\"},{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"maria@email.com\",\"id\":3,\"nome\":\"Maria Santos\",\"tipo\":\"cliente\"}],\"sucesso\":true}\n",
+    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 18:07:27\",\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},{\"criado_em\":\"2026-09-17 18:07:27\",\"email\":\"joao@email.com\",\"id\":2,\"nome\":\"Jo\\u00e3o Silva\",\"tipo\":\"cliente\"},{\"criado_em\":\"2026-09-17 18:07:27\",\"email\":\"maria@email.com\",\"id\":3,\"nome\":\"Maria Santos\",\"tipo\":\"cliente\"}],\"sucesso\":true}\n",
     "method": "GET",
     "path": "/usuarios"
   },
@@ -242,7 +248,7 @@
       },
       "sucesso": "bool"
     },
-    "body": "{\"dados\":{\"criado_em\":\"2026-09-17 16:23:17\",\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},\"sucesso\":true}\n",
+    "body": "{\"dados\":{\"criado_em\":\"2026-09-17 18:07:27\",\"email\":\"admin@loja.com\",\"id\":1,\"nome\":\"Admin\",\"tipo\":\"admin\"},\"sucesso\":true}\n",
     "method": "GET",
     "path": "/usuarios/1"
   },
@@ -250,9 +256,10 @@
     "status": 404,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Usu\\u00e1rio n\\u00e3o encontrado\"}\n",
+    "body": "{\"erro\":\"Usu\\u00e1rio n\\u00e3o encontrado\",\"sucesso\":false}\n",
     "method": "GET",
     "path": "/usuarios/9999"
   },
@@ -273,9 +280,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Nome, email e senha s\\u00e3o obrigat\\u00f3rios\"}\n",
+    "body": "{\"erro\":\"Nome, email e senha s\\u00e3o obrigat\\u00f3rios\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/usuarios"
   },
@@ -311,9 +319,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Email e senha s\\u00e3o obrigat\\u00f3rios\"}\n",
+    "body": "{\"erro\":\"Email e senha s\\u00e3o obrigat\\u00f3rios\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/login"
   },
@@ -358,9 +367,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Pedido deve ter pelo menos 1 item\"}\n",
+    "body": "{\"erro\":\"Pedido deve ter pelo menos 1 item\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/pedidos"
   },
@@ -373,7 +383,7 @@
       ],
       "sucesso": "bool"
     },
-    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 16:23:17\",\"id\":1,\"itens\":[{\"preco_unitario\":5999.99,\"produto_id\":1,\"produto_nome\":\"Notebook Gamer\",\"quantidade\":1},{\"preco_unitario\":299.9,\"produto_id\":3,\"produto_nome\":\"Teclado Mec\\u00e2nico\",\"quantidade\":2}],\"status\":\"pendente\",\"total\":6599.79,\"usuario_id\":2}],\"sucesso\":true}\n",
+    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 18:07:27\",\"id\":1,\"itens\":[{\"preco_unitario\":5999.99,\"produto_id\":1,\"produto_nome\":\"Notebook Gamer\",\"quantidade\":1},{\"preco_unitario\":299.9,\"produto_id\":3,\"produto_nome\":\"Teclado Mec\\u00e2nico\",\"quantidade\":2}],\"status\":\"pendente\",\"total\":6599.79,\"usuario_id\":2}],\"sucesso\":true}\n",
     "method": "GET",
     "path": "/pedidos"
   },
@@ -386,7 +396,7 @@
       ],
       "sucesso": "bool"
     },
-    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 16:23:17\",\"id\":1,\"itens\":[{\"preco_unitario\":5999.99,\"produto_id\":1,\"produto_nome\":\"Notebook Gamer\",\"quantidade\":1},{\"preco_unitario\":299.9,\"produto_id\":3,\"produto_nome\":\"Teclado Mec\\u00e2nico\",\"quantidade\":2}],\"status\":\"pendente\",\"total\":6599.79,\"usuario_id\":2}],\"sucesso\":true}\n",
+    "body": "{\"dados\":[{\"criado_em\":\"2026-09-17 18:07:27\",\"id\":1,\"itens\":[{\"preco_unitario\":5999.99,\"produto_id\":1,\"produto_nome\":\"Notebook Gamer\",\"quantidade\":1},{\"preco_unitario\":299.9,\"produto_id\":3,\"produto_nome\":\"Teclado Mec\\u00e2nico\",\"quantidade\":2}],\"status\":\"pendente\",\"total\":6599.79,\"usuario_id\":2}],\"sucesso\":true}\n",
     "method": "GET",
     "path": "/pedidos/usuario/2"
   },
@@ -405,9 +415,10 @@
     "status": 400,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Status inv\\u00e1lido\"}\n",
+    "body": "{\"erro\":\"Status inv\\u00e1lido\",\"sucesso\":false}\n",
     "method": "PUT",
     "path": "/pedidos/1/status"
   },
@@ -435,9 +446,10 @@
     "status": 403,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Endpoint administrativo desabilitado ou token inv\\u00e1lido\"}\n",
+    "body": "{\"erro\":\"Endpoints administrativos desabilitados ou token inv\\u00e1lido\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/admin/query"
   },
@@ -445,9 +457,10 @@
     "status": 403,
     "json": true,
     "shape": {
-      "erro": "str"
+      "erro": "str",
+      "sucesso": "bool"
     },
-    "body": "{\"erro\":\"Endpoint administrativo desabilitado ou token inv\\u00e1lido\"}\n",
+    "body": "{\"erro\":\"Endpoints administrativos desabilitados ou token inv\\u00e1lido\",\"sucesso\":false}\n",
     "method": "POST",
     "path": "/admin/reset-db"
   }

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Evaluator harness: hits every endpoint of a project and records status + response shape.
+"""Smoke test independente: chama todos os endpoints de um projeto e grava status + shape das respostas.
 
-usage: smoke.py <p1|p2|p3> <base_url> <out.json>
+Uso: python3 scripts/smoke_test.py <p1|p2|p3> <base_url> <saida.json>
+
+Os checks estão na mesma ordem para o código original e o refatorado, o que permite
+comparar as duas execuções com scripts/compare_results.py.
 """
 import json
 import sys

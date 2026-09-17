@@ -2,12 +2,16 @@
 """Compara duas execuções do smoke_test.py (baseline x refatorado).
 
 Uso:
-    python3 scripts/compare_results.py <baseline.json> <refatorado.json>
+    python3 scripts/compare_results.py <baseline.json> <refatorado.json> [--expected <arquivo.json> <projeto>]
 
 Para cada requisição (mesma ordem nos dois arquivos) compara o status HTTP e o
 "shape" da resposta (chaves JSON até 2 níveis; `-campo` = removido, `+campo` = novo).
-Imprime uma tabela Markdown e um resumo. Diferenças não são necessariamente regressões: mudanças de contrato
-intencionais (ex.: remoção de campos sensíveis) devem ser justificadas.
+Imprime uma tabela Markdown e um resumo.
+
+Com `--expected`, cada diferença precisa estar listada no arquivo de diferenças
+esperadas (mudanças de contrato documentadas, ex.: remoção de campos sensíveis),
+indexada por "<n>" (posição do check, a partir de 1). Qualquer diferença não
+listada é tratada como regressão e o script termina com código 1.
 """
 import json
 import sys
@@ -36,14 +40,21 @@ def shape_diff(old, new, path=""):
 
 
 def main():
-    base = json.load(open(sys.argv[1], encoding="utf-8"))
-    new = json.load(open(sys.argv[2], encoding="utf-8"))
+    args = sys.argv[1:]
+    expected = {}
+    gate = "--expected" in args
+    if gate:
+        i = args.index("--expected")
+        expected = json.load(open(args[i + 1], encoding="utf-8")).get(args[i + 2], {})
+        args = args[:i]
+    base = json.load(open(args[0], encoding="utf-8"))
+    new = json.load(open(args[1], encoding="utf-8"))
     if len(base) != len(new):
         print(f"AVISO: quantidade de checks diferente ({len(base)} x {len(new)})")
 
-    same = 0
+    same, documented, regressions = 0, 0, 0
     rows = []
-    for b, n in zip(base, new):
+    for index, (b, n) in enumerate(zip(base, new), start=1):
         status_ok = b["status"] == n["status"]
         shape_ok = b.get("shape") == n.get("shape") if b.get("json") and n.get("json") else b.get("json") == n.get("json")
         if status_ok and shape_ok:
@@ -56,12 +67,22 @@ def main():
             if not shape_ok:
                 detail = shape_diff(b.get("shape"), n.get("shape")) if b.get("json") and n.get("json") else ["texto ↔ JSON"]
                 parts.append("shape (" + ", ".join(detail) + ")")
-            verdict = "DIFERENTE: " + "; ".join(parts)
-        rows.append(f"| {b['method']} | `{b['path']}` | {b['status']} | {n['status']} | {verdict} |")
+            reason = expected.get(str(index))
+            if reason:
+                documented += 1
+                verdict = "DIFERENTE (esperado: " + reason + "): " + "; ".join(parts)
+            else:
+                regressions += 1
+                verdict = "DIFERENTE" + (" — NÃO ESPERADO" if gate else "") + ": " + "; ".join(parts)
+        rows.append(f"| {index} | {b['method']} | `{b['path']}` | {b['status']} | {n['status']} | {verdict} |")
 
-    print("| Método | Rota | Original | Refatorado | Resultado |")
-    print("|---|---|---|---|---|")
+    print("| # | Método | Rota | Original | Refatorado | Resultado |")
+    print("|---|---|---|---|---|---|")
     print("\n".join(rows))
+    if gate:
+        print(f"\n{same}/{len(base)} checks idênticos (status + shape); {documented} diferenças esperadas "
+              f"(mudanças de contrato documentadas); {regressions} diferenças não esperadas.")
+        sys.exit(1 if regressions or len(base) != len(new) else 0)
     print(f"\n{same}/{len(base)} checks idênticos (status + shape); {len(base) - same} diferenças para revisar.")
 
 
