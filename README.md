@@ -4,7 +4,7 @@ Entrega do desafio **Criação de Skills — Refatoração Arquitetural Automati
 
 A skill `refactor-arch` (Claude Code) analisa uma codebase, audita anti-patterns com severidade e `arquivo:linha`, pede confirmação e refatora o projeto para MVC, validando que a aplicação continua de pé e que todos os endpoints originais respondem.
 
-**Resultado em uma linha:** a mesma skill (copiada sem alterações nos 3 projetos) detectou a stack correta, encontrou 26, 21 e 21 findings (6/5/3 CRITICAL), pausou para confirmação e refatorou tudo para MVC. As 3 APIs sobem e respondem a todas as rotas originais — validado pela skill e por um script independente que compara request a request com o código original ([Resultados](#c-resultados)).
+**Resultado em uma linha:** a mesma skill (copiada sem alterações nos 3 projetos) detectou a stack correta, encontrou 26, 21 e 21 findings (6/5/3 CRITICAL), pausou para confirmação e refatorou tudo para MVC. As 3 APIs sobem e respondem a todas as rotas originais — validado pela skill e por um script independente que compara, request a request, o status e a estrutura das respostas com o código original ([Resultados](#c-resultados)).
 
 ## Sumário
 
@@ -182,7 +182,7 @@ Conferências que fiz nos relatórios:
 
 - **Localizações válidas:** `scripts/check_report_locations.py` conferiu as 157, 72 e 174 localizações citadas nas linhas `File:` contra o código original — **0 fora do intervalo**, 0 arquivos inexistentes. Também conferi por amostragem o conteúdo das linhas (SQL concatenado, `SECRET_KEY`, `to_dict` com senha, `badCrypto`, `utcnow`, `except:`).
 - **Contagens:** o `Summary` e o `Total` de cada relatório batem com a quantidade de títulos `### [SEVERIDADE]` (validado por script na geração dos arquivos).
-- **Ordenação:** severidade CRITICAL → HIGH → MEDIUM → LOW correta nos 3. A ordenação secundária (arquivo, depois linha) tem **uma inversão** no relatório 1 (`Inconsistent Response Envelopes`, `app.py:64`, aparece depois de `Generic Exception Handling`, `app.py:77`).
+- **Ordenação:** severidade CRITICAL → HIGH → MEDIUM → LOW correta nos 3. A ordenação secundária (arquivo, depois linha) tem **duas inversões** no relatório 1: `Inconsistent Response Envelopes` (`app.py:64`) aparece depois de `Generic Exception Handling` (`app.py:77`), e `Magic Numbers and Strings` (`app.py:36`) depois de `print Logging` (`app.py:56`).
 
 **Cobertura da análise manual:** a skill encontrou **todos** os problemas que eu havia documentado na seção A (17/17 no projeto 1, 18/18 no projeto 2 e 16/16 no projeto 3), às vezes agrupados num único finding — por exemplo, o CORS liberado entrou em `Insecure Runtime Configuration` e as 12 queries de `COUNT` entraram em `N+1 Queries and Per-Row Aggregation`. Achados que ela trouxe **além** da minha análise:
 
@@ -195,8 +195,8 @@ Conferências que fiz nos relatórios:
 | Projeto | No código | Nas dependências |
 |---|---|---|
 | 1 | nenhuma API da tabela de obsoletas (verificado com grep para as versões detectadas) | `flask==3.1.1` (CVE-2026-27205) e `flask-cors==5.0.1` (CVE-2024-6839/6844/6866), via API do PyPI |
-| 2 | — | `npm audit --package-lock-only`: 12 vulnerabilidades (1 critical, 7 high) em `path-to-regexp`, `qs`, `body-parser`, `tar`, `node-gyp`…, mais 8 pacotes marcados `deprecated` no lockfile |
-| 3 | `datetime.utcnow()` (19 pontos) → `datetime.now(timezone.utc)`; `Query.get()` legado (16 pontos) → `db.session.get()` | `flask==3.0.0`, `flask-cors==4.0.0` e 3 pacotes não importados (`marshmallow`, `requests`, `python-dotenv`), todos com CVE |
+| 2 | — | `npm audit --package-lock-only`: 12 vulnerabilidades (1 critical, 7 high) em `path-to-regexp`, `qs`, `body-parser`, `tar`, `node-gyp`…, mais 9 pacotes marcados `deprecated` no lockfile |
+| 3 | `datetime.utcnow()` em 21 localizações (23 ocorrências) → `datetime.now(timezone.utc)`; `Query.get()` legado em 16 pontos → `db.session.get()` | `flask==3.0.0`, `flask-cors==4.0.0` e 3 pacotes não importados (`marshmallow`, `requests`, `python-dotenv`), todos com CVE |
 
 ### Custo e tempo das execuções
 
@@ -306,7 +306,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/error_handler.py (AppError/HTTPException/Exception → JSON)
 - [x] Entry point claro — app.py → src/app.py:create_app()
 - [x] Aplicação inicia sem erros — `python app.py`, porta 5000, debug off, log sem traceback
-- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 20/36 checks idênticos + 16 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 3 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection)
+- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 20/36 checks idênticos + 16 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 2 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection — as 16 estão listadas em `docs/validation/expected-differences.json`). Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`, exceção de contrato prevista nas guidelines para endpoints que executavam SQL arbitrário
 ```
 
 #### Projeto 2 — ecommerce-api-legacy
@@ -352,7 +352,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Cada finding tem arquivo e linhas exatos — 174 localizações conferidas por script, 0 inválidas
 - [x] Findings ordenados por severidade (CRITICAL → LOW) — ordem primária e secundária corretas
 - [x] Mínimo de 5 findings identificados — 21 (3 CRITICAL, 6 HIGH)
-- [x] Detecção de APIs deprecated incluída (se aplicável) — `datetime.utcnow()` (19 pontos) e `Query.get()` (16 pontos) com substituto moderno, + 5 pins com CVE
+- [x] Detecção de APIs deprecated incluída (se aplicável) — `datetime.utcnow()` (21 localizações) e `Query.get()` (16 pontos) com substituto moderno, + 5 pins com CVE
 - [x] Skill pausa e pede confirmação antes da Fase 3 — turno encerrado com a pergunta; 0 escritas nas Fases 1-2
 
 ### Fase 3 — Refatoração
@@ -415,7 +415,15 @@ Durante a Fase 3 a própria skill fez validações extras, registradas nos logs 
 - **God Class Node.js (projeto 2):** transformações bem diferentes. Callback hell virou `async/await` com um wrapper de Promise para o `sqlite3` e uma fila de transações (conexão única), erros assíncronos passaram a chegar ao middleware via `asyncHandler`, e as respostas de erro continuaram em **texto puro**, como no original, em vez de virar JSON. Ela também resolveu sozinha o bloqueio de scripts de instalação do npm 12 (`allowScripts`) e validou o app com as duas versões do `sqlite3`.
 - **Flask parcialmente organizado (projeto 3):** não recriou do zero. Reaproveitou os models SQLAlchemy (agora com consultas encapsuladas, `GROUP BY` e `joinedload`), transformou `routes/` em `views/` + `controllers/`, tirou o CRUD de categorias do módulo de relatórios, removeu `utils/helpers.py` e o `NotificationService` que ninguém usava e trocou as APIs deprecated.
 - **Decisões consistentes nos 3:** autenticação obrigatória **não** foi adicionada, porque mudaria o contrato de rotas hoje públicas — em todos os projetos isso ficou como item pendente e com ✗ explícito na validação. Endpoints perigosos ganharam proteção proporcional ao risco: SQL arbitrário desabilitado por padrão no projeto 1 e guard opt-in via `ADMIN_TOKEN` no projeto 2.
+- **Convenções que ficaram diferentes entre os projetos:** comentários de código em inglês no projeto 2 e em português nos projetos 1 e 3; injeção de dependência por fábricas (projetos 2 e 3) contra controllers como funções de módulo com singletons e `flask.g` (projeto 1) — o projeto 1 é o menos testável dos três; e `.env` carregado automaticamente só no projeto 3 (que manteve o `python-dotenv`), o que está corretamente descrito em cada `.env.example`. As guidelines aceitam as três variações, mas quem for manter os três projetos junto provavelmente vai querer uniformizar.
+- **Limite do meu gate independente:** `scripts/compare_results.py` compara status HTTP e estrutura da resposta (chaves e tipos), não os valores. Uma regressão de valor (um total calculado errado, por exemplo) não seria pega por ele — quem cobriu isso foi a própria Fase 3, que comparou valores derivados (relatórios, estoque, contagens) com o baseline.
 - **Variação entre execuções:** no projeto 1 a skill padronizou o envelope de erro adicionando `"sucesso": false` onde faltava (mudança aditiva, declarada em "Contract Changes"), enquanto nos outros dois preservou os formatos como estavam. É uma leitura mais permissiva da regra "não mudar envelopes de resposta" das guidelines: nenhum cliente quebra, mas é o tipo de decisão que eu revisaria antes de subir.
+
+### Ajustes manuais depois da execução da skill
+
+Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída da Fase 3 da skill v1.2.0**, sem retoques (`git diff` entre o commit de cada refatoração e o HEAD não toca nenhum arquivo de fonte). A única exceção é este ajuste, feito por mim depois da revisão independente:
+
+- `code-smells-project/requirements.txt` e `task-manager-api/requirements.txt` passaram a declarar `werkzeug==3.1.8` (usado em `generate_password_hash`/`check_password_hash` e nos handlers de erro) e `itsdangerous==2.2.0` (token assinado do projeto 3). Os dois vinham só como dependência transitiva do Flask, o que é frágil num upgrade — e é exatamente o tipo de problema que os relatórios da skill cobram do código legado.
 
 ### Pendências conhecidas (assumidas de propósito)
 
