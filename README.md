@@ -4,7 +4,9 @@ Entrega do desafio **Criação de Skills — Refatoração Arquitetural Automati
 
 A skill `refactor-arch` (Claude Code) analisa uma codebase, audita anti-patterns com severidade e `arquivo:linha`, pede confirmação e refatora o projeto para MVC, validando que a aplicação continua de pé e que todos os endpoints originais respondem.
 
-**Resultado em uma linha:** a mesma skill (copiada sem alterações nos 3 projetos) detectou a stack correta, encontrou 26, 21 e 21 findings (6/5/3 CRITICAL), pausou para confirmação e refatorou tudo para MVC. As 3 APIs sobem e respondem a todas as rotas originais — validado pela skill e por um script independente que compara, request a request, o status e a estrutura das respostas com o código original ([Resultados](#c-resultados)).
+**Resultado em uma linha:** a mesma skill (copiada sem alterações nos 3 projetos) detectou a stack correta, encontrou 26, 21 e 21 findings (6/5/3 CRITICAL), pausou para confirmação e refatorou tudo para MVC. As 3 APIs sobem e respondem a todas as rotas originais — validado pela skill e por dois scripts independentes: um compara request a request com o código original, o outro prova com as apps no ar que os achados de autorização foram mesmo fechados ([Resultados](#c-resultados)).
+
+> **Iteração pós-avaliação (skill v1.4.0).** Um feedback apontou que o relatório do projeto 3 classificava escalação de privilégio como HIGH, mas a Fase 3 tinha deixado `POST /users` aceitando `role: admin`. Investiguei, achei o padrão por trás disso e corrigi a skill e os 3 projetos — o relato está em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca).
 
 ## Sumário
 
@@ -93,6 +95,8 @@ Escala usada (definida no enunciado): **CRITICAL** — segurança/arquitetura gr
 
 ### Estrutura
 
+Versão final: **v1.4.0** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
+
 ```text
 .claude/skills/refactor-arch/            # idêntica nos 3 projetos (diff -r vazio)
 ├── SKILL.md                             # orquestrador: regras críticas + 3 fases + troubleshooting (~150 linhas)
@@ -161,6 +165,7 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 | 7 | Saída poluída por avisos de conectores MCP do meu ambiente na execução headless | Execuções com `--strict-mcp-config`, que desliga servidores MCP. É um ajuste de ambiente, não da skill. |
 | 8 | Projetos 1 e 3 usam a mesma porta (5000), e a Fase 3 sobe a aplicação para validar | As Fases 1–2 dos 3 projetos rodaram em paralelo (somente leitura); nas Fases 3, projetos 1 e 2 rodaram juntos (portas 5000 e 3000) e o projeto 3 só começou depois do fim do projeto 1. |
 | 9 | Risco de *overfitting* da skill aos 3 projetos | Exemplos genéricos no playbook e sinais por responsabilidade (ver seção anterior). |
+| 11 | **Iteração 3 (v1.2.0 → v1.4.0), depois do feedback da banca:** a Fase 3 escondia correções possíveis atrás de "precisa de autenticação" — `POST /users` continuava aceitando `role: admin` no projeto 3, e o mesmo padrão aparecia em mais 7 pontos nos 3 projetos | Varredura finding-a-finding dos 68 achados, skill v1.3.0/v1.4.0 (exceção 8, guarda fechada por padrão, headers no contrato, sem segredo em log/seed, fechamento finding a finding com `Status`), reexecução das 3 fases nos 3 projetos e `scripts/security_probes.sh` com 27 provas. Detalhes em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca). |
 | 10 | O limite de uso da conta (`You've hit your session limit`) interrompeu a Fase 3 dos projetos 1 e 2 no meio | Retomei a **mesma sessão** depois da renovação (`claude -p "...continue de onde parou" --resume <sessão>`) e a skill seguiu do ponto em que estava. Os logs e as métricas registram a interrupção e as duas invocações. |
 
 
@@ -306,7 +311,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/error_handler.py (AppError/HTTPException/Exception → JSON)
 - [x] Entry point claro — app.py → src/app.py:create_app()
 - [x] Aplicação inicia sem erros — `python app.py`, porta 5000, debug off, log sem traceback
-- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 20/36 checks idênticos + 16 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 2 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection — as 16 estão listadas em `docs/validation/expected-differences.json`). Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`, exceção de contrato prevista nas guidelines para endpoints que executavam SQL arbitrário
+- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 19/36 checks idênticos + 17 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 2 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection, 1 login de demonstração sem senha fixa no seed — todas listadas em `docs/validation/expected-differences.json`). Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`
 ```
 
 #### Projeto 2 — ecommerce-api-legacy
@@ -335,7 +340,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/errorHandler.js + asyncHandler.js (erros em texto, como no original)
 - [x] Entry point claro — `npm start` → src/app.js → src/createApp.js
 - [x] Aplicação inicia sem erros — `npm ci` limpo (build nativo do sqlite3 ok) + `node src/app.js`, porta 3000
-- [x] Endpoints originais respondem corretamente — 3/3 rotas; 7/8 checks idênticos + 1 diferença esperada (relatório sem alunos órfãos após DELETE)
+- [x] Endpoints originais respondem corretamente — 3/3 rotas; 5/8 checks idênticos + 3 diferenças esperadas (as 2 rotas administrativas passaram a ser fechadas por padrão — com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN` respondem como o original)
 ```
 
 #### Projeto 3 — task-manager-api
@@ -364,7 +369,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/error_handler.py (nenhuma resposta HTML restante)
 - [x] Entry point claro — app.py e seed.py usam src/app.py:create_app()
 - [x] Aplicação inicia sem erros — `python seed.py && python app.py`, porta 5000, sem DeprecationWarning
-- [x] Endpoints originais respondem corretamente — 22/22 rotas; 40/44 checks idênticos + 4 diferenças esperadas (hash de senha fora das respostas)
+- [x] Endpoints originais respondem corretamente — 22/22 rotas; 39/44 checks idênticos + 5 diferenças esperadas (hash de senha fora das respostas, login de demonstração sem senha fixa no seed, `DELETE /users/<id>` atrás da guarda administrativa)
 ```
 
 ### Evidências: aplicações rodando após a refatoração
@@ -375,11 +380,11 @@ Além da validação feita pela própria skill, **validei de forma independente*
 $ scripts/validate.sh all
 === Projeto 1: code-smells-project (Python/Flask) ===
   ✓ servidor respondeu na porta 5000
-  20/36 checks idênticos (status + shape); 16 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+  19/36 checks idênticos (status + shape); 17 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
   ✓ log do servidor sem tracebacks
 === Projeto 2: ecommerce-api-legacy (Node.js/Express) ===
   ✓ servidor respondeu na porta 3000
-  7/8 checks idênticos (status + shape); 1 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+  5/8 checks idênticos (status + shape); 3 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
   ✓ log do servidor sem tracebacks
 === Projeto 3: task-manager-api (Python/Flask) ===
   Seed concluído com sucesso!
@@ -387,7 +392,7 @@ $ scripts/validate.sh all
     4 categorias
     10 tasks
   ✓ servidor respondeu na porta 5000
-  40/44 checks idênticos (status + shape); 4 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+  39/44 checks idênticos (status + shape); 5 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
   ✓ log do servidor sem tracebacks
 
 ✓ Todos os projetos validados
@@ -424,6 +429,66 @@ Durante a Fase 3 a própria skill fez validações extras, registradas nos logs 
 Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída da Fase 3 da skill v1.2.0**, sem retoques (`git diff` entre o commit de cada refatoração e o HEAD não toca nenhum arquivo de fonte). A única exceção é este ajuste, feito por mim depois da revisão independente:
 
 - `code-smells-project/requirements.txt` e `task-manager-api/requirements.txt` passaram a declarar `werkzeug==3.1.8` (usado em `generate_password_hash`/`check_password_hash` e nos handlers de erro) e `itsdangerous==2.2.0` (token assinado do projeto 3). Os dois vinham só como dependência transitiva do Flask, o que é frágil num upgrade — e é exatamente o tipo de problema que os relatórios da skill cobram do código legado.
+
+### Iteração pós-avaliação (feedback da banca)
+
+**O apontamento.** O relatório do projeto 3 classificava escalação de privilégio como HIGH, mas a Fase 3 tinha deixado `POST /users` lendo `role` do corpo (`user_validator.py:54`) — qualquer um se cadastrava como `admin`. Procede: a skill tinha jogado o item inteiro em "Remaining Items" como decisão de produto, porque a recomendação mencionava autenticação.
+
+**A causa raiz.** Rodei uma varredura finding-a-finding (agente com contexto limpo) conferindo **cada um dos 68 findings** dos 3 relatórios contra o código refatorado, subindo as aplicações. O caso do `role` não era isolado: sempre que a correção tocava em *quem pode fazer o quê*, a Fase 3 parava e rotulava como decisão de produto, mesmo quando havia conserto possível sem autenticação. Oito lacunas, todas corrigíveis sem mexer no contrato de requisições legítimas:
+
+| # | Projeto | Lacuna | Prova antes da correção |
+|---|---|---|---|
+| 1 | task-manager-api | `POST /users` aceitava `role` | `201 {"role":"admin"}` |
+| 2 | task-manager-api | `PUT /users/<id>` deixava anônimo promover/desativar qualquer conta | `maria` → `admin`, `active:false` |
+| 3 | ecommerce-api-legacy | guarda administrativa *opt-in*: sem `ADMIN_TOKEN`, relatório financeiro e `DELETE /api/users/:id` ficavam públicos (finding CRITICAL) | ambos → 200 sem token |
+| 4 | task-manager-api | hash de senha vazava nos parâmetros do erro de banco | `IntegrityError ... [parameters: (...scrypt...)]` |
+| 5 | code-smells-project | `/admin/query` continuava executando SQL do cliente (a recomendação era remover) e devolvia hashes | `SELECT email,senha FROM usuarios` → 200 |
+| 6 | code-smells-project | seed criava `admin@loja.com`/`admin123` por padrão | `POST /login` → 200 |
+| 7 | code-smells-project | 405 perdeu o header `Allow` — regressão introduzida pela refatoração | `DELETE /health` → 405 sem `Allow` |
+| 8 | task-manager-api | `SQLAlchemy` sem versão fixada | `requirements.txt` |
+
+**A correção na skill (v1.3.0 → v1.4.0).** Mudei as regras, não os projetos:
+
+- `mvc-guidelines.md` §9 ganhou a exceção 8 — campo de privilégio (`role`, `is_admin`, `permissions`, `active`) vindo de cliente anônimo **tem** de parar de conceder privilégio, no create e no update; é correção de segurança, não decisão de produto — e a regra **"não esconda um problema corrigível atrás de um maior"**: "isso precisa de autenticação" só cobre a parte que realmente precisa.
+- Guarda de endpoint destrutivo/administrativo tem de ser **fechada por padrão**; guarda opt-in não fecha um CRITICAL, e o padrão vale igual nos três projetos (era inconsistente: o projeto 1 negava por padrão, o 2 deixava aberto).
+- Headers que o framework enviava (`Allow` no 405, CORS) entraram na lista do que o contrato preserva.
+- Proibido logar parâmetros de banco e semear conta privilegiada com senha conhecida; `/admin/query` não pode ler coluna de credencial.
+- A Fase 3 passou a fechar **finding a finding**: cada achado da Fase 2 aparece na tabela com `Status` (`Fixed` / `Partially fixed` / `Not fixed`), relendo a própria recomendação, e roda 4 provas de fechamento antes de declarar corrigido.
+
+**A reexecução.** Rodei as 3 fases de novo nos 3 projetos (agora sobre o código já refatorado — a Fase 1 detecta "MVC em camadas" e audita o que sobrou). Achados e resultado:
+
+| Projeto | Findings na reauditoria | Fechados | Relatório | Log |
+|---|---|---|---|---|
+| 1 — code-smells-project | 9 (0 CRITICAL, 1 HIGH) | 8 corrigidos, 1 bloqueado por contrato | [`audit-project-1-rerun.md`](reports/audit-project-1-rerun.md) | [log](docs/execution-logs/rerun-v140-project-1-code-smells-project.md) |
+| 2 — ecommerce-api-legacy | 9 (1 CRITICAL, 1 HIGH) | 6 corrigidos, 1 parcial, 2 bloqueados | [`audit-project-2-rerun.md`](reports/audit-project-2-rerun.md) | [log](docs/execution-logs/rerun-v140-project-2-ecommerce-api-legacy.md) |
+| 3 — task-manager-api | 8 + 7 (duas rodadas) | escalação fechada na 1ª, log/seed/dependência na 2ª | [v1.3.0](reports/audit-project-3-rerun-v130.md) · [v1.4.0](reports/audit-project-3-rerun.md) | [log v1.3.0](docs/execution-logs/rerun-v130-project-3-task-manager-api.md) · [log v1.4.0](docs/execution-logs/rerun-v140-project-3-task-manager-api.md) |
+
+O único CRITICAL/HIGH que segue aberto é o mesmo de antes e continua legítimo: **não existe autenticação nas rotas** do projeto 3 (e das rotas de gestão do projeto 1) — adicionar login obrigatório transformaria requisições hoje bem-sucedidas em 401. A parte corrigível desse mesmo finding foi fechada, e a skill agora é obrigada a dizer explicitamente o que fechou e o que não fechou.
+
+**Provas, não declarações.** Criei [`scripts/security_probes.sh`](scripts/security_probes.sh): sobe cada aplicação e verifica na prática o que os relatórios afirmam — 27 provas, todas passando:
+
+```text
+=== Projeto 1: code-smells-project ===
+  PASS  endpoint de SQL arbitrário fechado por padrão (HTTP 403)
+  PASS  405 preserva o header Allow
+  PASS  consulta que cita coluna de credencial é recusada (HTTP 400)
+  PASS  SELECT * em usuarios não devolve hash
+=== Projeto 2: ecommerce-api-legacy ===
+  PASS  relatório financeiro fechado por padrão (HTTP 403)
+  PASS  relatório financeiro com token (HTTP 200)
+  PASS  checkout duplicado é recusado (HTTP 400)
+=== Projeto 3: task-manager-api ===
+  PASS  auto-cadastro como admin é recusado (HTTP 403)
+  PASS  promoção de conta alheia é recusada (HTTP 403)
+  PASS  auto-cadastro comum continua funcionando (HTTP 201)
+  PASS  log de erro não expõe parâmetros do banco
+
+✓ Todas as provas de segurança passaram
+```
+
+**O gate também aprendeu.** Durante a iteração ele pegou duas coisas: a mudança de 409 → 400 no e-mail duplicado (efeito da senha mínima 8, ajustei o harness e regravei o baseline) e — pior — descobri que uma entrada "esperada" engolia *qualquer* diferença naquele check, mascarando o login do projeto 3 virando 401. Agora a troca de status precisa ser declarada explicitamente (`"status": "200->401"`), senão é regressão.
+
+**Mudanças de contrato desta iteração** (todas em `docs/validation/expected-differences.json`, com o motivo): rotas administrativas fechadas por padrão nos 3 projetos (403 sem configuração, idêntico ao original com flag + token); login de demonstração passa a depender de `SEED_PASSWORD` (ou da senha sorteada e registrada no primeiro boot), porque o seed não tem mais senha no código; checkout duplicado recusado no projeto 2; `tags` acima do limite recusadas no projeto 3.
 
 ### Pendências conhecidas (assumidas de propósito)
 
@@ -489,6 +554,7 @@ Validação automática (instala dependências em diretório temporário, sobe c
 ```bash
 scripts/validate.sh all          # ou: scripts/validate.sh 1 | 2 | 3
 scripts/validate.sh all --save   # também atualiza os resultados em docs/validation/
+scripts/security_probes.sh all   # 27 provas de segurança com as aplicações no ar
 ```
 
 O script termina com código `0` só se as 3 aplicações subirem, os logs ficarem sem traceback e todas as diferenças em relação ao código original estiverem declaradas em `docs/validation/expected-differences.json`.
@@ -526,9 +592,10 @@ mba-ia-refactor-projects-skill/
 ├── ecommerce-api-legacy/            # Projeto 2 refatorado + .claude/skills/refactor-arch/ (cópia idêntica)
 ├── task-manager-api/                # Projeto 3 refatorado + .claude/skills/refactor-arch/ (cópia idêntica)
 ├── reports/
-│   ├── audit-project-1.md           # saída da Fase 2 (verbatim)
+│   ├── audit-project-1.md           # saída da Fase 2 sobre o código legado (verbatim)
 │   ├── audit-project-2.md
-│   └── audit-project-3.md
+│   ├── audit-project-3.md
+│   └── audit-project-*-rerun*.md    # reauditorias do código já refatorado (iteração pós-avaliação)
 ├── docs/
 │   ├── ENUNCIADO.md                 # enunciado original do desafio
 │   ├── execution-logs/              # saída das Fases 1 e 3 + linha do tempo de ferramentas, por projeto
@@ -538,5 +605,6 @@ mba-ia-refactor-projects-skill/
     ├── smoke_test.py                # exercita todos os endpoints de um projeto
     ├── compare_results.py           # compara baseline × refatorado (status + shape), com gate de regressão
     ├── check_report_locations.py    # confere os arquivo:linha dos relatórios contra o código original
+    ├── security_probes.sh           # provas de segurança com as aplicações no ar
     └── validate.sh                  # validação ponta a ponta dos 3 projetos
 ```
