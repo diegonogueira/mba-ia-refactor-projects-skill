@@ -12,6 +12,9 @@ COLOR_PATTERN = re.compile(r'^#[0-9a-fA-F]{6}$')
 MAX_NAME_LENGTH = 100
 MAX_DESCRIPTION_LENGTH = 300
 
+# Mensagem de contrato da API para este recurso: controllers e validadores usam esta.
+CATEGORY_NOT_FOUND_MESSAGE = 'Categoria não encontrada'
+
 
 class Category(PersistableMixin, db.Model):
     __tablename__ = 'categories'

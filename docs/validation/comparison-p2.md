@@ -5,8 +5,8 @@
 | 3 | POST | `/api/checkout` | 400 | 400 | igual |
 | 4 | POST | `/api/checkout` | 404 | 404 | igual |
 | 5 | POST | `/api/checkout` | 400 | 400 | igual |
-| 6 | GET | `/api/admin/financial-report` | 200 | 200 | igual |
-| 7 | DELETE | `/api/users/1` | 200 | 200 | igual |
-| 8 | GET | `/api/admin/financial-report` | 200 | 200 | DIFERENTE (esperado: relatório financeiro sem alunos órfãos/receita fantasma após DELETE /api/users/1 (exceção 5: integridade referencial)): shape ([].students: lista vazia) |
+| 6 | GET | `/api/admin/financial-report` | 200 | 403 | DIFERENTE (esperado: GET /api/admin/financial-report — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403; shape (texto ↔ JSON) |
+| 7 | DELETE | `/api/users/1` | 200 | 403 | DIFERENTE (esperado: DELETE /api/users/:id — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403 |
+| 8 | GET | `/api/admin/financial-report` | 200 | 403 | DIFERENTE (esperado: GET /api/admin/financial-report — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403; shape (texto ↔ JSON) |
 
-7/8 checks idênticos (status + shape); 1 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+5/8 checks idênticos (status + shape); 3 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.

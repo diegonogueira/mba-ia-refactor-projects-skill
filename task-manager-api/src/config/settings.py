@@ -18,6 +18,8 @@ DEFAULT_PORT = 5000
 DEFAULT_CORS_ORIGINS = 'http://localhost:3000,http://127.0.0.1:3000'
 DEFAULT_LOG_LEVEL = 'INFO'
 TRUTHY_VALUES = {'1', 'true', 'yes', 'on'}
+# Endpoints administrativos nascem fechados: liberar exige a flag E o token no ambiente.
+DEFAULT_ADMIN_ENDPOINTS_ENABLED = False
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,8 @@ class Settings:
     port: int
     cors_origins: str | list[str]
     log_level: str
+    admin_token: str
+    admin_endpoints_enabled: bool
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -66,4 +70,7 @@ def load_settings() -> Settings:
         port=int(os.environ.get('PORT', DEFAULT_PORT)),
         cors_origins=_cors_origins(os.environ.get('CORS_ORIGINS', DEFAULT_CORS_ORIGINS)),
         log_level=os.environ.get('LOG_LEVEL', DEFAULT_LOG_LEVEL).upper(),
+        # sem default: um token ausente mantém os endpoints administrativos recusando
+        admin_token=os.environ.get('ADMIN_TOKEN', ''),
+        admin_endpoints_enabled=_bool('ADMIN_ENDPOINTS_ENABLED', DEFAULT_ADMIN_ENDPOINTS_ENABLED),
     )

@@ -3,13 +3,12 @@ from datetime import datetime, timedelta
 
 from src.models.category_model import Category
 from src.models.task_model import NO_TASKS, Task
-from src.models.user_model import User
+from src.models.user_model import USER_NOT_FOUND_MESSAGE, User
 from src.utils.datetime_utils import utcnow_naive
 from src.utils.errors import NotFoundError
 from src.utils.math_utils import calculate_percentage
 
 REPORT_WINDOW_DAYS = 7
-USER_NOT_FOUND_MESSAGE = 'Usuário não encontrado'
 
 
 class ReportService:

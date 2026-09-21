@@ -31,4 +31,11 @@ function validateCheckoutInput(body) {
     return { name, email, password: password || null, courseId: parsePositiveInteger(rawCourseId), cardNumber };
 }
 
-module.exports = { validateCheckoutInput };
+// Route ids are positive integers; anything else is a bad request instead of a no-op reported as success.
+function validateUserId(rawUserId) {
+    const userId = parsePositiveInteger(rawUserId);
+    if (userId === null) throw new ValidationError();
+    return userId;
+}
+
+module.exports = { validateCheckoutInput, validateUserId };

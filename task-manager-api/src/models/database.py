@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 
 db = SQLAlchemy()
 
+# O texto de um erro do SQLAlchemy embute o SQL e os valores ligados (inclusive hashes de senha);
+# `hide_parameters` mantém esses valores fora de qualquer log ou traceback.
+ENGINE_OPTIONS = {'hide_parameters': True}
+
 
 def init_database(app) -> None:
     """Liga a extensão à aplicação e garante o schema (chamado pelo composition root)."""
@@ -24,7 +28,8 @@ def commit(failure_message: str) -> None:
         db.session.commit()
     except SQLAlchemyError as exc:
         db.session.rollback()
-        logger.exception('Falha ao gravar no banco')
+        # apenas o tipo do erro: a mensagem e o traceback carregam os dados que estavam sendo gravados
+        logger.error('Falha ao gravar no banco (%s)', type(exc).__name__)
         raise PersistenceError(failure_message) from exc
 
 

@@ -14,6 +14,24 @@ def require_json_object(payload, *, allow_empty: bool = False) -> dict:
     return payload
 
 
+def validate_bounded_text(value, max_length: int, *, invalid_message: str, too_long_message: str) -> str:
+    """Texto obrigatório que precisa caber no limite da coluna."""
+    if not isinstance(value, str):
+        raise ValidationError(invalid_message)
+    if len(value) > max_length:
+        raise ValidationError(too_long_message)
+    return value
+
+
+def validate_optional_bounded_text(value, max_length: int, *, invalid_message: str,
+                                   too_long_message: str):
+    """Mesma regra de `validate_bounded_text`, aceitando ausência de valor."""
+    if value is None:
+        return None
+    return validate_bounded_text(value, max_length, invalid_message=invalid_message,
+                                 too_long_message=too_long_message)
+
+
 def is_valid_email(value) -> bool:
     return isinstance(value, str) and EMAIL_PATTERN.match(value) is not None
 

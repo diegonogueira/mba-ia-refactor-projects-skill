@@ -1,4 +1,6 @@
 """Conexão SQLite por contexto de aplicação, transações, schema e seed."""
+import logging
+import secrets
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -6,7 +8,12 @@ from pathlib import Path
 from flask import current_app, g
 from werkzeug.security import generate_password_hash
 
+logger = logging.getLogger(__name__)
+
 DatabaseError = sqlite3.Error
+
+# Bytes de entropia da senha gerada para os usuários de demonstração quando SEED_PASSWORD não é definido.
+SEED_PASSWORD_BYTES = 16
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS produtos (
@@ -56,11 +63,12 @@ PRODUTOS_SEED = [
     ("Camiseta Dev", "Camiseta estampa código", 59.90, 100, "vestuario"),
 ]
 
-# Usuários de demonstração; as senhas são gravadas como hash (desative com SEED_DATABASE=false).
+# Usuários de demonstração (desative com SEED_DATABASE=false). A senha NÃO fica no código:
+# vem de SEED_PASSWORD ou é sorteada no primeiro boot e registrada no log uma única vez.
 USUARIOS_SEED = [
-    ("Admin", "admin@loja.com", "admin123", "admin"),
-    ("João Silva", "joao@email.com", "123456", "cliente"),
-    ("Maria Santos", "maria@email.com", "senha123", "cliente"),
+    ("Admin", "admin@loja.com", "admin"),
+    ("João Silva", "joao@email.com", "cliente"),
+    ("Maria Santos", "maria@email.com", "cliente"),
 ]
 
 
@@ -100,9 +108,24 @@ def transaction(immediate=False):
     conexao.commit()
 
 
+def _senha_do_seed():
+    """Senha dos usuários de demonstração: de SEED_PASSWORD ou sorteada e exibida uma única vez."""
+    senha = current_app.config["SEED_PASSWORD"]
+    if senha:
+        return senha
+    senha = secrets.token_urlsafe(SEED_PASSWORD_BYTES)
+    logger.warning(
+        "SEED_PASSWORD não definido; usuários de demonstração criados com a senha %s "
+        "(exibida apenas agora — defina SEED_PASSWORD para escolher a sua ou SEED_DATABASE=false para não criá-los)",
+        senha,
+    )
+    return senha
+
+
 def _seed(conexao):
     if conexao.execute("SELECT COUNT(*) FROM produtos").fetchone()[0] > 0:
         return
+    senha_hash = generate_password_hash(_senha_do_seed())
     with transaction() as transacao:
         transacao.executemany(
             "INSERT INTO produtos (nome, descricao, preco, estoque, categoria) VALUES (?, ?, ?, ?, ?)",
@@ -110,7 +133,7 @@ def _seed(conexao):
         )
         transacao.executemany(
             "INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)",
-            [(nome, email, generate_password_hash(senha), tipo) for nome, email, senha, tipo in USUARIOS_SEED],
+            [(nome, email, senha_hash, tipo) for nome, email, tipo in USUARIOS_SEED],
         )
 
 

@@ -9,6 +9,11 @@ logger = logging.getLogger(__name__)
 
 CONSULTA_SELECT_UNICA = re.compile(r"^\s*select\b[^;]*;?\s*$", re.IGNORECASE)
 
+# Colunas de credenciais nunca saem por /admin/query: a consulta que as cita é recusada e,
+# para casos como `SELECT *`, os valores ainda são removidos das linhas retornadas.
+COLUNAS_CREDENCIAIS = frozenset({"senha", "password", "token", "secret"})
+REFERENCIA_CREDENCIAL = re.compile(r"\b(%s)\b" % "|".join(sorted(COLUNAS_CREDENCIAIS)), re.IGNORECASE)
+
 # Ordem respeita as referências entre tabelas (filhos antes dos pais).
 COMANDOS_RESET = (
     "DELETE FROM itens_pedido",
@@ -35,9 +40,15 @@ def resetar_banco():
             conexao.execute(comando)
 
 
+def _sem_credenciais(linha):
+    return {coluna: valor for coluna, valor in dict(linha).items() if coluna.lower() not in COLUNAS_CREDENCIAIS}
+
+
 def consultar_somente_leitura(sql):
     if not CONSULTA_SELECT_UNICA.match(sql):
         raise ValidationError("Apenas uma única consulta SELECT é permitida")
+    if REFERENCIA_CREDENCIAL.search(sql):
+        raise ValidationError("Consulta não pode referenciar colunas de credenciais")
     conexao = get_read_only_connection()
     try:
         linhas = conexao.execute(sql).fetchall()
@@ -46,4 +57,4 @@ def consultar_somente_leitura(sql):
         raise ValidationError("Consulta inválida") from erro
     finally:
         conexao.close()
-    return [dict(linha) for linha in linhas]
+    return [_sem_credenciais(linha) for linha in linhas]

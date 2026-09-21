@@ -1,6 +1,6 @@
 """Acesso a dados e regras da entidade produto."""
 from src.models.database import get_connection, transaction
-from src.utils.errors import ConflictError, ValidationError
+from src.utils.errors import ConflictError, NotFoundError, ValidationError
 
 CATEGORIAS_VALIDAS = ("informatica", "moveis", "vestuario", "geral", "eletronicos", "livros")
 CATEGORIA_PADRAO = "geral"
@@ -8,6 +8,8 @@ NOME_TAMANHO_MINIMO = 2
 NOME_TAMANHO_MAXIMO = 200
 
 COLUNAS = "id, nome, descricao, preco, estoque, categoria, ativo, criado_em"
+
+PRODUTO_NAO_ENCONTRADO = "Produto não encontrado"
 
 
 def validar(nome, preco, estoque, categoria):
@@ -63,19 +65,25 @@ def criar(nome, descricao, preco, estoque, categoria):
 
 
 def atualizar(produto_id, nome, descricao, preco, estoque, categoria):
+    """Atualiza o produto; a existência é confirmada pelo próprio UPDATE, dentro da transação."""
     validar(nome, preco, estoque, categoria)
     with transaction() as conexao:
-        conexao.execute(
+        alterados = conexao.execute(
             "UPDATE produtos SET nome = ?, descricao = ?, preco = ?, estoque = ?, categoria = ? WHERE id = ?",
             (nome, descricao, preco, estoque, categoria, produto_id),
-        )
+        ).rowcount
+        if alterados == 0:
+            raise NotFoundError(PRODUTO_NAO_ENCONTRADO)
 
 
 def deletar(produto_id):
+    """Remove o produto; a existência é confirmada pelo próprio DELETE, dentro da transação."""
     with transaction(immediate=True) as conexao:
         referenciado = conexao.execute(
             "SELECT 1 FROM itens_pedido WHERE produto_id = ? LIMIT 1", (produto_id,)
         ).fetchone()
         if referenciado:
             raise ConflictError("Produto possui pedidos e não pode ser removido")
-        conexao.execute("DELETE FROM produtos WHERE id = ?", (produto_id,))
+        removidos = conexao.execute("DELETE FROM produtos WHERE id = ?", (produto_id,)).rowcount
+        if removidos == 0:
+            raise NotFoundError(PRODUTO_NAO_ENCONTRADO)

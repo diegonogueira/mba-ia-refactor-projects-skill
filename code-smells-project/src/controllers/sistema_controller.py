@@ -1,6 +1,6 @@
 import logging
 
-from flask import current_app, jsonify, request
+from flask import current_app, jsonify, request, url_for
 
 from src.config.settings import API_VERSION
 from src.controllers.validators import ler_consulta
@@ -9,18 +9,21 @@ from src.models.database import DatabaseError
 
 logger = logging.getLogger(__name__)
 
+# Nome exibido no índice -> endpoint do blueprint. As URLs vêm do url_map, então não há
+# caminho duplicado entre este módulo e src/views/*_routes.py.
 ENDPOINTS_PUBLICOS = {
-    "produtos": "/produtos",
-    "usuarios": "/usuarios",
-    "pedidos": "/pedidos",
-    "login": "/login",
-    "relatorios": "/relatorios/vendas",
-    "health": "/health",
+    "produtos": "produtos.listar_produtos",
+    "usuarios": "usuarios.listar_usuarios",
+    "pedidos": "pedidos.listar_todos_pedidos",
+    "login": "usuarios.login",
+    "relatorios": "relatorios.relatorio_vendas",
+    "health": "sistema.health_check",
 }
 
 
 def index():
-    return jsonify({"mensagem": "Bem-vindo à API da Loja", "versao": API_VERSION, "endpoints": ENDPOINTS_PUBLICOS})
+    endpoints = {nome: url_for(endpoint) for nome, endpoint in ENDPOINTS_PUBLICOS.items()}
+    return jsonify({"mensagem": "Bem-vindo à API da Loja", "versao": API_VERSION, "endpoints": endpoints})
 
 
 def health_check():

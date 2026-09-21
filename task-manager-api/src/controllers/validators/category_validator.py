@@ -2,7 +2,8 @@
 from src.models.category_model import (COLOR_PATTERN, DEFAULT_COLOR, MAX_DESCRIPTION_LENGTH,
                                        MAX_NAME_LENGTH)
 from src.utils.errors import ValidationError
-from src.utils.validators import ensure_optional_text, require_json_object
+from src.utils.validators import (require_json_object, validate_bounded_text,
+                                  validate_optional_bounded_text)
 
 NAME_REQUIRED_MESSAGE = 'Nome é obrigatório'
 NAME_INVALID_MESSAGE = 'Nome inválido'
@@ -13,24 +14,19 @@ COLOR_INVALID_MESSAGE = 'Cor inválida'
 
 
 def _name(value) -> str:
-    if not isinstance(value, str):
-        raise ValidationError(NAME_INVALID_MESSAGE)
-    if len(value) > MAX_NAME_LENGTH:
-        raise ValidationError(NAME_TOO_LONG_MESSAGE)
-    return value
+    return validate_bounded_text(value, MAX_NAME_LENGTH, invalid_message=NAME_INVALID_MESSAGE,
+                                 too_long_message=NAME_TOO_LONG_MESSAGE)
 
 
 def _description(value):
-    ensure_optional_text(value, DESCRIPTION_INVALID_MESSAGE)
-    if value is not None and len(value) > MAX_DESCRIPTION_LENGTH:
-        raise ValidationError(DESCRIPTION_TOO_LONG_MESSAGE)
-    return value
+    return validate_optional_bounded_text(value, MAX_DESCRIPTION_LENGTH,
+                                          invalid_message=DESCRIPTION_INVALID_MESSAGE,
+                                          too_long_message=DESCRIPTION_TOO_LONG_MESSAGE)
 
 
 def _color(value):
     """Cor precisa caber na coluna: hexadecimal no formato #RRGGBB."""
-    ensure_optional_text(value, COLOR_INVALID_MESSAGE)
-    if value is not None and not COLOR_PATTERN.match(value):
+    if value is not None and (not isinstance(value, str) or not COLOR_PATTERN.match(value)):
         raise ValidationError(COLOR_INVALID_MESSAGE)
     return value
 

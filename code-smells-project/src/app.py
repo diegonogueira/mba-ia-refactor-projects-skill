@@ -2,7 +2,7 @@
 from flask import Flask
 from flask_cors import CORS
 
-from src.config.settings import load_settings
+from src.config.settings import configure_logging, load_settings
 from src.middlewares.error_handler import register_error_handlers
 from src.models.database import init_database
 from src.views.pedido_routes import pedido_bp
@@ -13,6 +13,7 @@ from src.views.usuario_routes import usuario_bp
 
 
 def create_app(settings=None):
+    configure_logging()
     settings = settings or load_settings()
 
     app = Flask(__name__)
@@ -22,6 +23,7 @@ def create_app(settings=None):
         DATABASE_PATH=settings.database_path,
         APP_ENV=settings.app_env,
         SEED_DATABASE=settings.seed_database,
+        SEED_PASSWORD=settings.seed_password,
         ADMIN_ENDPOINTS_ENABLED=settings.admin_endpoints_enabled,
         ADMIN_TOKEN=settings.admin_token,
     )

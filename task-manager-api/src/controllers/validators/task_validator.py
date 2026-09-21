@@ -1,10 +1,14 @@
 """Validação dos payloads de task: mesmas mensagens e mesma ordem de checagem da API original."""
 from datetime import datetime
 
+from src.models.category_model import CATEGORY_NOT_FOUND_MESSAGE
 from src.models.task_model import (DEFAULT_PRIORITY, DEFAULT_STATUS, DUE_DATE_FORMAT, MAX_PRIORITY,
-                                   MAX_TITLE_LENGTH, MIN_PRIORITY, MIN_TITLE_LENGTH, TASK_STATUSES)
+                                   MAX_TAGS_LENGTH, MAX_TITLE_LENGTH, MIN_PRIORITY, MIN_TITLE_LENGTH,
+                                   TASK_STATUSES, Task)
+from src.models.user_model import USER_NOT_FOUND_MESSAGE
 from src.utils.errors import NotFoundError, ValidationError
-from src.utils.validators import ensure_optional_text, is_integer, require_json_object
+from src.utils.validators import (ensure_optional_text, is_integer, require_json_object,
+                                  validate_bounded_text)
 
 TITLE_REQUIRED_MESSAGE = 'Título é obrigatório'
 TITLE_INVALID_MESSAGE = 'Título inválido'
@@ -15,22 +19,19 @@ PRIORITY_INVALID_MESSAGE = 'Prioridade inválida'
 PRIORITY_RANGE_MESSAGE = 'Prioridade deve ser entre 1 e 5'
 DESCRIPTION_INVALID_MESSAGE = 'Descrição inválida'
 TAGS_INVALID_MESSAGE = 'Tags inválidas'
-USER_NOT_FOUND_MESSAGE = 'Usuário não encontrado'
+TAGS_TOO_LONG_MESSAGE = 'Tags muito longas'
 USER_INVALID_MESSAGE = 'user_id inválido'
-CATEGORY_NOT_FOUND_MESSAGE = 'Categoria não encontrada'
 CATEGORY_INVALID_MESSAGE = 'category_id inválido'
 DUE_DATE_ON_CREATE_MESSAGE = 'Formato de data inválido. Use YYYY-MM-DD'
 DUE_DATE_ON_UPDATE_MESSAGE = 'Formato de data inválido'
 
 
 def _title(value) -> str:
-    if not isinstance(value, str):
-        raise ValidationError(TITLE_INVALID_MESSAGE)
-    if len(value) < MIN_TITLE_LENGTH:
+    title = validate_bounded_text(value, MAX_TITLE_LENGTH, invalid_message=TITLE_INVALID_MESSAGE,
+                                  too_long_message=TITLE_TOO_LONG_MESSAGE)
+    if len(title) < MIN_TITLE_LENGTH:
         raise ValidationError(TITLE_TOO_SHORT_MESSAGE)
-    if len(value) > MAX_TITLE_LENGTH:
-        raise ValidationError(TITLE_TOO_LONG_MESSAGE)
-    return value
+    return title
 
 
 def _status(value) -> str:
@@ -73,10 +74,12 @@ def _tags(value):
     if isinstance(value, list):
         if not all(isinstance(tag, str) for tag in value):
             raise ValidationError(TAGS_INVALID_MESSAGE)
-        return value
-    if value is None or isinstance(value, str):
-        return value
-    raise ValidationError(TAGS_INVALID_MESSAGE)
+    elif value is not None and not isinstance(value, str):
+        raise ValidationError(TAGS_INVALID_MESSAGE)
+    # a coluna guarda as tags unidas por vírgula: o limite vale para essa string final
+    if value is not None and len(Task.encode_tags(value)) > MAX_TAGS_LENGTH:
+        raise ValidationError(TAGS_TOO_LONG_MESSAGE)
+    return value
 
 
 def validate_new_task(payload, *, user_exists, category_exists) -> dict:

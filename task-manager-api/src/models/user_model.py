@@ -12,6 +12,12 @@ SELF_SIGNUP_ROLES = (DEFAULT_ROLE,)
 MIN_PASSWORD_LENGTH = 8
 MAX_NAME_LENGTH = 100
 MAX_EMAIL_LENGTH = 150
+MAX_ROLE_LENGTH = 50
+# `generate_password_hash` devolve ~162 caracteres com scrypt; a folga cobre trocas de algoritmo
+MAX_PASSWORD_HASH_LENGTH = 255
+
+# Mensagem de contrato da API para este recurso: controllers, validadores e services usam esta.
+USER_NOT_FOUND_MESSAGE = 'Usuário não encontrado'
 
 
 class User(PersistableMixin, db.Model):
@@ -22,8 +28,8 @@ class User(PersistableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(MAX_NAME_LENGTH), nullable=False)
     email = db.Column(db.String(MAX_EMAIL_LENGTH), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), default=DEFAULT_ROLE)
+    password = db.Column(db.String(MAX_PASSWORD_HASH_LENGTH), nullable=False)
+    role = db.Column(db.String(MAX_ROLE_LENGTH), default=DEFAULT_ROLE)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=utcnow_naive)
 

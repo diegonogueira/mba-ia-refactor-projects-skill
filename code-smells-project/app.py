@@ -2,13 +2,13 @@
 import logging
 
 from src.app import create_app
-from src.config.settings import load_settings
+from src.config.settings import configure_logging, load_settings
 
 logger = logging.getLogger(__name__)
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    configure_logging()
     settings = load_settings()
     app = create_app(settings)
     logger.info("Servidor iniciado em http://%s:%s", settings.host, settings.port)

@@ -10,10 +10,10 @@ async function main() {
 
     const db = await openDatabase(settings.databasePath);
     await initSchema(db);
-    await seedDatabase(db);
+    await seedDatabase(db, { userPassword: settings.seedUserPassword });
 
-    if (!settings.adminToken) {
-        logger.warn('ADMIN_TOKEN não definido: as rotas administrativas continuam públicas.');
+    if (!settings.adminEndpointsEnabled || !settings.adminToken) {
+        logger.warn('Rotas administrativas fechadas (403): defina ADMIN_ENDPOINTS_ENABLED=true e ADMIN_TOKEN para habilitá-las.');
     }
 
     const server = createApp({ db, settings, logger }).listen(settings.port, settings.host, () => {

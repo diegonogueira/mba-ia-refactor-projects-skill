@@ -5,14 +5,13 @@ from flask import jsonify, request
 
 from src.controllers.validators.category_validator import (validate_category_changes,
                                                            validate_new_category)
-from src.models.category_model import Category
+from src.models.category_model import CATEGORY_NOT_FOUND_MESSAGE, Category
 from src.models.task_model import Task
 from src.utils.errors import NotFoundError
 from src.views.serializers import serialize_category
 
 logger = logging.getLogger(__name__)
 
-CATEGORY_NOT_FOUND_MESSAGE = 'Categoria não encontrada'
 CATEGORY_DELETED_MESSAGE = 'Categoria deletada'
 
 

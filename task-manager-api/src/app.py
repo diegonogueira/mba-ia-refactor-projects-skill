@@ -12,7 +12,7 @@ from src.controllers.report_controller import ReportController
 from src.controllers.task_controller import TaskController
 from src.controllers.user_controller import UserController
 from src.middlewares.error_handler import register_error_handlers
-from src.models.database import init_database
+from src.models.database import ENGINE_OPTIONS, init_database
 from src.services.auth_service import AuthService
 from src.services.report_service import ReportService
 from src.views.category_routes import build_category_blueprint
@@ -33,6 +33,9 @@ def create_app(settings: Settings | None = None) -> Flask:
         SECRET_KEY=settings.secret_key,
         SQLALCHEMY_DATABASE_URI=settings.database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_ENGINE_OPTIONS=ENGINE_OPTIONS,
+        ADMIN_TOKEN=settings.admin_token,
+        ADMIN_ENDPOINTS_ENABLED=settings.admin_endpoints_enabled,
     )
 
     CORS(app, origins=settings.cors_origins)

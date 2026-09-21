@@ -12,19 +12,47 @@
     "19": "usuário sem o campo senha (exceção 1: dados sensíveis)",
     "20": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "22": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
+    "23": {
+      "status": "200->401",
+      "motivo": "o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=admin123 para reproduzir o login de demonstração, ou a senha sorteada que aparece no log do primeiro boot"
+    },
     "25": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "29": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "33": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
-    "35": "POST /admin/query desabilitado por padrão → 403 (exceção 2: endpoint destrutivo)",
-    "36": "POST /admin/reset-db desabilitado por padrão → 403 (exceção 2: endpoint destrutivo)"
+    "35": {
+      "status": "200->403",
+      "motivo": "POST /admin/query — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"
+    },
+    "36": {
+      "status": "200->403",
+      "motivo": "POST /admin/reset-db — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"
+    }
   },
   "p2": {
-    "8": "relatório financeiro sem alunos órfãos/receita fantasma após DELETE /api/users/1 (exceção 5: integridade referencial)"
+    "6": {
+      "status": "200->403",
+      "motivo": "GET /api/admin/financial-report — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"
+    },
+    "7": {
+      "status": "200->403",
+      "motivo": "DELETE /api/users/:id — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"
+    },
+    "8": {
+      "status": "200->403",
+      "motivo": "GET /api/admin/financial-report — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"
+    }
   },
   "p3": {
-    "22": "GET /users/<id> sem o hash de senha (exceção 1: dados sensíveis)",
+    "22": "GET /users/<id> sem o hash de senha (exceção 1)",
     "24": "POST /users sem o hash de senha na resposta (exceção 1)",
     "28": "PUT /users/<id> sem o hash de senha na resposta (exceção 1)",
-    "32": "POST /login sem o hash de senha em user (exceção 1)"
+    "32": {
+      "status": "200->401",
+      "motivo": "o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=1234 no seed para reproduzir o login de demonstração, ou a senha sorteada que o seed imprime"
+    },
+    "44": {
+      "status": "200->403",
+      "motivo": "DELETE /users/<id> — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"
+    }
   }
 }

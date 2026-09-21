@@ -1,5 +1,5 @@
-2026-09-17T18:07:29.249Z [WARN] ADMIN_TOKEN não definido: as rotas administrativas continuam públicas.
-2026-09-17T18:07:29.256Z [INFO] LMS API rodando em http://127.0.0.1:3000
-2026-09-17T18:07:29.706Z [INFO] Processando pagamento de 497 no cartão ****4444
-2026-09-17T18:07:29.732Z [INFO] Processando pagamento de 497 no cartão ****4444
-2026-09-17T18:07:29.734Z [INFO] Processando pagamento de 997 no cartão ****4444
+2026-09-21T15:30:01.580Z [WARN] Rotas administrativas fechadas (403): defina ADMIN_ENDPOINTS_ENABLED=true e ADMIN_TOKEN para habilitá-las.
+2026-09-21T15:30:01.587Z [INFO] LMS API rodando em http://127.0.0.1:3000
+2026-09-21T15:30:02.070Z [INFO] Processando pagamento de 497 no cartão ****4444
+2026-09-21T15:30:02.275Z [INFO] Processando pagamento de 497 no cartão ****4444
+2026-09-21T15:30:02.478Z [INFO] Processando pagamento de 997 no cartão ****4444

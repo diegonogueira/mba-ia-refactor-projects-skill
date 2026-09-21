@@ -1,4 +1,6 @@
 """Dados iniciais do projeto, usados pelo script `seed.py` da raiz."""
+import os
+import secrets
 from datetime import timedelta
 
 from sqlalchemy import delete
@@ -6,16 +8,20 @@ from sqlalchemy import delete
 from src.models.category_model import Category
 from src.models.database import commit, db
 from src.models.task_model import Task
-from src.models.user_model import User
+from src.models.user_model import MIN_PASSWORD_LENGTH, User
 from src.utils.datetime_utils import utcnow_naive
 
 SEED_ERROR_MESSAGE = 'Erro ao popular o banco'
 
-# Senhas de exemplo, apenas para desenvolvimento: são gravadas com hash na criação.
+SEED_PASSWORD_VARIABLE = 'SEED_PASSWORD'
+GENERATED_PASSWORD_BYTES = 12
+
+# Os usuários de exemplo incluem papéis privilegiados; por isso a senha nunca fica fixa no código:
+# vem de SEED_PASSWORD ou é sorteada a cada seed e mostrada uma única vez pelo script.
 SEED_USERS = (
-    {'name': 'João Silva', 'email': 'joao@email.com', 'password': '1234', 'role': 'admin'},
-    {'name': 'Maria Santos', 'email': 'maria@email.com', 'password': 'abcd', 'role': 'user'},
-    {'name': 'Pedro Oliveira', 'email': 'pedro@email.com', 'password': 'pass', 'role': 'manager'},
+    {'name': 'João Silva', 'email': 'joao@email.com', 'role': 'admin'},
+    {'name': 'Maria Santos', 'email': 'maria@email.com', 'role': 'user'},
+    {'name': 'Pedro Oliveira', 'email': 'pedro@email.com', 'role': 'manager'},
 )
 
 SEED_CATEGORIES = (
@@ -50,16 +56,30 @@ SEED_TASKS = (
 )
 
 
-def seed_database() -> dict[str, int]:
-    """Recria os dados de exemplo em uma única transação e devolve as contagens."""
+def seed_password() -> tuple[str, bool]:
+    """Senha dos usuários de exemplo: a de `SEED_PASSWORD` ou uma sorteada agora.
+
+    Devolve `(senha, foi_gerada)` — quando gerada, o script do seed a exibe uma única vez.
+    """
+    configured = os.environ.get(SEED_PASSWORD_VARIABLE)
+    if not configured:
+        return secrets.token_urlsafe(GENERATED_PASSWORD_BYTES), True
+    if len(configured) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f'{SEED_PASSWORD_VARIABLE} deve ter no mínimo {MIN_PASSWORD_LENGTH} caracteres')
+    return configured, False
+
+
+def seed_database() -> dict:
+    """Recria os dados de exemplo em uma única transação e devolve as contagens e a senha usada."""
     now = utcnow_naive()
+    password, generated = seed_password()
 
     for entity in (Task, User, Category):
         db.session.execute(delete(entity))
 
-    users = [User(name=data['name'], email=data['email'], role=data['role']) for data in SEED_USERS]
-    for user, data in zip(users, SEED_USERS):
-        user.set_password(data['password'])
+    users = [User(**data) for data in SEED_USERS]
+    for user in users:
+        user.set_password(password)
     categories = [Category(**data) for data in SEED_CATEGORIES]
     db.session.add_all(users + categories)
     db.session.flush()
@@ -79,4 +99,10 @@ def seed_database() -> dict[str, int]:
         db.session.add(task)
 
     commit(SEED_ERROR_MESSAGE)
-    return {'users': User.count_all(), 'categories': Category.count_all(), 'tasks': Task.count_all()}
+    return {
+        'users': User.count_all(),
+        'categories': Category.count_all(),
+        'tasks': Task.count_all(),
+        'password': password,
+        'password_generated': generated,
+    }

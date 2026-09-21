@@ -17,6 +17,9 @@ A aplicação sobe em `http://localhost:5000`. O `seed.py` popula o banco SQLite
 usuários, categorias e tasks de exemplo — **rode-o antes do primeiro boot**, caso contrário os endpoints
 vão retornar listas vazias.
 
+Os usuários de exemplo **não têm senha fixa no código**: defina `SEED_PASSWORD` antes de rodar o seed ou
+anote a senha sorteada que o script mostra uma única vez na saída.
+
 ## Configuração
 
 Todas as configurações vêm de variáveis de ambiente (veja `.env.example`); um arquivo `.env` na raiz é
@@ -32,6 +35,9 @@ valor efêmero a cada boot e registra um aviso.
 | `FLASK_DEBUG` | `false` | Modo debug do Flask |
 | `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Origens liberadas no CORS, separadas por vírgula (`*` libera todas — só em desenvolvimento) |
 | `LOG_LEVEL` | `INFO` | Nível dos logs |
+| `ADMIN_ENDPOINTS_ENABLED` | `false` | Libera os endpoints administrativos (junto com `ADMIN_TOKEN`) |
+| `ADMIN_TOKEN` | vazio | Token esperado no header `X-Admin-Token` dos endpoints administrativos |
+| `SEED_PASSWORD` | sorteada | Senha dos usuários criados pelo `seed.py` (mínimo 8 caracteres) |
 
 ## Estrutura
 
@@ -45,7 +51,7 @@ src/
 ├── services/           # autenticação e relatórios (casos de uso)
 ├── controllers/        # fluxo da requisição + validadores de payload
 ├── views/              # blueprints (URL → controller) e serializers
-├── middlewares/        # tratamento de erros centralizado
+├── middlewares/        # tratamento de erros centralizado e guard administrativo
 └── utils/              # erros, validadores e helpers sem dependência de framework
 ```
 
@@ -62,7 +68,8 @@ src/
 | GET/PUT/DELETE | `/tasks/<id>` | Detalha, atualiza e remove uma task |
 | GET | `/users` | Lista usuários com total de tasks |
 | POST | `/users` | Cria um usuário |
-| GET/PUT/DELETE | `/users/<id>` | Detalha, atualiza e remove um usuário (e as tasks dele) |
+| GET/PUT | `/users/<id>` | Detalha e atualiza um usuário |
+| DELETE | `/users/<id>` | Remove um usuário e as tasks dele — **endpoint administrativo** (ver abaixo) |
 | GET | `/users/<id>/tasks` | Tasks de um usuário |
 | POST | `/login` | Autentica e devolve um token assinado |
 | GET | `/reports/summary` | Relatório geral |
@@ -82,8 +89,13 @@ privilégios a quem chama:
 - `PUT /users/<id>` não altera `role` nem `active`: ambos devolvem **403**. Esses campos só devem mudar
   por uma rota administrativa autenticada.
 - Senhas têm no mínimo 8 caracteres e são gravadas com hash `scrypt` (Werkzeug).
-- `name`, `email`, `description` e `color` são validados contra os limites das colunas; `color` precisa
-  ser hexadecimal no formato `#RRGGBB`.
+- `name`, `email`, `description`, `color` e `tags` são validados contra os limites das colunas; `color`
+  precisa ser hexadecimal no formato `#RRGGBB`.
+- `DELETE /users/<id>` apaga o usuário **e todas as tasks dele**. Por ser destrutivo e não haver
+  autenticação, ele nasce **fechado**: responde **403** até que `ADMIN_ENDPOINTS_ENABLED=true` e
+  `ADMIN_TOKEN` estejam definidos e a requisição traga o header `X-Admin-Token` correspondente.
+- Falhas de gravação são registradas apenas pelo tipo do erro, e o SQLAlchemy roda com
+  `hide_parameters`: nenhum hash de senha chega aos logs.
 
 **Limitação conhecida:** nenhuma rota exige autenticação. O token devolvido por `POST /login` é assinado,
 mas ainda não é verificado por nenhum endpoint — qualquer cliente com acesso de rede consegue ler, alterar

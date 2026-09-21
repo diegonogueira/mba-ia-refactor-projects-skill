@@ -2,7 +2,7 @@
 from src.models.user_model import (DEFAULT_ROLE, MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, MIN_PASSWORD_LENGTH,
                                    SELF_SIGNUP_ROLES, USER_ROLES)
 from src.utils.errors import ConflictError, ForbiddenError, ValidationError
-from src.utils.validators import is_valid_email, require_json_object
+from src.utils.validators import is_valid_email, require_json_object, validate_bounded_text
 
 NAME_REQUIRED_MESSAGE = 'Nome é obrigatório'
 NAME_INVALID_MESSAGE = 'Nome inválido'
@@ -32,11 +32,8 @@ def _password(value, too_short_message: str) -> str:
 
 
 def _name(value) -> str:
-    if not isinstance(value, str):
-        raise ValidationError(NAME_INVALID_MESSAGE)
-    if len(value) > MAX_NAME_LENGTH:
-        raise ValidationError(NAME_TOO_LONG_MESSAGE)
-    return value
+    return validate_bounded_text(value, MAX_NAME_LENGTH, invalid_message=NAME_INVALID_MESSAGE,
+                                 too_long_message=NAME_TOO_LONG_MESSAGE)
 
 
 def _email(value) -> str:

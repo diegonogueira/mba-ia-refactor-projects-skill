@@ -6,7 +6,7 @@ from flask import jsonify, request
 from src.controllers.validators.task_validator import (parse_search_filters, validate_new_task,
                                                        validate_task_changes)
 from src.models.category_model import Category
-from src.models.task_model import Task
+from src.models.task_model import TASK_NOT_FOUND_MESSAGE, Task
 from src.models.user_model import User
 from src.utils.datetime_utils import utcnow_naive
 from src.utils.errors import NotFoundError
@@ -15,7 +15,6 @@ from src.views.serializers import (serialize_task, serialize_task_detail, serial
 
 logger = logging.getLogger(__name__)
 
-TASK_NOT_FOUND_MESSAGE = 'Task não encontrada'
 TASK_DELETED_MESSAGE = 'Task deletada com sucesso'
 
 

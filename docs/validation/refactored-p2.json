@@ -46,40 +46,26 @@
     "path": "/api/checkout"
   },
   {
-    "status": 200,
-    "json": true,
-    "shape": [
-      {
-        "course": "str",
-        "revenue": "int",
-        "students": [
-          "object"
-        ]
-      }
-    ],
-    "body": "[{\"course\":\"Clean Architecture\",\"revenue\":997,\"students\":[{\"student\":\"Leonan\",\"paid\":997}]},{\"course\":\"Docker\",\"revenue\":994,\"students\":[{\"student\":\"Guilherme\",\"paid\":497},{\"student\":\"Leonan\",\"paid\":497}]}]",
+    "status": 403,
+    "json": false,
+    "body": "Rotas administrativas desabilitadas",
+    "ctype": "text/html; charset=utf-8",
     "method": "GET",
     "path": "/api/admin/financial-report"
   },
   {
-    "status": 200,
+    "status": 403,
     "json": false,
-    "body": "Usuário deletado, junto com suas matrículas e pagamentos.",
+    "body": "Rotas administrativas desabilitadas",
     "ctype": "text/html; charset=utf-8",
     "method": "DELETE",
     "path": "/api/users/1"
   },
   {
-    "status": 200,
-    "json": true,
-    "shape": [
-      {
-        "course": "str",
-        "revenue": "int",
-        "students": []
-      }
-    ],
-    "body": "[{\"course\":\"Clean Architecture\",\"revenue\":0,\"students\":[]},{\"course\":\"Docker\",\"revenue\":497,\"students\":[{\"student\":\"Guilherme\",\"paid\":497}]}]",
+    "status": 403,
+    "json": false,
+    "body": "Rotas administrativas desabilitadas",
+    "ctype": "text/html; charset=utf-8",
     "method": "GET",
     "path": "/api/admin/financial-report"
   }

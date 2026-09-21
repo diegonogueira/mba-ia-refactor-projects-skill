@@ -1,5 +1,8 @@
+const crypto = require('crypto');
 const { hashPassword } = require('../utils/password');
 const { PAYMENT_STATUS } = require('../utils/constants');
+
+const RANDOM_PASSWORD_BYTES = 24;
 
 // AUTOINCREMENT on tables that allow deletes: ids are never reused, so audit log references stay unambiguous.
 const SCHEMA = `
@@ -31,7 +34,9 @@ const SCHEMA = `
         action TEXT NOT NULL,
         created_at DATETIME NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_enrollments_user_id ON enrollments (user_id);
+    -- One enrollment per user and course: blocks the duplicated charge even under concurrency.
+    -- Its (user_id, course_id) prefix also serves the lookups by user.
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_enrollments_user_course ON enrollments (user_id, course_id);
     CREATE INDEX IF NOT EXISTS idx_enrollments_course_id ON enrollments (course_id);
 `;
 
@@ -40,11 +45,14 @@ async function initSchema(db) {
     await db.exec(SCHEMA);
 }
 
-async function seedDatabase(db) {
+// The seed account never carries a well-known password: without SEED_USER_PASSWORD it gets a random one.
+async function seedDatabase(db, { userPassword = null } = {}) {
     const { total } = await db.get('SELECT COUNT(*) AS total FROM courses');
     if (total > 0) return;
 
-    const seedUserPassword = await hashPassword('123');
+    const seedUserPassword = await hashPassword(
+        userPassword || crypto.randomBytes(RANDOM_PASSWORD_BYTES).toString('hex'),
+    );
     await db.transaction(async (tx) => {
         const { lastID: userId } = await tx.run(
             'INSERT INTO users (name, email, pass) VALUES (?, ?, ?)',

@@ -22,8 +22,12 @@ HIGH_PRIORITY_MAX = 2
 MIN_TITLE_LENGTH = 3
 MAX_TITLE_LENGTH = 200
 MAX_TAGS_LENGTH = 500
+MAX_STATUS_LENGTH = 50
 DUE_DATE_FORMAT = '%Y-%m-%d'
 TAG_SEPARATOR = ','
+
+# Mensagem de contrato da API para este recurso: controllers e validadores usam esta.
+TASK_NOT_FOUND_MESSAGE = 'Task não encontrada'
 
 UserTaskCounts = namedtuple('UserTaskCounts', ('total', 'completed'))
 NO_TASKS = UserTaskCounts(0, 0)
@@ -37,7 +41,7 @@ class Task(PersistableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(MAX_TITLE_LENGTH), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(50), default=DEFAULT_STATUS)
+    status = db.Column(db.String(MAX_STATUS_LENGTH), default=DEFAULT_STATUS)
     priority = db.Column(db.Integer, default=DEFAULT_PRIORITY)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)

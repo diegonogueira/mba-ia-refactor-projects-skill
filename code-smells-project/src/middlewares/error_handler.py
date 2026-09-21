@@ -21,6 +21,19 @@ def _resposta_erro(mensagem, status):
     return jsonify({"erro": mensagem, "sucesso": False}), status
 
 
+def _resposta_http_erro(erro):
+    """Troca o corpo HTML da HTTPException pelo envelope JSON, preservando os headers do framework.
+
+    Recriar a resposta do zero descartaria headers que fazem parte do contrato HTTP —
+    `Allow` no 405, `WWW-Authenticate` no 401, `Retry-After` no 429.
+    """
+    resposta = erro.get_response()
+    corpo = jsonify({"erro": MENSAGENS_HTTP.get(erro.code, erro.name), "sucesso": False})
+    resposta.data = corpo.data
+    resposta.content_type = corpo.content_type
+    return resposta
+
+
 def register_error_handlers(app):
     @app.errorhandler(AppError)
     def tratar_erro_aplicacao(erro):
@@ -28,7 +41,7 @@ def register_error_handlers(app):
 
     @app.errorhandler(HTTPException)
     def tratar_erro_http(erro):
-        return _resposta_erro(MENSAGENS_HTTP.get(erro.code, erro.name), erro.code)
+        return _resposta_http_erro(erro)
 
     @app.errorhandler(Exception)
     def tratar_erro_inesperado(_erro):

@@ -17,7 +17,7 @@
       "status": "str",
       "timestamp": "str"
     },
-    "body": "{\"status\":\"ok\",\"timestamp\":\"2026-09-17 15:07:32.250374\"}\n",
+    "body": "{\"status\":\"ok\",\"timestamp\":\"2026-09-21 15:30:04.994625\"}\n",
     "method": "GET",
     "path": "/health"
   },
@@ -42,7 +42,7 @@
         "user_name": "str"
       }
     ],
-    "body": "[{\"category_id\":1,\"category_name\":\"Backend\",\"created_at\":\"2026-09-17 18:07:31.655601\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 18:07:31.519362\",\"id\":1,\"overdue\":true,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-17 18:07:31.655603\",\"user_id\":1,\"user_name\":\"Jo\\u00e3o Silva\"},{\"category_id\"",
+    "body": "[{\"category_id\":1,\"category_name\":\"Backend\",\"created_at\":\"2026-09-21 15:30:04.403481\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-18 15:30:04.266630\",\"id\":1,\"overdue\":true,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-21 15:30:04.403498\",\"user_id\":1,\"user_name\":\"Jo\\u00e3o Silva\"},{\"category_id\"",
     "method": "GET",
     "path": "/tasks"
   },
@@ -63,7 +63,7 @@
       "updated_at": "str",
       "user_id": "int"
     },
-    "body": "{\"category_id\":1,\"created_at\":\"2026-09-17 18:07:31.655601\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 18:07:31.519362\",\"id\":1,\"overdue\":true,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-17 18:07:31.655603\",\"user_id\":1}\n",
+    "body": "{\"category_id\":1,\"created_at\":\"2026-09-21 15:30:04.403481\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-18 15:30:04.266630\",\"id\":1,\"overdue\":true,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-21 15:30:04.403498\",\"user_id\":1}\n",
     "method": "GET",
     "path": "/tasks/1"
   },
@@ -95,7 +95,7 @@
       "updated_at": "str",
       "user_id": "int"
     },
-    "body": "{\"category_id\":1,\"created_at\":\"2026-09-17 18:07:32.267988\",\"description\":\"d\",\"due_date\":\"2030-01-01 00:00:00\",\"id\":11,\"priority\":2,\"status\":\"pending\",\"tags\":[\"a\",\"b\"],\"title\":\"Nova task\",\"updated_at\":\"2026-09-17 18:07:32.267992\",\"user_id\":1}\n",
+    "body": "{\"category_id\":1,\"created_at\":\"2026-09-21 15:30:05.013195\",\"description\":\"d\",\"due_date\":\"2030-01-01 00:00:00\",\"id\":11,\"priority\":2,\"status\":\"pending\",\"tags\":[\"a\",\"b\"],\"title\":\"Nova task\",\"updated_at\":\"2026-09-21 15:30:05.013198\",\"user_id\":1}\n",
     "method": "POST",
     "path": "/tasks"
   },
@@ -175,7 +175,7 @@
       "updated_at": "str",
       "user_id": "int"
     },
-    "body": "{\"category_id\":1,\"created_at\":\"2026-09-17 18:07:31.655601\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 18:07:31.519362\",\"id\":1,\"priority\":2,\"status\":\"in_progress\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-17 18:07:32.276806\",\"user_id\":1}\n",
+    "body": "{\"category_id\":1,\"created_at\":\"2026-09-21 15:30:04.403481\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-18 15:30:04.266630\",\"id\":1,\"priority\":2,\"status\":\"in_progress\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\",\"updated_at\":\"2026-09-21 15:30:05.021511\",\"user_id\":1}\n",
     "method": "PUT",
     "path": "/tasks/1"
   },
@@ -237,7 +237,7 @@
         "user_id": "int"
       }
     ],
-    "body": "[{\"category_id\":1,\"created_at\":\"2026-09-17 18:07:31.655608\",\"description\":\"Endpoints retornam todos os registros\",\"due_date\":\"2026-09-27 18:07:31.519362\",\"id\":5,\"priority\":3,\"status\":\"pending\",\"tags\":[],\"title\":\"Adicionar pagina\\u00e7\\u00e3o na API\",\"updated_at\":\"2026-09-17 18:07:31.655609\",\"user_id\":1},{\"category_id\":1,\"created_at\":\"2026-09-17 18:07:31.655610\",\"description\":\"Gerar documenta\\u00e7",
+    "body": "[{\"category_id\":1,\"created_at\":\"2026-09-21 15:30:04.403508\",\"description\":\"Endpoints retornam todos os registros\",\"due_date\":\"2026-10-01 15:30:04.266630\",\"id\":5,\"priority\":3,\"status\":\"pending\",\"tags\":[],\"title\":\"Adicionar pagina\\u00e7\\u00e3o na API\",\"updated_at\":\"2026-09-21 15:30:04.403509\",\"user_id\":1},{\"category_id\":1,\"created_at\":\"2026-09-21 15:30:04.403510\",\"description\":\"Gerar documenta\\u00e7",
     "method": "GET",
     "path": "/tasks/search?q=API"
   },
@@ -259,7 +259,7 @@
         "user_id": "int"
       }
     ],
-    "body": "[{\"category_id\":4,\"created_at\":\"2026-09-17 18:07:31.655607\",\"description\":\"Filtro n\\u00e3o funciona com caracteres especiais\",\"due_date\":\"2026-09-16 18:07:31.519362\",\"id\":4,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Corrigir bug no filtro de busca\",\"updated_at\":\"2026-09-17 18:07:31.655607\",\"user_id\":1}]\n",
+    "body": "[{\"category_id\":4,\"created_at\":\"2026-09-21 15:30:04.403507\",\"description\":\"Filtro n\\u00e3o funciona com caracteres especiais\",\"due_date\":\"2026-09-20 15:30:04.266630\",\"id\":4,\"priority\":1,\"status\":\"pending\",\"tags\":[],\"title\":\"Corrigir bug no filtro de busca\",\"updated_at\":\"2026-09-21 15:30:04.403507\",\"user_id\":1}]\n",
     "method": "GET",
     "path": "/tasks/search?status=pending&priority=1"
   },
@@ -293,7 +293,7 @@
         "task_count": "int"
       }
     ],
-    "body": "[{\"active\":true,\"created_at\":\"2026-09-17 18:07:31.654640\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\",\"task_count\":5},{\"active\":true,\"created_at\":\"2026-09-17 18:07:31.654643\",\"email\":\"maria@email.com\",\"id\":2,\"name\":\"Maria Santos\",\"role\":\"user\",\"task_count\":2},{\"active\":true,\"created_at\":\"2026-09-17 18:07:31.654644\",\"email\":\"pedro@email.com\",\"id\":3,\"name\":\"Pedro Oliveira",
+    "body": "[{\"active\":true,\"created_at\":\"2026-09-21 15:30:04.402495\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\",\"task_count\":5},{\"active\":true,\"created_at\":\"2026-09-21 15:30:04.402497\",\"email\":\"maria@email.com\",\"id\":2,\"name\":\"Maria Santos\",\"role\":\"user\",\"task_count\":2},{\"active\":true,\"created_at\":\"2026-09-21 15:30:04.402498\",\"email\":\"pedro@email.com\",\"id\":3,\"name\":\"Pedro Oliveira",
     "method": "GET",
     "path": "/users"
   },
@@ -311,7 +311,7 @@
         "object"
       ]
     },
-    "body": "{\"active\":true,\"created_at\":\"2026-09-17 18:07:31.654640\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\",\"tasks\":[{\"category_id\":1,\"created_at\":\"2026-09-17 18:07:31.655601\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 18:07:31.519362\",\"id\":1,\"priority\":2,\"status\":\"in_progress\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"",
+    "body": "{\"active\":true,\"created_at\":\"2026-09-21 15:30:04.402495\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\",\"tasks\":[{\"category_id\":1,\"created_at\":\"2026-09-21 15:30:04.403481\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-18 15:30:04.266630\",\"id\":1,\"priority\":2,\"status\":\"in_progress\",\"tags\":[],\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"",
     "method": "GET",
     "path": "/users/1"
   },
@@ -336,7 +336,7 @@
       "name": "str",
       "role": "str"
     },
-    "body": "{\"active\":true,\"created_at\":\"2026-09-17 18:07:32.343022\",\"email\":\"ana68452244@email.com\",\"id\":4,\"name\":\"Ana\",\"role\":\"user\"}\n",
+    "body": "{\"active\":true,\"created_at\":\"2026-09-21 15:30:05.087614\",\"email\":\"ana04604988@email.com\",\"id\":4,\"name\":\"Ana\",\"role\":\"user\"}\n",
     "method": "POST",
     "path": "/users"
   },
@@ -381,7 +381,7 @@
       "name": "str",
       "role": "str"
     },
-    "body": "{\"active\":true,\"created_at\":\"2026-09-17 18:07:31.654643\",\"email\":\"maria@email.com\",\"id\":2,\"name\":\"Maria S.\",\"role\":\"user\"}\n",
+    "body": "{\"active\":true,\"created_at\":\"2026-09-21 15:30:04.402497\",\"email\":\"maria@email.com\",\"id\":2,\"name\":\"Maria S.\",\"role\":\"user\"}\n",
     "method": "PUT",
     "path": "/users/2"
   },
@@ -410,7 +410,7 @@
         "title": "str"
       }
     ],
-    "body": "[{\"created_at\":\"2026-09-17 18:07:31.655601\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-14 18:07:31.519362\",\"id\":1,\"overdue\":true,\"priority\":2,\"status\":\"in_progress\",\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"},{\"created_at\":\"2026-09-17 18:07:31.655607\",\"description\":\"Filtro n\\u00e3o funciona com caracteres especiais\",\"due_date\":\"2026-09-16 18:07:31.51936",
+    "body": "[{\"created_at\":\"2026-09-21 15:30:04.403481\",\"description\":\"Adicionar autentica\\u00e7\\u00e3o real com JWT\",\"due_date\":\"2026-09-18 15:30:04.266630\",\"id\":1,\"overdue\":true,\"priority\":2,\"status\":\"in_progress\",\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"},{\"created_at\":\"2026-09-21 15:30:04.403507\",\"description\":\"Filtro n\\u00e3o funciona com caracteres especiais\",\"due_date\":\"2026-09-20 15:30:04.26663",
     "method": "GET",
     "path": "/users/1/tasks"
   },
@@ -425,21 +425,12 @@
     "path": "/users/9999/tasks"
   },
   {
-    "status": 200,
+    "status": 401,
     "json": true,
     "shape": {
-      "message": "str",
-      "token": "str",
-      "user": {
-        "active": "bool",
-        "created_at": "str",
-        "email": "str",
-        "id": "int",
-        "name": "str",
-        "role": "str"
-      }
+      "error": "str"
     },
-    "body": "{\"message\":\"Login realizado com sucesso\",\"token\":\"eyJ1c2VyX2lkIjoxfQ.aqwsZA.Hbug3vD8QSMMo-7z6p_d6VfkcLE\",\"user\":{\"active\":true,\"created_at\":\"2026-09-17 18:07:31.654640\",\"email\":\"joao@email.com\",\"id\":1,\"name\":\"Jo\\u00e3o Silva\",\"role\":\"admin\"}}\n",
+    "body": "{\"error\":\"Credenciais inv\\u00e1lidas\"}\n",
     "method": "POST",
     "path": "/login"
   },
@@ -500,7 +491,7 @@
         "object"
       ]
     },
-    "body": "{\"generated_at\":\"2026-09-17 18:07:32.445376\",\"overdue\":{\"count\":2,\"tasks\":[{\"days_overdue\":3,\"due_date\":\"2026-09-14 18:07:31.519362\",\"id\":1,\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"},{\"days_overdue\":1,\"due_date\":\"2026-09-16 18:07:31.519362\",\"id\":4,\"title\":\"Corrigir bug no filtro de busca\"}]},\"overview\":{\"total_categories\":4,\"total_tasks\":10,\"total_users\":4},\"recent_activity\":{\"tasks_complet",
+    "body": "{\"generated_at\":\"2026-09-21 15:30:05.190048\",\"overdue\":{\"count\":2,\"tasks\":[{\"days_overdue\":3,\"due_date\":\"2026-09-18 15:30:04.266630\",\"id\":1,\"title\":\"Implementar autentica\\u00e7\\u00e3o JWT\"},{\"days_overdue\":1,\"due_date\":\"2026-09-20 15:30:04.266630\",\"id\":4,\"title\":\"Corrigir bug no filtro de busca\"}]},\"overview\":{\"total_categories\":4,\"total_tasks\":10,\"total_users\":4},\"recent_activity\":{\"tasks_complet",
     "method": "GET",
     "path": "/reports/summary"
   },
@@ -551,7 +542,7 @@
         "task_count": "int"
       }
     ],
-    "body": "[{\"color\":\"#3498db\",\"created_at\":\"2026-09-17 18:07:31.654022\",\"description\":\"Tarefas de backend\",\"id\":1,\"name\":\"Backend\",\"task_count\":7},{\"color\":\"#2ecc71\",\"created_at\":\"2026-09-17 18:07:31.654027\",\"description\":\"Tarefas de frontend\",\"id\":2,\"name\":\"Frontend\",\"task_count\":0},{\"color\":\"#e74c3c\",\"created_at\":\"2026-09-17 18:07:31.654028\",\"description\":\"Tarefas de infraestrutura\",\"id\":3,\"name\":\"DevOps\"",
+    "body": "[{\"color\":\"#3498db\",\"created_at\":\"2026-09-21 15:30:04.401869\",\"description\":\"Tarefas de backend\",\"id\":1,\"name\":\"Backend\",\"task_count\":7},{\"color\":\"#2ecc71\",\"created_at\":\"2026-09-21 15:30:04.401874\",\"description\":\"Tarefas de frontend\",\"id\":2,\"name\":\"Frontend\",\"task_count\":0},{\"color\":\"#e74c3c\",\"created_at\":\"2026-09-21 15:30:04.401875\",\"description\":\"Tarefas de infraestrutura\",\"id\":3,\"name\":\"DevOps\"",
     "method": "GET",
     "path": "/categories"
   },
@@ -565,7 +556,7 @@
       "id": "int",
       "name": "str"
     },
-    "body": "{\"color\":\"#123456\",\"created_at\":\"2026-09-17 18:07:32.456216\",\"description\":\"Testes\",\"id\":5,\"name\":\"QA\"}\n",
+    "body": "{\"color\":\"#123456\",\"created_at\":\"2026-09-21 15:30:05.201763\",\"description\":\"Testes\",\"id\":5,\"name\":\"QA\"}\n",
     "method": "POST",
     "path": "/categories"
   },
@@ -589,7 +580,7 @@
       "id": "int",
       "name": "str"
     },
-    "body": "{\"color\":\"#3498db\",\"created_at\":\"2026-09-17 18:07:31.654022\",\"description\":\"Backend tasks\",\"id\":1,\"name\":\"Backend\"}\n",
+    "body": "{\"color\":\"#3498db\",\"created_at\":\"2026-09-21 15:30:04.401869\",\"description\":\"Backend tasks\",\"id\":1,\"name\":\"Backend\"}\n",
     "method": "PUT",
     "path": "/categories/1"
   },
@@ -614,12 +605,12 @@
     "path": "/categories/9999"
   },
   {
-    "status": 200,
+    "status": 403,
     "json": true,
     "shape": {
-      "message": "str"
+      "error": "str"
     },
-    "body": "{\"message\":\"Usu\\u00e1rio deletado com sucesso\"}\n",
+    "body": "{\"error\":\"Endpoint administrativo desabilitado\"}\n",
     "method": "DELETE",
     "path": "/users/3"
   }

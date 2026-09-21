@@ -22,7 +22,7 @@
 | 20 | GET | `/usuarios/9999` | 404 | 404 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 21 | POST | `/usuarios` | 201 | 201 | igual |
 | 22 | POST | `/usuarios` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
-| 23 | POST | `/login` | 200 | 200 | igual |
+| 23 | POST | `/login` | 200 | 401 | DIFERENTE (esperado: o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=admin123 para reproduzir o login de demonstração, ou a senha sorteada que aparece no log do primeiro boot): status 200 → 401; shape (-dados, -mensagem, +erro) |
 | 24 | POST | `/login` | 401 | 401 | igual |
 | 25 | POST | `/login` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 26 | POST | `/pedidos` | 201 | 201 | igual |
@@ -34,7 +34,7 @@
 | 32 | PUT | `/pedidos/1/status` | 200 | 200 | igual |
 | 33 | PUT | `/pedidos/1/status` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 34 | GET | `/relatorios/vendas` | 200 | 200 | igual |
-| 35 | POST | `/admin/query` | 200 | 403 | DIFERENTE (esperado: POST /admin/query desabilitado por padrão → 403 (exceção 2: endpoint destrutivo)): status 200 → 403; shape (-dados, +erro) |
-| 36 | POST | `/admin/reset-db` | 200 | 403 | DIFERENTE (esperado: POST /admin/reset-db desabilitado por padrão → 403 (exceção 2: endpoint destrutivo)): status 200 → 403; shape (-mensagem, +erro) |
+| 35 | POST | `/admin/query` | 200 | 403 | DIFERENTE (esperado: POST /admin/query — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403; shape (-dados, +erro) |
+| 36 | POST | `/admin/reset-db` | 200 | 403 | DIFERENTE (esperado: POST /admin/reset-db — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403; shape (-mensagem, +erro) |
 
-20/36 checks idênticos (status + shape); 16 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+19/36 checks idênticos (status + shape); 17 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.

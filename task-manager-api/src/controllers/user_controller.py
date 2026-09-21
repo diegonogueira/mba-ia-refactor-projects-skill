@@ -6,7 +6,7 @@ from flask import jsonify, request
 from src.controllers.validators.user_validator import (validate_credentials, validate_new_user,
                                                        validate_user_changes)
 from src.models.task_model import NO_TASKS, Task
-from src.models.user_model import User
+from src.models.user_model import USER_NOT_FOUND_MESSAGE, User
 from src.utils.datetime_utils import utcnow_naive
 from src.utils.errors import NotFoundError
 from src.views.serializers import (serialize_login, serialize_user, serialize_user_task,
@@ -14,7 +14,6 @@ from src.views.serializers import (serialize_login, serialize_user, serialize_us
 
 logger = logging.getLogger(__name__)
 
-USER_NOT_FOUND_MESSAGE = 'Usuário não encontrado'
 USER_DELETED_MESSAGE = 'Usuário deletado com sucesso'
 
 

@@ -8,10 +8,15 @@ Para cada requisição (mesma ordem nos dois arquivos) compara o status HTTP e o
 "shape" da resposta (chaves JSON até 2 níveis; `-campo` = removido, `+campo` = novo).
 Imprime uma tabela Markdown e um resumo.
 
-Com `--expected`, cada diferença precisa estar listada no arquivo de diferenças
-esperadas (mudanças de contrato documentadas, ex.: remoção de campos sensíveis),
-indexada por "<n>" (posição do check, a partir de 1). Qualquer diferença não
-listada é tratada como regressão e o script termina com código 1.
+Com `--expected`, cada diferença precisa estar declarada no arquivo de diferenças
+esperadas (mudanças de contrato documentadas), indexada por "<n>" (posição do check,
+a partir de 1). O valor pode ser:
+
+    "<n>": "motivo"                              → só diferença de shape é aceita
+    "<n>": {"status": "200->403", "motivo": "…"} → também aceita essa troca de status
+
+Qualquer diferença não declarada — inclusive uma troca de status onde só se esperava
+mudança de shape — é tratada como regressão e o script termina com código 1.
 """
 import json
 import sys
@@ -67,13 +72,22 @@ def main():
             if not shape_ok:
                 detail = shape_diff(b.get("shape"), n.get("shape")) if b.get("json") and n.get("json") else ["texto ↔ JSON"]
                 parts.append("shape (" + ", ".join(detail) + ")")
-            reason = expected.get(str(index))
-            if reason:
+            entry = expected.get(str(index))
+            reason, allowed_status = None, None
+            if isinstance(entry, dict):
+                reason, allowed_status = entry.get("motivo"), entry.get("status")
+            elif entry:
+                reason = entry
+            status_declared = status_ok or (allowed_status == f"{b['status']}->{n['status']}")
+            if reason and status_declared:
                 documented += 1
                 verdict = "DIFERENTE (esperado: " + reason + "): " + "; ".join(parts)
             else:
                 regressions += 1
-                verdict = "DIFERENTE" + (" — NÃO ESPERADO" if gate else "") + ": " + "; ".join(parts)
+                missing = "" if reason else ""
+                if reason and not status_declared:
+                    missing = f" — troca de status {b['status']}->{n['status']} não declarada"
+                verdict = "DIFERENTE" + (" — NÃO ESPERADO" + missing if gate else "") + ": " + "; ".join(parts)
         rows.append(f"| {index} | {b['method']} | `{b['path']}` | {b['status']} | {n['status']} | {verdict} |")
 
     print("| # | Método | Rota | Original | Refatorado | Resultado |")

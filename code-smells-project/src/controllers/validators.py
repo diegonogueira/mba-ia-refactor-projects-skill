@@ -8,6 +8,12 @@ from src.utils.errors import ValidationError
 DADOS_INVALIDOS = "Dados inválidos"
 EMAIL_FORMATO = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# Política de cadastro de usuário (o login não aplica mínimos: contas antigas seguem entrando).
+SENHA_TAMANHO_MINIMO = 8
+SENHA_TAMANHO_MAXIMO = 128  # evita gastar CPU de hashing com entradas enormes
+NOME_TAMANHO_MAXIMO = 200
+EMAIL_TAMANHO_MAXIMO = 254  # RFC 5321
+
 
 def _eh_numero(valor):
     return isinstance(valor, (int, float)) and not isinstance(valor, bool) and math.isfinite(valor)
@@ -73,8 +79,14 @@ def ler_usuario(dados):
     if not all(isinstance(valor, str) for valor in campos):
         raise ValidationError("Nome, email e senha devem ser textos")
     nome, email, senha = campos
-    if not EMAIL_FORMATO.match(email):
+    if len(nome) > NOME_TAMANHO_MAXIMO:
+        raise ValidationError(f"Nome deve ter no máximo {NOME_TAMANHO_MAXIMO} caracteres")
+    if len(email) > EMAIL_TAMANHO_MAXIMO or not EMAIL_FORMATO.match(email):
         raise ValidationError("Email inválido")
+    if len(senha) < SENHA_TAMANHO_MINIMO:
+        raise ValidationError(f"Senha deve ter no mínimo {SENHA_TAMANHO_MINIMO} caracteres")
+    if len(senha) > SENHA_TAMANHO_MAXIMO:
+        raise ValidationError(f"Senha deve ter no máximo {SENHA_TAMANHO_MAXIMO} caracteres")
     return {"nome": nome, "email": email, "senha": senha}
 
 

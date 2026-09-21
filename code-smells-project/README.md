@@ -9,7 +9,9 @@ pip install -r requirements.txt
 python app.py
 ```
 
-A aplicação sobe em `http://127.0.0.1:5000`. O banco SQLite (`loja.db`) é criado automaticamente no primeiro boot, já com produtos e usuários de exemplo (as senhas do seed são gravadas como hash).
+A aplicação sobe em `http://127.0.0.1:5000`. O banco SQLite (`loja.db`) é criado automaticamente no primeiro boot, já com produtos e usuários de exemplo.
+
+Os usuários de demonstração **não têm senha fixa no código**: defina `SEED_PASSWORD` para escolher a senha ou deixe em branco para que uma senha aleatória seja sorteada no primeiro boot e registrada no log uma única vez (procure por `SEED_PASSWORD não definido` na saída). Use `SEED_DATABASE=false` para não criá-los.
 
 ## Configuração
 
@@ -24,11 +26,13 @@ Todas as configurações vêm de variáveis de ambiente; veja `.env.example` (o 
 | `APP_ENV` | `producao` | Nome do ambiente exibido no `/health` |
 | `DATABASE_PATH` | `loja.db` | Arquivo do banco SQLite |
 | `SEED_DATABASE` | `true` | Insere produtos e usuários de demonstração quando o banco está vazio |
-| `CORS_ORIGINS` | `*` | Origens permitidas, separadas por vírgula |
+| `SEED_PASSWORD` | senha aleatória por boot | Senha dos usuários de demonstração (registrada no log quando sorteada) |
+| `LOG_LEVEL` | `INFO` | Nível dos logs da aplicação |
+| `CORS_ORIGINS` | `http://127.0.0.1:5000` | Origens permitidas, separadas por vírgula (`*` libera todas — só em desenvolvimento) |
 | `ADMIN_ENDPOINTS_ENABLED` | `false` | Habilita `/admin/reset-db` e `/admin/query` |
 | `ADMIN_TOKEN` | — | Token exigido no header `X-Admin-Token` pelos endpoints `/admin/*` |
 
-Com os endpoints administrativos habilitados, `/admin/query` aceita apenas uma única consulta `SELECT`, executada numa conexão somente leitura.
+Com os endpoints administrativos habilitados, `/admin/query` aceita apenas uma única consulta `SELECT`, executada numa conexão somente leitura. Consultas que citam colunas de credenciais (`senha`, `password`, `token`, `secret`) são recusadas e esses campos também são removidos das linhas retornadas — então nem `SELECT *` expõe hashes de senha.
 
 ## Estrutura
 

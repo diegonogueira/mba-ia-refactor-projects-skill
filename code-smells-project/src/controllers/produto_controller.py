@@ -4,12 +4,11 @@ from flask import jsonify, request
 
 from src.controllers.validators import ler_filtros_busca, ler_produto
 from src.models import produto_model
+from src.models.produto_model import PRODUTO_NAO_ENCONTRADO
 from src.utils.errors import NotFoundError
 from src.views.serializers import serializar_produto
 
 logger = logging.getLogger(__name__)
-
-PRODUTO_NAO_ENCONTRADO = "Produto não encontrado"
 
 
 def _obter_produto(produto_id):

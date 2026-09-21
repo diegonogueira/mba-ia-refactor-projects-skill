@@ -1,6 +1,8 @@
 """Rotas de usuários e login: apenas URL + método → controller."""
 from flask import Blueprint
 
+from src.middlewares.admin_guard import admin_only
+
 
 def build_user_blueprint(controller) -> Blueprint:
     blueprint = Blueprint('users', __name__)
@@ -8,7 +10,9 @@ def build_user_blueprint(controller) -> Blueprint:
     blueprint.add_url_rule('/users', 'create_user', controller.create_user, methods=['POST'])
     blueprint.add_url_rule('/users/<int:user_id>', 'get_user', controller.get_user, methods=['GET'])
     blueprint.add_url_rule('/users/<int:user_id>', 'update_user', controller.update_user, methods=['PUT'])
-    blueprint.add_url_rule('/users/<int:user_id>', 'delete_user', controller.delete_user, methods=['DELETE'])
+    # apagar um usuário remove em cascata todas as tasks dele: só com o guard administrativo
+    blueprint.add_url_rule('/users/<int:user_id>', 'delete_user', admin_only(controller.delete_user),
+                           methods=['DELETE'])
     blueprint.add_url_rule('/users/<int:user_id>/tasks', 'list_user_tasks', controller.list_user_tasks,
                            methods=['GET'])
     blueprint.add_url_rule('/login', 'login', controller.login, methods=['POST'])
