@@ -13,7 +13,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(npm audit *)
 metadata:
-  version: 1.2.0
+  version: 1.3.0
   phases: analysis, audit, refactoring
 ---
 
@@ -123,8 +123,11 @@ Following the validation guide: prepare the runtime (virtualenv / `npm install`)
 ### 3.4 Validate
 Boot the refactored app and rerun the same smoke test. Compare with the baseline following the validation guide. Fix every regression and repeat until all endpoints match (differences allowed only for the documented contract exceptions).
 
-### 3.5 Re-audit
-Rerun the catalog detection signals on the new code. Any remaining CRITICAL or HIGH finding must be fixed now; anything intentionally left (e.g. needs a product decision such as introducing authentication) must be listed as a remaining item with the reason.
+### 3.5 Re-audit and finding-by-finding closure
+1. Rerun the catalog detection signals on the new code.
+2. Go through the Phase 2 report **finding by finding** and classify each one as `Fixed`, `Partially fixed` or `Not fixed`, with the evidence (file, and the check you ran). Every finding must appear in the "Findings Addressed" table with that status — none may be silently dropped.
+3. A finding may only stay `Partially fixed`/`Not fixed` when the missing part is outside the allowed exceptions of `references/mvc-guidelines.md` §9 (typically: adding mandatory authentication where everything was public, or changing the response envelope). Everything else must be fixed before you finish — including the part of a finding that is fixable while the rest is blocked (see §9, "Do not hide a fixable problem behind a bigger one"): privilege fields accepted from anonymous clients, predictable tokens, missing validation, integrity fixes.
+4. Whatever stays open goes to "Remaining Items" with the reason and the recommendation, and the validation block must show `✗` for "Zero CRITICAL/HIGH anti-patterns remaining".
 
 ### 3.6 Clean up
 Stop every process you started, delete runtime artifacts you created inside the project that are not versioned (database files, logs, `__pycache__`), and keep dependency folders out of version control.

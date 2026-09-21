@@ -127,9 +127,9 @@ PHASE 3: REFACTORING COMPLETE
 
 ## Findings Addressed
 
-| Finding | Severity | Transformation | Where it was fixed |
-|---|---|---|---|
-| <AP-xx name> | <SEV> | <T-xx> | `<new file(s)>` |
+| Finding | Severity | Status | Transformation | Where it was fixed |
+|---|---|---|---|---|
+| <AP-xx name> | <SEV> | Fixed / Partially fixed / Not fixed | <T-xx> | `<new file(s)>` |
 
 ## Contract Changes
 
@@ -163,3 +163,5 @@ PHASE 3: REFACTORING COMPLETE
 Rules:
 - Only print ✓ for checks you actually executed in this session and that passed; use ✗ otherwise.
 - The endpoint count must match the Phase 1 inventory; list any mismatch explicitly.
+- **Every finding of the Phase 2 report appears in "Findings Addressed"**, with the same name and severity, and with an explicit status. The number of rows equals the number of findings.
+- `Partially fixed` and `Not fixed` rows must name, in "Remaining Items", exactly what is missing and which contract rule blocks it. A finding may only stay unfixed when the fix is outside the allowed exceptions of `mvc-guidelines.md` §9.

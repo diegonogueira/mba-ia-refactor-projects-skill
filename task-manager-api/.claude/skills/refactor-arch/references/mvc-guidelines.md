@@ -179,8 +179,11 @@ Allowed exceptions (each must be listed under "Contract Changes" in the Phase 3 
 5. **Integrity fixes**: e.g. deleting a parent also removes/handles dependent rows inside a transaction; success message may change to reflect the real behavior.
 6. **Business-rule bugs that corrupt data** (negative quantities, overselling) are rejected with 400.
 7. **Credential format**: stored password hashes change algorithm; plaintext/legacy seed passwords must still authenticate after the change (re-hash seeds, or verify legacy hashes and upgrade on login).
+8. **Privilege escalation**: a field that grants privileges (`role`, `is_admin`, `type`, `permissions`, `plan`, `scopes`) must stop being honoured when it comes from an **unauthenticated** client. Ignore it and use the least-privileged default, or reject the privileged value with the project's error envelope (400/403); the route, the method and the success status stay the same. **This is a required security fix, not a product decision** — it does not need authentication to exist, it only needs the endpoint to stop granting privileges to anonymous callers. The same applies to update endpoints: without a guard that proves who is calling, a public endpoint may not change a privilege field.
 
-Not allowed without asking the user: adding mandatory authentication to endpoints that were public, renaming routes/fields, changing ports, changing response envelopes. Report these as "Remaining Items" recommendations instead.
+Not allowed without asking the user: adding mandatory authentication to endpoints that were public (i.e. turning a 200 into a 401 for a legitimate request), renaming routes/fields, changing ports, changing response envelopes. Report these as "Remaining Items" recommendations instead.
+
+**Do not hide a fixable problem behind a bigger one.** "This needs authentication" only covers the part that really needs authentication. When a finding has a portion that can be fixed within the exceptions above (e.g. the privilege field of exception 8, a predictable token that can be signed, a missing ownership check that can become a 404), fix that portion now and keep only the genuinely blocked part in "Remaining Items", saying explicitly what was fixed and what was not.
 
 ## 10. Adapting to the starting point
 

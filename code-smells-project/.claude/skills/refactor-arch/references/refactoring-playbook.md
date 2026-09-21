@@ -398,6 +398,29 @@ function adminGuard(settings) {
 ```
 Use guards on routes that were already "admin"/debug by nature only when allowed by the contract rules (see mvc-guidelines §9); otherwise list authentication as a remaining item.
 
+Privilege escalation on public endpoints — before:
+```python
+role = data.get("role", "user")          # anyone can send {"role": "admin"}
+if role not in ("user", "admin", "manager"):
+    raise ValidationError("Role inválido")
+```
+
+After (self-registration can only create the least-privileged role; the route, the method and the 201 stay the same):
+```python
+DEFAULT_ROLE = "user"
+SELF_SIGNUP_ROLES = (DEFAULT_ROLE,)          # roles an anonymous caller may ask for
+PRIVILEGED_ROLES = ("admin", "manager")      # only an authenticated admin may grant these
+
+def role_for_public_signup(payload: dict) -> str:
+    requested = payload.get("role", DEFAULT_ROLE)
+    if requested not in USER_ROLES:
+        raise ValidationError("Role inválido")          # same message as before
+    if requested not in SELF_SIGNUP_ROLES:
+        raise ForbiddenError("Não é possível criar usuário com esse role")
+    return requested
+```
+The same rule applies to updates: while the endpoint has no guard proving who is calling, it must not change `role`/`is_admin`/`permissions` (reject with 403, or ignore the field and say so in "Contract Changes"). Escalating to "needs authentication" is not an option here — see `mvc-guidelines.md` §9 exception 8.
+
 Predictable tokens (`'token-' + str(user.id)`) → sign them with the framework's utilities (e.g. `itsdangerous.URLSafeTimedSerializer(secret_key).dumps({"user_id": id})`, or HMAC with `crypto.createHmac('sha256', secret)`), keeping the same response field.
 
 ---
