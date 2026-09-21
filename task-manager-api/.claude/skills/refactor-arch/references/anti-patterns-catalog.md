@@ -106,6 +106,9 @@ Escalation rules:
 - Health/debug endpoints returning `secret_key`, `debug`, `db_path`, env vars.
 - Logs with sensitive values: `(print|console\.log|logger\.\w+)\(.*(card|cc|password|senha|token|key|secret)`.
 - Exception text returned to clients (`str(e)`, `err.message`) — report under AP-15 unless it leaks secrets.
+- Database/ORM errors logged with their parameters: `logger.exception`/`console.error` over a driver error whose message embeds the statement and bound values (SQLAlchemy `IntegrityError ... [parameters: (...)]` includes password hashes on user inserts).
+- Admin/debug query endpoints able to `SELECT` credential columns (password, hash, token) — the data leaves through the tool even when the route is protected.
+- Seeds/fixtures creating privileged accounts with well-known passwords (`admin`/`admin123`) enabled by default.
 
 **Not a finding when:** the field is write-only (accepted in input but excluded from output) or logs mask the value (`****1234`).
 
@@ -322,6 +325,7 @@ Severity: HIGH when the vulnerable package is used at runtime by the application
 - Cross-cutting concerns repeated in every handler instead of middleware: auth checks, try/catch, logging, JSON parsing.
 - Error responses mixing plain text (`res.send("Erro DB")`) and JSON, or different envelopes per route.
 - Middlewares registered in the wrong order (error handler before routes, body parser after routes) or missing (`express.json()` absent while `req.body` is used).
+- Error handler that rebuilds the response and **drops headers the framework had set** (`Allow` on 405, `WWW-Authenticate`, CORS headers) — check by comparing the headers of an error response before and after the refactor.
 - Global CORS without restriction (see also AP-10).
 
 ---

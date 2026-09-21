@@ -13,7 +13,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(npm audit *)
 metadata:
-  version: 1.3.0
+  version: 1.4.0
   phases: analysis, audit, refactoring
 ---
 
@@ -125,9 +125,14 @@ Boot the refactored app and rerun the same smoke test. Compare with the baseline
 
 ### 3.5 Re-audit and finding-by-finding closure
 1. Rerun the catalog detection signals on the new code.
-2. Go through the Phase 2 report **finding by finding** and classify each one as `Fixed`, `Partially fixed` or `Not fixed`, with the evidence (file, and the check you ran). Every finding must appear in the "Findings Addressed" table with that status — none may be silently dropped.
+2. Go through the Phase 2 report **finding by finding**, re-reading the **Recommendation you wrote** for each one, and classify it as `Fixed`, `Partially fixed` or `Not fixed`, with the evidence (file, and the check you ran). Every finding must appear in the "Findings Addressed" table with that status — none may be silently dropped. If you implemented something different from your own recommendation (e.g. the recommendation said "remove this endpoint" and you only protected it), the status is `Partially fixed` and the difference goes to "Remaining Items".
 3. A finding may only stay `Partially fixed`/`Not fixed` when the missing part is outside the allowed exceptions of `references/mvc-guidelines.md` §9 (typically: adding mandatory authentication where everything was public, or changing the response envelope). Everything else must be fixed before you finish — including the part of a finding that is fixable while the rest is blocked (see §9, "Do not hide a fixable problem behind a bigger one"): privilege fields accepted from anonymous clients, predictable tokens, missing validation, integrity fixes.
 4. Whatever stays open goes to "Remaining Items" with the reason and the recommendation, and the validation block must show `✗` for "Zero CRITICAL/HIGH anti-patterns remaining".
+5. Run these closure probes against the running app before declaring a security finding fixed (they are the ones that catch "fixed on paper"):
+   - privilege field sent by an anonymous client (`{"role": "admin"}`) on create **and** update → the created/updated record must keep the default role;
+   - protected/destructive endpoint **without** any configuration → must answer 403 (not 200);
+   - an error forced on a write (duplicate key) → the log must not contain the bound parameters (no password hashes);
+   - an error status the framework used to decorate (405) → the header (`Allow`) must still be there.
 
 ### 3.6 Clean up
 Stop every process you started, delete runtime artifacts you created inside the project that are not versioned (database files, logs, `__pycache__`), and keep dependency folders out of version control.
