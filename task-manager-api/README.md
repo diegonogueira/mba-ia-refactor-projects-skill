@@ -30,7 +30,7 @@ valor efêmero a cada boot e registra um aviso.
 | `HOST` | `127.0.0.1` | Interface do servidor (use `0.0.0.0` para expor na rede) |
 | `PORT` | `5000` | Porta do servidor |
 | `FLASK_DEBUG` | `false` | Modo debug do Flask |
-| `CORS_ORIGINS` | `*` | Origens liberadas no CORS, separadas por vírgula |
+| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Origens liberadas no CORS, separadas por vírgula (`*` libera todas — só em desenvolvimento) |
 | `LOG_LEVEL` | `INFO` | Nível dos logs |
 
 ## Estrutura
@@ -72,3 +72,20 @@ src/
 | PUT/DELETE | `/categories/<id>` | Atualiza e remove uma categoria |
 
 Todas as respostas, inclusive as de erro, são JSON. Erros usam o envelope `{"error": "mensagem"}`.
+
+## Regras de segurança dos endpoints de usuário
+
+A API ainda não exige autenticação (veja as limitações abaixo), então os endpoints públicos não concedem
+privilégios a quem chama:
+
+- `POST /users` cria sempre com `role: "user"`. Pedir `admin` ou `manager` devolve **403**.
+- `PUT /users/<id>` não altera `role` nem `active`: ambos devolvem **403**. Esses campos só devem mudar
+  por uma rota administrativa autenticada.
+- Senhas têm no mínimo 8 caracteres e são gravadas com hash `scrypt` (Werkzeug).
+- `name`, `email`, `description` e `color` são validados contra os limites das colunas; `color` precisa
+  ser hexadecimal no formato `#RRGGBB`.
+
+**Limitação conhecida:** nenhuma rota exige autenticação. O token devolvido por `POST /login` é assinado,
+mas ainda não é verificado por nenhum endpoint — qualquer cliente com acesso de rede consegue ler, alterar
+e apagar dados. Antes de expor a API fora do ambiente local, adicione um middleware que valide esse token
+(e o papel do usuário) nas rotas de escrita.

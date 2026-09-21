@@ -1,0 +1,12 @@
+# Ambiente virtual e artefatos de runtime (nunca versionados)
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Banco SQLite criado pela aplicação
+instance/
+*.db
+
+# Configuração local com valores reais (use .env.example como modelo)
+.env

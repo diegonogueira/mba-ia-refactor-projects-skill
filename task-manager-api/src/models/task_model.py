@@ -63,8 +63,14 @@ class Task(PersistableMixin, db.Model):
         now = now or utcnow_naive()
         return and_(cls.due_date.isnot(None), cls.due_date < now, cls.status.notin_(CLOSED_STATUSES))
 
+    @hybrid_method
     def is_high_priority(self) -> bool:
         return self.priority is not None and self.priority <= HIGH_PRIORITY_MAX
+
+    @is_high_priority.expression
+    def is_high_priority(cls):
+        """Mesma regra, avaliada no banco (usada nas contagens do relatório por usuário)."""
+        return and_(cls.priority.isnot(None), cls.priority <= HIGH_PRIORITY_MAX)
 
     def days_overdue(self, now: datetime | None = None) -> int:
         now = now or utcnow_naive()
@@ -123,16 +129,26 @@ class Task(PersistableMixin, db.Model):
         return list(db.session.execute(select(cls).where(cls.is_overdue(now)).order_by(cls.id)).scalars())
 
     @classmethod
-    def count_all(cls) -> int:
-        return db.session.scalar(select(func.count(cls.id)))
+    def _scoped(cls, query, user_id):
+        """Restringe a consulta a um usuário quando `user_id` é informado."""
+        return query if user_id is None else query.where(cls.user_id == user_id)
 
     @classmethod
-    def count_overdue(cls, now: datetime | None = None) -> int:
-        return db.session.scalar(select(func.count(cls.id)).where(cls.is_overdue(now)))
+    def count_all(cls, *, user_id=None) -> int:
+        return db.session.scalar(cls._scoped(select(func.count(cls.id)), user_id))
 
     @classmethod
-    def count_by_status(cls) -> dict[str, int]:
-        counts = dict(db.session.execute(select(cls.status, func.count(cls.id)).group_by(cls.status)).all())
+    def count_overdue(cls, now: datetime | None = None, *, user_id=None) -> int:
+        return db.session.scalar(cls._scoped(select(func.count(cls.id)).where(cls.is_overdue(now)), user_id))
+
+    @classmethod
+    def count_high_priority(cls, *, user_id=None) -> int:
+        return db.session.scalar(cls._scoped(select(func.count(cls.id)).where(cls.is_high_priority()), user_id))
+
+    @classmethod
+    def count_by_status(cls, *, user_id=None) -> dict[str, int]:
+        query = cls._scoped(select(cls.status, func.count(cls.id)), user_id).group_by(cls.status)
+        counts = dict(db.session.execute(query).all())
         return {status: counts.get(status, 0) for status in TASK_STATUSES}
 
     @classmethod

@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 
 from src.models.category_model import Category
-from src.models.task_model import NO_TASKS, TASK_STATUSES, Task
+from src.models.task_model import NO_TASKS, Task
 from src.models.user_model import User
 from src.utils.datetime_utils import utcnow_naive
 from src.utils.errors import NotFoundError
@@ -47,25 +47,21 @@ class ReportService:
         }
 
     def user_report(self, user_id, now: datetime | None = None) -> dict:
-        """Estatísticas das tasks de um usuário."""
+        """Estatísticas das tasks de um usuário, agregadas no banco."""
         now = now or utcnow_naive()
         user = User.get_by_id(user_id)
         if user is None:
             raise NotFoundError(USER_NOT_FOUND_MESSAGE)
 
-        tasks = Task.list_by_user(user_id)
-        by_status = {status: 0 for status in TASK_STATUSES}
-        for task in tasks:
-            if task.status in by_status:
-                by_status[task.status] += 1
-
+        by_status = Task.count_by_status(user_id=user_id)
+        total = Task.count_all(user_id=user_id)
         return {
             'user': user,
-            'total': len(tasks),
+            'total': total,
             'by_status': by_status,
-            'overdue': sum(1 for task in tasks if task.is_overdue(now)),
-            'high_priority': sum(1 for task in tasks if task.is_high_priority()),
-            'completion_rate': calculate_percentage(by_status['done'], len(tasks)),
+            'overdue': Task.count_overdue(now, user_id=user_id),
+            'high_priority': Task.count_high_priority(user_id=user_id),
+            'completion_rate': calculate_percentage(by_status['done'], total),
         }
 
     @staticmethod

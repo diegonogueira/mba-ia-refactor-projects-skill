@@ -1,22 +1,26 @@
 """Validação dos payloads de usuário e de login."""
-from src.models.user_model import DEFAULT_ROLE, MIN_PASSWORD_LENGTH, USER_ROLES
-from src.utils.errors import ConflictError, ValidationError
+from src.models.user_model import (DEFAULT_ROLE, MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, MIN_PASSWORD_LENGTH,
+                                   SELF_SIGNUP_ROLES, USER_ROLES)
+from src.utils.errors import ConflictError, ForbiddenError, ValidationError
 from src.utils.validators import is_valid_email, require_json_object
 
 NAME_REQUIRED_MESSAGE = 'Nome é obrigatório'
 NAME_INVALID_MESSAGE = 'Nome inválido'
+NAME_TOO_LONG_MESSAGE = 'Nome muito longo'
 EMAIL_REQUIRED_MESSAGE = 'Email é obrigatório'
 EMAIL_INVALID_MESSAGE = 'Email inválido'
+EMAIL_TOO_LONG_MESSAGE = 'Email muito longo'
 EMAIL_TAKEN_MESSAGE = 'Email já cadastrado'
 PASSWORD_REQUIRED_MESSAGE = 'Senha é obrigatória'
 PASSWORD_INVALID_MESSAGE = 'Senha inválida'
-PASSWORD_TOO_SHORT_ON_CREATE_MESSAGE = 'Senha deve ter no mínimo 4 caracteres'
+PASSWORD_TOO_SHORT_ON_CREATE_MESSAGE = f'Senha deve ter no mínimo {MIN_PASSWORD_LENGTH} caracteres'
 PASSWORD_TOO_SHORT_ON_UPDATE_MESSAGE = 'Senha muito curta'
 ROLE_INVALID_MESSAGE = 'Role inválido'
-ACTIVE_INVALID_MESSAGE = 'Campo active inválido'
 CREDENTIALS_REQUIRED_MESSAGE = 'Email e senha são obrigatórios'
 
-ACTIVE_VALUES = (True, False, None)
+# Enquanto os endpoints de usuário não exigem autenticação, nenhum cliente pode escolher privilégios.
+ROLE_FORBIDDEN_MESSAGE = 'Não é possível definir esse role sem autenticação'
+ACTIVE_FORBIDDEN_MESSAGE = 'Não é possível alterar o campo active sem autenticação'
 
 
 def _password(value, too_short_message: str) -> str:
@@ -30,18 +34,25 @@ def _password(value, too_short_message: str) -> str:
 def _name(value) -> str:
     if not isinstance(value, str):
         raise ValidationError(NAME_INVALID_MESSAGE)
+    if len(value) > MAX_NAME_LENGTH:
+        raise ValidationError(NAME_TOO_LONG_MESSAGE)
     return value
 
 
-def _role(value) -> str:
+def _email(value) -> str:
+    if not is_valid_email(value):
+        raise ValidationError(EMAIL_INVALID_MESSAGE)
+    if len(value) > MAX_EMAIL_LENGTH:
+        raise ValidationError(EMAIL_TOO_LONG_MESSAGE)
+    return value
+
+
+def _self_signup_role(value) -> str:
+    """Cadastro público só cria o papel menos privilegiado; pedir outro é recusado."""
     if value not in USER_ROLES:
         raise ValidationError(ROLE_INVALID_MESSAGE)
-    return value
-
-
-def _active(value):
-    if value not in ACTIVE_VALUES:
-        raise ValidationError(ACTIVE_INVALID_MESSAGE)
+    if value not in SELF_SIGNUP_ROLES:
+        raise ForbiddenError(ROLE_FORBIDDEN_MESSAGE)
     return value
 
 
@@ -59,34 +70,33 @@ def validate_new_user(payload, *, email_in_use) -> dict:
         raise ValidationError(EMAIL_REQUIRED_MESSAGE)
     if not password:
         raise ValidationError(PASSWORD_REQUIRED_MESSAGE)
-    if not is_valid_email(email):
-        raise ValidationError(EMAIL_INVALID_MESSAGE)
+    email = _email(email)
     _password(password, PASSWORD_TOO_SHORT_ON_CREATE_MESSAGE)
     if email_in_use(email):
         raise ConflictError(EMAIL_TAKEN_MESSAGE)
 
-    return {'name': _name(name), 'email': email, 'password': password, 'role': _role(role)}
+    return {'name': _name(name), 'email': email, 'password': password, 'role': _self_signup_role(role)}
 
 
 def validate_user_changes(payload, *, email_in_use) -> dict:
     data = require_json_object(payload)
-    changes = {}
 
+    # Sem um guard que prove quem está chamando, campos de privilégio não podem ser alterados.
+    if 'role' in data:
+        raise ForbiddenError(ROLE_FORBIDDEN_MESSAGE)
+    if 'active' in data:
+        raise ForbiddenError(ACTIVE_FORBIDDEN_MESSAGE)
+
+    changes = {}
     if 'name' in data:
         changes['name'] = _name(data['name'])
     if 'email' in data:
-        email = data['email']
-        if not is_valid_email(email):
-            raise ValidationError(EMAIL_INVALID_MESSAGE)
+        email = _email(data['email'])
         if email_in_use(email):
             raise ConflictError(EMAIL_TAKEN_MESSAGE)
         changes['email'] = email
     if 'password' in data:
         changes['password'] = _password(data['password'], PASSWORD_TOO_SHORT_ON_UPDATE_MESSAGE)
-    if 'role' in data:
-        changes['role'] = _role(data['role'])
-    if 'active' in data:
-        changes['active'] = _active(data['active'])
     return changes
 
 

@@ -1,4 +1,6 @@
 """Entidade Category: dados e consultas."""
+import re
+
 from sqlalchemy import func, select
 
 from src.models.database import PersistableMixin, db
@@ -6,6 +8,9 @@ from src.utils.datetime_utils import utcnow_naive
 
 DEFAULT_COLOR = '#000000'
 COLOR_LENGTH = 7
+COLOR_PATTERN = re.compile(r'^#[0-9a-fA-F]{6}$')
+MAX_NAME_LENGTH = 100
+MAX_DESCRIPTION_LENGTH = 300
 
 
 class Category(PersistableMixin, db.Model):
@@ -14,8 +19,8 @@ class Category(PersistableMixin, db.Model):
     CREATE_ERROR_MESSAGE = 'Erro ao criar categoria'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(300), nullable=True)
+    name = db.Column(db.String(MAX_NAME_LENGTH), nullable=False)
+    description = db.Column(db.String(MAX_DESCRIPTION_LENGTH), nullable=True)
     color = db.Column(db.String(COLOR_LENGTH), default=DEFAULT_COLOR)
     created_at = db.Column(db.DateTime, default=utcnow_naive)
 

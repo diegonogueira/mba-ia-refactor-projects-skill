@@ -396,6 +396,24 @@ function adminGuard(settings) {
   };
 }
 ```
+The guard must be **closed by default**: with no token configured it denies (403), it never falls through to `next()`/the view. An opt-in guard leaves the finding open — see `mvc-guidelines.md` §9 exception 2.
+
+```js
+// wrong: without ADMIN_TOKEN the route stays public
+function createAdminGuard({ adminToken }) {
+  if (!adminToken) return (req, res, next) => next();
+  ...
+}
+
+// right: closed by default, enabled by explicit configuration
+function createAdminGuard({ adminToken, adminEndpointsEnabled }) {
+  return (req, res, next) => {
+    if (!adminEndpointsEnabled || !adminToken) return next(new ForbiddenError('Admin endpoints disabled'));
+    return tokensMatch(req.get(ADMIN_TOKEN_HEADER) || '', adminToken) ? next() : next(new ForbiddenError());
+  };
+}
+```
+
 Use guards on routes that were already "admin"/debug by nature only when allowed by the contract rules (see mvc-guidelines §9); otherwise list authentication as a remaining item.
 
 Privilege escalation on public endpoints — before:
@@ -468,7 +486,13 @@ def register_error_handlers(app, error_key="erro"):
 
     @app.errorhandler(HTTPException)
     def handle_http_error(err):
-        return jsonify({error_key: err.description}), err.code
+        response = jsonify({error_key: err.description})
+        response.status_code = err.code
+        # keep the headers the framework had set (Allow on 405, WWW-Authenticate on 401...)
+        for header, value in (err.get_response().headers or {}).items():
+            if header.lower() not in {"content-type", "content-length"}:
+                response.headers[header] = value
+        return response
 
     @app.errorhandler(Exception)
     def handle_unexpected(err):

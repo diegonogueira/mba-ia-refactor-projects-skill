@@ -14,7 +14,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATABASE_URL = 'sqlite:///tasks.db'
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 5000
-DEFAULT_CORS_ORIGINS = '*'
+# Origens de desenvolvimento; liberar qualquer origem exige CORS_ORIGINS=* explícito no ambiente.
+DEFAULT_CORS_ORIGINS = 'http://localhost:3000,http://127.0.0.1:3000'
 DEFAULT_LOG_LEVEL = 'INFO'
 TRUTHY_VALUES = {'1', 'true', 'yes', 'on'}
 
@@ -47,7 +48,10 @@ def _secret(name: str) -> str:
 
 def _cors_origins(raw: str) -> str | list[str]:
     origins = [origin.strip() for origin in raw.split(',') if origin.strip()]
-    if not origins or origins == ['*']:
+    if not origins:
+        return _cors_origins(DEFAULT_CORS_ORIGINS)
+    if origins == ['*']:
+        logger.warning('CORS_ORIGINS=* libera a API para qualquer origem; use apenas em desenvolvimento')
         return '*'
     return origins
 

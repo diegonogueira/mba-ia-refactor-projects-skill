@@ -4,6 +4,7 @@ import logging
 from flask import Flask
 from flask_cors import CORS
 
+import src.models  # noqa: F401  — registra as entidades no metadata antes do db.create_all()
 from src.config.settings import Settings, load_settings
 from src.controllers.category_controller import CategoryController
 from src.controllers.health_controller import HealthController
@@ -23,7 +24,7 @@ from src.views.user_routes import build_user_blueprint
 LOG_FORMAT = '%(asctime)s %(levelname)s %(name)s: %(message)s'
 
 
-def create_app(settings: Settings | None = None, config_overrides: dict | None = None) -> Flask:
+def create_app(settings: Settings | None = None) -> Flask:
     settings = settings or load_settings()
     logging.basicConfig(level=settings.log_level, format=LOG_FORMAT)
 
@@ -32,7 +33,6 @@ def create_app(settings: Settings | None = None, config_overrides: dict | None =
         SECRET_KEY=settings.secret_key,
         SQLALCHEMY_DATABASE_URI=settings.database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        **(config_overrides or {}),
     )
 
     CORS(app, origins=settings.cors_origins)

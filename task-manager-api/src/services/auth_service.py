@@ -1,12 +1,8 @@
 """Autenticação: verifica credenciais e emite tokens assinados."""
-import logging
-
 from itsdangerous import URLSafeTimedSerializer
 
 from src.models.user_model import User
 from src.utils.errors import ForbiddenError, UnauthorizedError
-
-logger = logging.getLogger(__name__)
 
 TOKEN_SALT = 'auth-token'
 INVALID_CREDENTIALS_MESSAGE = 'Credenciais inválidas'
@@ -18,14 +14,10 @@ class AuthService:
         self._serializer = URLSafeTimedSerializer(secret_key, salt=TOKEN_SALT)
 
     def authenticate(self, email: str, password: str) -> User:
-        """Valida e-mail e senha; migra hashes MD5 antigos no primeiro login bem-sucedido."""
+        """Valida e-mail e senha de um usuário ativo."""
         user = User.get_by_email(email)
         if user is None or not user.check_password(password):
             raise UnauthorizedError(INVALID_CREDENTIALS_MESSAGE)
-        if user.has_legacy_hash():
-            logger.info('Atualizando hash de senha legado: usuário id=%s', user.id)
-            user.set_password(password)
-            user.update()
         if not user.active:
             raise ForbiddenError(INACTIVE_USER_MESSAGE)
         return user
