@@ -72,6 +72,11 @@ probes_1() {
   probe_body "health não expõe segredos" 'secret_key|db_path' localhost:5000/health
   probe "login com a senha do seed configurada" 200 -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com","senha":"senha-de-teste-123"}'
   probe "injeção de SQL no login não autentica" 401 -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com'"'"' --","senha":"x"}'
+  if curl -s -D- -o /dev/null -H 'Origin: http://origem-desconhecida.example' localhost:5000/produtos | grep -qi 'access-control-allow-origin'; then
+    echo "  FAIL  CORS reflete origem desconhecida"; FAILED=1
+  else
+    echo "  PASS  CORS não reflete origem desconhecida"
+  fi
   stop
   echo "  -- com os endpoints administrativos habilitados --"
   start "$d" 5000 "$WORK/p1-admin.log" env ADMIN_ENDPOINTS_ENABLED=true ADMIN_TOKEN=token-de-teste SEED_PASSWORD=senha-de-teste-123 "$d/.venv/bin/python" app.py || return 1
@@ -112,9 +117,37 @@ probes_3() {
   probe "desativar conta alheia é recusado" 403 -X PUT localhost:5000/users/2 -H 'Content-Type: application/json' -d '{"active":false}'
   probe "atualização legítima continua funcionando" 200 -X PUT localhost:5000/users/2 -H 'Content-Type: application/json' -d '{"name":"Maria S."}'
   probe_body "resposta de usuário não traz hash de senha" '"password"' localhost:5000/users/1
-  curl -s -o /dev/null -X POST localhost:5000/users -H 'Content-Type: application/json' -d '{"name":"Dup","email":"joao@email.com","password":"segredo123"}'
-  if grep -qE 'scrypt|pbkdf2|parameters:' "$WORK/p3.log"; then echo "  FAIL  log expõe parâmetros/hash de senha"; FAILED=1; else echo "  PASS  log de erro não expõe parâmetros do banco"; fi
+  if curl -s -D- -o /dev/null -H 'Origin: http://origem-desconhecida.example' localhost:5000/tasks | grep -qi 'access-control-allow-origin'; then
+    echo "  FAIL  CORS reflete origem desconhecida"; FAILED=1
+  else
+    echo "  PASS  CORS não reflete origem desconhecida"
+  fi
   stop
+  # Falha de escrita real: o e-mail duplicado é barrado pelo validador antes do banco, então força-se um
+  # IntegrityError de verdade para ver o que o logger grava.
+  ( cd "$d" && .venv/bin/python - <<'PY' > "$WORK/p3-integrity.log" 2>&1
+import logging
+logging.basicConfig(level=logging.DEBUG)
+from src.app import create_app
+from src.models.database import commit, db
+from src.models.user_model import User
+app = create_app()
+with app.app_context():
+    existente = db.session.execute(db.select(User)).scalars().first()
+    duplicado = User(name="Dup", email=existente.email, role="user")
+    duplicado.set_password("segredo123")
+    db.session.add(duplicado)
+    try:
+        commit("Erro ao criar usuário")
+    except Exception as exc:
+        print("erro tratado:", type(exc).__name__)
+PY
+  )
+  if grep -qiE 'scrypt|pbkdf2|parameters: \(|INSERT INTO users' "$WORK/p3-integrity.log"; then
+    echo "  FAIL  log de erro expõe parâmetros/hash de senha"; FAILED=1
+  else
+    echo "  PASS  log de erro não expõe parâmetros do banco (IntegrityError forçado)"
+  fi
 }
 
 case "${1:-all}" in

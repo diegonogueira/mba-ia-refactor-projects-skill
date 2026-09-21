@@ -31,7 +31,7 @@
 | 29 | PUT | `/users/9999` | 404 | 404 | igual |
 | 30 | GET | `/users/1/tasks` | 200 | 200 | igual |
 | 31 | GET | `/users/9999/tasks` | 404 | 404 | igual |
-| 32 | POST | `/login` | 200 | 401 | DIFERENTE (esperado: o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=1234 no seed para reproduzir o login de demonstração, ou a senha sorteada que o seed imprime): status 200 → 401; shape (-message, -token, -user, +error) |
+| 32 | POST | `/login` | 200 | 401 | DIFERENTE (esperado: o seed deixou de ter senha no código (exceção 8): rode `SEED_PASSWORD=senha1234 python seed.py` (mínimo de 8 caracteres) para reproduzir o login de demonstração, ou use a senha sorteada que o seed imprime): status 200 → 401; shape (-message, -token, -user, +error) |
 | 33 | POST | `/login` | 401 | 401 | igual |
 | 34 | POST | `/login` | 400 | 400 | igual |
 | 35 | GET | `/reports/summary` | 200 | 200 | igual |

@@ -1,56 +1,56 @@
 SECRET_KEY não definida; usando um valor efêmero de desenvolvimento
  * Serving Flask app 'src.app'
  * Debug mode: off
-2026-09-21 12:30:04,642 INFO werkzeug: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+2026-09-21 12:55:43,229 INFO werkzeug: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
  * Running on http://127.0.0.1:5000
-2026-09-21 12:30:04,642 INFO werkzeug: Press CTRL+C to quit
-2026-09-21 12:30:04,957 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:04] "GET / HTTP/1.1" 200 -
-2026-09-21 12:30:04,993 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:04] "GET / HTTP/1.1" 200 -
-2026-09-21 12:30:04,994 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:04] "GET /health HTTP/1.1" 200 -
-2026-09-21 12:30:05,006 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /tasks HTTP/1.1" 200 -
-2026-09-21 12:30:05,008 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /tasks/1 HTTP/1.1" 200 -
-2026-09-21 12:30:05,009 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /tasks/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,014 INFO src.controllers.task_controller: Task criada: id=11
-2026-09-21 12:30:05,014 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 201 -
-2026-09-21 12:30:05,015 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 400 -
-2026-09-21 12:30:05,016 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 400 -
-2026-09-21 12:30:05,017 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 400 -
-2026-09-21 12:30:05,018 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 400 -
-2026-09-21 12:30:05,019 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 404 -
-2026-09-21 12:30:05,020 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /tasks HTTP/1.1" 400 -
-2026-09-21 12:30:05,022 INFO src.controllers.task_controller: Task atualizada: id=1
-2026-09-21 12:30:05,023 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /tasks/1 HTTP/1.1" 200 -
-2026-09-21 12:30:05,024 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /tasks/1 HTTP/1.1" 400 -
-2026-09-21 12:30:05,025 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /tasks/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,027 INFO src.controllers.task_controller: Task deletada: id=2
-2026-09-21 12:30:05,027 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "DELETE /tasks/2 HTTP/1.1" 200 -
-2026-09-21 12:30:05,029 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "DELETE /tasks/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,031 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /tasks/search?q=API HTTP/1.1" 200 -
-2026-09-21 12:30:05,033 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /tasks/search?status=pending&priority=1 HTTP/1.1" 200 -
-2026-09-21 12:30:05,036 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /tasks/stats HTTP/1.1" 200 -
-2026-09-21 12:30:05,039 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /users HTTP/1.1" 200 -
-2026-09-21 12:30:05,040 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /users/1 HTTP/1.1" 200 -
-2026-09-21 12:30:05,041 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /users/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,088 INFO src.controllers.user_controller: Usuário criado: id=4
-2026-09-21 12:30:05,088 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /users HTTP/1.1" 201 -
-2026-09-21 12:30:05,090 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /users HTTP/1.1" 409 -
-2026-09-21 12:30:05,091 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /users HTTP/1.1" 400 -
-2026-09-21 12:30:05,092 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /users HTTP/1.1" 400 -
-2026-09-21 12:30:05,094 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /users/2 HTTP/1.1" 200 -
-2026-09-21 12:30:05,095 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /users/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,097 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /users/1/tasks HTTP/1.1" 200 -
-2026-09-21 12:30:05,098 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /users/9999/tasks HTTP/1.1" 404 -
-2026-09-21 12:30:05,143 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /login HTTP/1.1" 401 -
-2026-09-21 12:30:05,188 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /login HTTP/1.1" 401 -
-2026-09-21 12:30:05,189 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /login HTTP/1.1" 400 -
-2026-09-21 12:30:05,193 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /reports/summary HTTP/1.1" 200 -
-2026-09-21 12:30:05,197 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /reports/user/1 HTTP/1.1" 200 -
-2026-09-21 12:30:05,198 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /reports/user/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,200 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "GET /categories HTTP/1.1" 200 -
-2026-09-21 12:30:05,202 INFO src.controllers.category_controller: Categoria criada: id=5
-2026-09-21 12:30:05,203 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /categories HTTP/1.1" 201 -
-2026-09-21 12:30:05,204 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "POST /categories HTTP/1.1" 400 -
-2026-09-21 12:30:05,207 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /categories/1 HTTP/1.1" 200 -
-2026-09-21 12:30:05,208 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "PUT /categories/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,209 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "DELETE /categories/9999 HTTP/1.1" 404 -
-2026-09-21 12:30:05,210 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:30:05] "DELETE /users/3 HTTP/1.1" 403 -
+2026-09-21 12:55:43,229 INFO werkzeug: Press CTRL+C to quit
+2026-09-21 12:55:43,544 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET / HTTP/1.1" 200 -
+2026-09-21 12:55:43,580 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET / HTTP/1.1" 200 -
+2026-09-21 12:55:43,581 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /health HTTP/1.1" 200 -
+2026-09-21 12:55:43,590 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /tasks HTTP/1.1" 200 -
+2026-09-21 12:55:43,593 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /tasks/1 HTTP/1.1" 200 -
+2026-09-21 12:55:43,594 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /tasks/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,600 INFO src.controllers.task_controller: Task criada: id=11
+2026-09-21 12:55:43,600 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 201 -
+2026-09-21 12:55:43,601 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 400 -
+2026-09-21 12:55:43,602 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 400 -
+2026-09-21 12:55:43,603 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 400 -
+2026-09-21 12:55:43,604 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 400 -
+2026-09-21 12:55:43,605 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 404 -
+2026-09-21 12:55:43,606 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /tasks HTTP/1.1" 400 -
+2026-09-21 12:55:43,609 INFO src.controllers.task_controller: Task atualizada: id=1
+2026-09-21 12:55:43,609 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /tasks/1 HTTP/1.1" 200 -
+2026-09-21 12:55:43,610 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /tasks/1 HTTP/1.1" 400 -
+2026-09-21 12:55:43,611 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /tasks/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,613 INFO src.controllers.task_controller: Task deletada: id=2
+2026-09-21 12:55:43,613 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "DELETE /tasks/2 HTTP/1.1" 200 -
+2026-09-21 12:55:43,615 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "DELETE /tasks/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,616 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /tasks/search?q=API HTTP/1.1" 200 -
+2026-09-21 12:55:43,618 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /tasks/search?status=pending&priority=1 HTTP/1.1" 200 -
+2026-09-21 12:55:43,622 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /tasks/stats HTTP/1.1" 200 -
+2026-09-21 12:55:43,624 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /users HTTP/1.1" 200 -
+2026-09-21 12:55:43,626 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /users/1 HTTP/1.1" 200 -
+2026-09-21 12:55:43,627 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /users/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,675 INFO src.controllers.user_controller: Usuário criado: id=4
+2026-09-21 12:55:43,676 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /users HTTP/1.1" 201 -
+2026-09-21 12:55:43,677 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /users HTTP/1.1" 409 -
+2026-09-21 12:55:43,678 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /users HTTP/1.1" 400 -
+2026-09-21 12:55:43,679 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /users HTTP/1.1" 400 -
+2026-09-21 12:55:43,681 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /users/2 HTTP/1.1" 200 -
+2026-09-21 12:55:43,682 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /users/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,684 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /users/1/tasks HTTP/1.1" 200 -
+2026-09-21 12:55:43,685 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /users/9999/tasks HTTP/1.1" 404 -
+2026-09-21 12:55:43,731 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /login HTTP/1.1" 401 -
+2026-09-21 12:55:43,777 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /login HTTP/1.1" 401 -
+2026-09-21 12:55:43,778 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /login HTTP/1.1" 400 -
+2026-09-21 12:55:43,783 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /reports/summary HTTP/1.1" 200 -
+2026-09-21 12:55:43,786 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /reports/user/1 HTTP/1.1" 200 -
+2026-09-21 12:55:43,787 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /reports/user/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,789 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "GET /categories HTTP/1.1" 200 -
+2026-09-21 12:55:43,792 INFO src.controllers.category_controller: Categoria criada: id=5
+2026-09-21 12:55:43,792 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /categories HTTP/1.1" 201 -
+2026-09-21 12:55:43,793 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "POST /categories HTTP/1.1" 400 -
+2026-09-21 12:55:43,795 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /categories/1 HTTP/1.1" 200 -
+2026-09-21 12:55:43,797 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "PUT /categories/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,798 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "DELETE /categories/9999 HTTP/1.1" 404 -
+2026-09-21 12:55:43,799 INFO werkzeug: 127.0.0.1 - - [21/Sep/2026 12:55:43] "DELETE /users/3 HTTP/1.1" 403 -

@@ -187,7 +187,7 @@ Allowed exceptions (each must be listed under "Contract Changes" in the Phase 3 
 
 Not allowed without asking the user: adding mandatory authentication to endpoints that were public (i.e. turning a 200 into a 401 for a legitimate request), renaming routes/fields, changing ports, changing response envelopes. Report these as "Remaining Items" recommendations instead.
 
-**Do not hide a fixable problem behind a bigger one.** "This needs authentication" only covers the part that really needs authentication. When a finding has a portion that can be fixed within the exceptions above (e.g. the privilege field of exception 8, a predictable token that can be signed, a missing ownership check that can become a 404), fix that portion now and keep only the genuinely blocked part in "Remaining Items", saying explicitly what was fixed and what was not.
+**Do not hide a fixable problem behind a bigger one.** "This needs authentication" only covers the part that really needs authentication. When a finding has a portion that can be fixed within the exceptions above (e.g. the privilege field of exception 9, a predictable token that can be signed, a missing ownership check that can become a 404), fix that portion now and keep only the genuinely blocked part in "Remaining Items", saying explicitly what was fixed and what was not.
 
 ## 10. Adapting to the starting point
 

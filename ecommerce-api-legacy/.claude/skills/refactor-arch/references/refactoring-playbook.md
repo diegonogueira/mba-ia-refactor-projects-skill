@@ -437,7 +437,7 @@ def role_for_public_signup(payload: dict) -> str:
         raise ForbiddenError("Não é possível criar usuário com esse role")
     return requested
 ```
-The same rule applies to updates: while the endpoint has no guard proving who is calling, it must not change `role`/`is_admin`/`permissions` (reject with 403, or ignore the field and say so in "Contract Changes"). Escalating to "needs authentication" is not an option here — see `mvc-guidelines.md` §9 exception 8.
+The same rule applies to updates: while the endpoint has no guard proving who is calling, it must not change `role`/`is_admin`/`permissions` (reject with 403, or ignore the field and say so in "Contract Changes"). Escalating to "needs authentication" is not an option here — see `mvc-guidelines.md` §9 exception 9.
 
 Predictable tokens (`'token-' + str(user.id)`) → sign them with the framework's utilities (e.g. `itsdangerous.URLSafeTimedSerializer(secret_key).dumps({"user_id": id})`, or HMAC with `crypto.createHmac('sha256', secret)`), keeping the same response field.
 

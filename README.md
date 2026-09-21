@@ -128,7 +128,7 @@ Versão final: **v1.4.0** (o histórico das iterações está em [Desafios](#des
 4. **Dynamic context injection (`` ```! ``):** ao carregar, a skill injeta a lista de arquivos do projeto (sem `node_modules`, `.venv`, `.git`) e o `git status`. Isso economiza chamadas na Fase 1 e permite avisar sobre alterações não commitadas antes da Fase 3 (o que aconteceu no projeto 2). Os comandos terminam com `|| true`, porque uma falha na injeção abortaria a skill inteira.
 5. **Pausa portável:** a Fase 2 termina com `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]` e **encerra o turno**, sem depender de uma ferramenta de pergunta. Assim funciona no modo interativo (`claude "/refactor-arch"`) e no headless (`claude -p` + `--resume <sessão> "y"`), que usei para gerar logs reproduzíveis.
 6. **Validação baseada em baseline:** antes de alterar qualquer arquivo, a Fase 3 sobe a aplicação **original**, roda um smoke test com todos os endpoints do inventário da Fase 1 e guarda o resultado fora do projeto. Depois da refatoração, roda o mesmo teste e compara status e shape das respostas. Por isso a linha "All endpoints respond correctly" é medida, não declarada.
-7. **Preservação de contrato com exceções explícitas:** rotas, métodos, nomes de campos, envelopes, porta e comando de start não mudam. Há 7 exceções permitidas, todas de segurança ou integridade (remover segredos/hashes das respostas, desabilitar endpoints de SQL arbitrário, 500 → 400 em entrada inválida, etc.), e cada uma precisa aparecer em "Contract Changes". Mudanças que exigem decisão de produto, como tornar autenticação obrigatória, vão para "Remaining Items".
+7. **Preservação de contrato com exceções explícitas:** rotas, métodos, nomes de campos, envelopes, porta e comando de start não mudam. Há 9 exceções permitidas, todas de segurança ou integridade (remover segredos/hashes das respostas, fechar endpoints destrutivos por padrão, 500 → 400 em entrada inválida, tirar segredos de log e seed, barrar escalação de privilégio, etc.), e cada uma precisa aparecer em "Contract Changes". Mudanças que exigem decisão de produto, como tornar autenticação obrigatória, vão para "Remaining Items".
 8. **Honestidade no resultado:** o template só permite ✓ para checagens realmente executadas. Nos 3 projetos a skill marcou ✗ em "Zero CRITICAL/HIGH remaining", porque manteve de propósito a ausência de autenticação para não quebrar o contrato, e explicou o motivo.
 9. **Auditoria de dependências obrigatória na Fase 2:** além dos greps de APIs obsoletas no código, a skill roda um audit somente leitura por ecossistema (`npm audit --package-lock-only`, campo `vulnerabilities` da API do PyPI) e precisa registrar no relatório se o registry estava inacessível, em vez de assumir que está tudo bem (veio da iteração 2).
 10. **Relatório em Markdown renderizável:** banners em blocos `text` e findings como listas com rótulos em negrito. A saída fica legível no terminal e pode ser salva direto em `reports/` sem edição.
@@ -165,7 +165,7 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 | 7 | Saída poluída por avisos de conectores MCP do meu ambiente na execução headless | Execuções com `--strict-mcp-config`, que desliga servidores MCP. É um ajuste de ambiente, não da skill. |
 | 8 | Projetos 1 e 3 usam a mesma porta (5000), e a Fase 3 sobe a aplicação para validar | As Fases 1–2 dos 3 projetos rodaram em paralelo (somente leitura); nas Fases 3, projetos 1 e 2 rodaram juntos (portas 5000 e 3000) e o projeto 3 só começou depois do fim do projeto 1. |
 | 9 | Risco de *overfitting* da skill aos 3 projetos | Exemplos genéricos no playbook e sinais por responsabilidade (ver seção anterior). |
-| 11 | **Iteração 3 (v1.2.0 → v1.4.0), depois do feedback da banca:** a Fase 3 escondia correções possíveis atrás de "precisa de autenticação" — `POST /users` continuava aceitando `role: admin` no projeto 3, e o mesmo padrão aparecia em mais 7 pontos nos 3 projetos | Varredura finding-a-finding dos 68 achados, skill v1.3.0/v1.4.0 (exceção 8, guarda fechada por padrão, headers no contrato, sem segredo em log/seed, fechamento finding a finding com `Status`), reexecução das 3 fases nos 3 projetos e `scripts/security_probes.sh` com 27 provas. Detalhes em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca). |
+| 11 | **Iteração 3 (v1.2.0 → v1.4.0), depois do feedback da banca:** a Fase 3 escondia correções possíveis atrás de "precisa de autenticação" — `POST /users` continuava aceitando `role: admin` no projeto 3, e o mesmo padrão aparecia em mais 7 pontos nos 3 projetos | Varredura finding-a-finding dos 68 achados, skill v1.3.0/v1.4.0 (exceção 9 para escalação de privilégio, exceção 8 para segredo em log/seed, guarda fechada por padrão, headers no contrato, fechamento finding a finding com `Status`), reexecução das 3 fases nos 3 projetos e `scripts/security_probes.sh` com 29 provas. Detalhes em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca). |
 | 10 | O limite de uso da conta (`You've hit your session limit`) interrompeu a Fase 3 dos projetos 1 e 2 no meio | Retomei a **mesma sessão** depois da renovação (`claude -p "...continue de onde parou" --resume <sessão>`) e a skill seguiu do ponto em que estava. Os logs e as métricas registram a interrupção e as duas invocações. |
 
 
@@ -449,7 +449,7 @@ Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída
 
 **A correção na skill (v1.3.0 → v1.4.0).** Mudei as regras, não os projetos:
 
-- `mvc-guidelines.md` §9 ganhou a exceção 8 — campo de privilégio (`role`, `is_admin`, `permissions`, `active`) vindo de cliente anônimo **tem** de parar de conceder privilégio, no create e no update; é correção de segurança, não decisão de produto — e a regra **"não esconda um problema corrigível atrás de um maior"**: "isso precisa de autenticação" só cobre a parte que realmente precisa.
+- `mvc-guidelines.md` §9 ganhou a exceção 9 — campo de privilégio (`role`, `is_admin`, `permissions`, `active`) vindo de cliente anônimo **tem** de parar de conceder privilégio, no create e no update; é correção de segurança, não decisão de produto — e a regra **"não esconda um problema corrigível atrás de um maior"**: "isso precisa de autenticação" só cobre a parte que realmente precisa.
 - Guarda de endpoint destrutivo/administrativo tem de ser **fechada por padrão**; guarda opt-in não fecha um CRITICAL, e o padrão vale igual nos três projetos (era inconsistente: o projeto 1 negava por padrão, o 2 deixava aberto).
 - Headers que o framework enviava (`Allow` no 405, CORS) entraram na lista do que o contrato preserva.
 - Proibido logar parâmetros de banco e semear conta privilegiada com senha conhecida; `/admin/query` não pode ler coluna de credencial.
@@ -459,13 +459,13 @@ Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída
 
 | Projeto | Findings na reauditoria | Fechados | Relatório | Log |
 |---|---|---|---|---|
-| 1 — code-smells-project | 9 (0 CRITICAL, 1 HIGH) | 8 corrigidos, 1 bloqueado por contrato | [`audit-project-1-rerun.md`](reports/audit-project-1-rerun.md) | [log](docs/execution-logs/rerun-v140-project-1-code-smells-project.md) |
-| 2 — ecommerce-api-legacy | 9 (1 CRITICAL, 1 HIGH) | 6 corrigidos, 1 parcial, 2 bloqueados | [`audit-project-2-rerun.md`](reports/audit-project-2-rerun.md) | [log](docs/execution-logs/rerun-v140-project-2-ecommerce-api-legacy.md) |
+| 1 — code-smells-project | 9 (0 CRITICAL, 1 HIGH) | 7 `Fixed`, 1 `Partially fixed`, 1 `Not fixed` | [`audit-project-1-rerun.md`](reports/audit-project-1-rerun.md) | [log](docs/execution-logs/rerun-v140-project-1-code-smells-project.md) |
+| 2 — ecommerce-api-legacy | 9 (1 CRITICAL, 1 HIGH) | 5 `Fixed`, 2 `Partially fixed`, 2 `Not fixed` | [`audit-project-2-rerun.md`](reports/audit-project-2-rerun.md) | [log](docs/execution-logs/rerun-v140-project-2-ecommerce-api-legacy.md) |
 | 3 — task-manager-api | 8 + 7 (duas rodadas) | escalação fechada na 1ª, log/seed/dependência na 2ª | [v1.3.0](reports/audit-project-3-rerun-v130.md) · [v1.4.0](reports/audit-project-3-rerun.md) | [log v1.3.0](docs/execution-logs/rerun-v130-project-3-task-manager-api.md) · [log v1.4.0](docs/execution-logs/rerun-v140-project-3-task-manager-api.md) |
 
 O único CRITICAL/HIGH que segue aberto é o mesmo de antes e continua legítimo: **não existe autenticação nas rotas** do projeto 3 (e das rotas de gestão do projeto 1) — adicionar login obrigatório transformaria requisições hoje bem-sucedidas em 401. A parte corrigível desse mesmo finding foi fechada, e a skill agora é obrigada a dizer explicitamente o que fechou e o que não fechou.
 
-**Provas, não declarações.** Criei [`scripts/security_probes.sh`](scripts/security_probes.sh): sobe cada aplicação e verifica na prática o que os relatórios afirmam — 27 provas, todas passando:
+**Provas, não declarações.** Criei [`scripts/security_probes.sh`](scripts/security_probes.sh): sobe cada aplicação e verifica na prática o que os relatórios afirmam — 29 provas, todas passando. A prova do vazamento no log força um `IntegrityError` de verdade (o e-mail duplicado é barrado pelo validador antes do banco, então a versão ingênua não detectaria nada) e foi conferida com controle negativo: reativando `hide_parameters=False` numa cópia, ela falha como esperado.
 
 ```text
 === Projeto 1: code-smells-project ===
@@ -481,24 +481,24 @@ O único CRITICAL/HIGH que segue aberto é o mesmo de antes e continua legítimo
   PASS  auto-cadastro como admin é recusado (HTTP 403)
   PASS  promoção de conta alheia é recusada (HTTP 403)
   PASS  auto-cadastro comum continua funcionando (HTTP 201)
-  PASS  log de erro não expõe parâmetros do banco
+  PASS  CORS não reflete origem desconhecida
+  PASS  log de erro não expõe parâmetros do banco (IntegrityError forçado)
 
 ✓ Todas as provas de segurança passaram
 ```
 
 **O gate também aprendeu.** Durante a iteração ele pegou duas coisas: a mudança de 409 → 400 no e-mail duplicado (efeito da senha mínima 8, ajustei o harness e regravei o baseline) e — pior — descobri que uma entrada "esperada" engolia *qualquer* diferença naquele check, mascarando o login do projeto 3 virando 401. Agora a troca de status precisa ser declarada explicitamente (`"status": "200->401"`), senão é regressão.
 
-**Mudanças de contrato desta iteração** (todas em `docs/validation/expected-differences.json`, com o motivo): rotas administrativas fechadas por padrão nos 3 projetos (403 sem configuração, idêntico ao original com flag + token); login de demonstração passa a depender de `SEED_PASSWORD` (ou da senha sorteada e registrada no primeiro boot), porque o seed não tem mais senha no código; checkout duplicado recusado no projeto 2; `tags` acima do limite recusadas no projeto 3.
+**Mudanças de contrato desta iteração** (as visíveis pelo smoke test estão em `docs/validation/expected-differences.json`, com o motivo): rotas administrativas fechadas por padrão nos 3 projetos (403 sem configuração, idêntico ao original com flag + token); login de demonstração passa a depender de `SEED_PASSWORD` (ou da senha sorteada e registrada no primeiro boot), porque o seed não tem mais senha no código; checkout duplicado recusado no projeto 2; `tags` acima do limite recusadas no projeto 3. **Uma mudança não aparece no gate porque o smoke test não manda `Origin`:** o CORS deixou de refletir qualquer origem — o padrão passou a ser `http://127.0.0.1:5000` (projeto 1) e `http://localhost:3000,http://127.0.0.1:3000` (projeto 3), configurável por `CORS_ORIGINS` (`CORS_ORIGINS=*` reproduz o comportamento original). As provas de segurança cobrem esse caso.
 
 ### Pendências conhecidas (assumidas de propósito)
 
 | Item | Onde | Por quê |
 |---|---|---|
-| Rotas sem autenticação (AP-06) — no projeto 2 o finding é CRITICAL | 3 projetos | Exigir login/token muda o contrato de endpoints hoje públicos; virou "Remaining Item" com recomendação. No projeto 1 os endpoints de SQL arbitrário e reset ficaram desabilitados por padrão; no projeto 2 o guard liga com `ADMIN_TOKEN`; no projeto 3 o token passou a ser assinado, mas nenhuma rota o exige |
-| `role` escolhido pelo cliente no cadastro | task-manager-api | Restringir mudaria o contrato de `POST /users` |
-| Credenciais de demonstração no seed | code-smells-project, task-manager-api | O README documenta essas contas; agora são gravadas com hash e podem ser desligadas (`SEED_DATABASE=false`) |
-| `CORS_ORIGINS=*` como padrão | 3 projetos | Comportamento original preservado, agora configurável |
-| Sem testes automatizados | 3 projetos | Fora do escopo do desafio; o smoke test do repositório cobre o contrato |
+| Ausência de autenticação nas rotas (AP-06) — no projeto 2 o finding é CRITICAL | 3 projetos | Exigir login transformaria requisições hoje bem-sucedidas em 401, o que precisa de decisão de produto. A parte corrigível desse mesmo finding **foi fechada**: endpoints destrutivos e administrativos (`/admin/*` no projeto 1, relatório financeiro e `DELETE /api/users/:id` no projeto 2, `DELETE /users/<id>` no projeto 3) ficam 403 por padrão e só abrem com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN`; e nenhum campo de privilégio (`role`, `active`) é mais aceito de cliente anônimo |
+| Rotas de leitura/escrita comuns seguem públicas | 3 projetos | Mesmo motivo acima: `GET /usuarios`, `PUT /produtos/<id>`, `PUT /tasks/<id>` etc. continuam sem autenticação, como no original |
+| Política de senha mais dura muda o cadastro | code-smells-project, task-manager-api | Mínimo de 8 caracteres foi aplicado (era 4/nenhum); contas antigas continuam autenticando, mas cadastros com senha curta agora recebem 400 |
+| Sem testes automatizados | 3 projetos | Fora do escopo do desafio; o smoke test e as provas de segurança do repositório cobrem o contrato |
 
 ---
 
@@ -554,7 +554,7 @@ Validação automática (instala dependências em diretório temporário, sobe c
 ```bash
 scripts/validate.sh all          # ou: scripts/validate.sh 1 | 2 | 3
 scripts/validate.sh all --save   # também atualiza os resultados em docs/validation/
-scripts/security_probes.sh all   # 27 provas de segurança com as aplicações no ar
+scripts/security_probes.sh all   # 29 provas de segurança com as aplicações no ar
 ```
 
 O script termina com código `0` só se as 3 aplicações subirem, os logs ficarem sem traceback e todas as diferenças em relação ao código original estiverem declaradas em `docs/validation/expected-differences.json`.
