@@ -28,11 +28,17 @@ Todas as configurações vêm de variáveis de ambiente; veja `.env.example` (o 
 | `SEED_DATABASE` | `true` | Insere produtos e usuários de demonstração quando o banco está vazio |
 | `SEED_PASSWORD` | senha aleatória por boot | Senha dos usuários de demonstração (registrada no log quando sorteada) |
 | `LOG_LEVEL` | `INFO` | Nível dos logs da aplicação |
-| `CORS_ORIGINS` | `http://127.0.0.1:5000` | Origens permitidas, separadas por vírgula (`*` libera todas — só em desenvolvimento) |
+| `CORS_ORIGINS` | `http://<HOST>:<PORT>` | Origens permitidas, separadas por vírgula (`*` libera todas — só em desenvolvimento) |
 | `ADMIN_ENDPOINTS_ENABLED` | `false` | Habilita `/admin/reset-db` e `/admin/query` |
 | `ADMIN_TOKEN` | — | Token exigido no header `X-Admin-Token` pelos endpoints `/admin/*` |
 
-Com os endpoints administrativos habilitados, `/admin/query` aceita apenas uma única consulta `SELECT`, executada numa conexão somente leitura. Consultas que citam colunas de credenciais (`senha`, `password`, `token`, `secret`) são recusadas e esses campos também são removidos das linhas retornadas — então nem `SELECT *` expõe hashes de senha.
+Com os endpoints administrativos habilitados, `/admin/query` aceita apenas uma única consulta `SELECT`, executada numa conexão somente leitura. Consultas que citam colunas de credenciais (`senha`, `password`, `token`, `secret`) são recusadas e, na execução, um authorizer do SQLite troca toda leitura dessas colunas por `NULL` — então nem `SELECT *`, aliases, subconsultas ou `UNION` expõem hashes de senha.
+
+## Regras de pedido
+
+- Criar um pedido baixa o estoque dos produtos na mesma transação.
+- Mudar o status para `cancelado` devolve ao estoque as quantidades dos itens, uma única vez.
+- `cancelado` e `entregue` são estados finais: tentar sair deles responde 400. Repetir o status atual não altera nada.
 
 ## Estrutura
 
@@ -43,7 +49,7 @@ src/config/         # settings a partir de variáveis de ambiente
 src/models/         # conexão, schema/seed e acesso a dados por entidade
 src/services/       # casos de uso de pedido e notificações
 src/controllers/    # fluxo das requisições e validação de entrada
-src/views/          # rotas (blueprints) e serializers
+src/views/          # rotas (blueprints), conversores de URL e serializers
 src/middlewares/    # error handler central e guard dos endpoints administrativos
 src/utils/          # hierarquia de erros
 ```

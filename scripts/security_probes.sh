@@ -89,8 +89,8 @@ probes_1() {
   probe "405 continua respondendo" 405 -X DELETE localhost:5000/health
   if curl -s -D- -o /dev/null -X DELETE localhost:5000/health | grep -qi '^allow:'; then
     echo "  PASS  405 preserva o header Allow"; else echo "  FAIL  405 sem header Allow"; FAILED=1; fi
-  probe "listagem de usuários fechada para anônimo" 403 localhost:5000/usuarios
-  probe "relatório de vendas fechado para anônimo" 403 localhost:5000/relatorios/vendas
+  probe "listagem de usuários continua respondendo (contrato original)" 200 localhost:5000/usuarios
+  probe "relatório de vendas continua respondendo (contrato original)" 200 localhost:5000/relatorios/vendas
   probe_body "listagem de usuários não expõe senha" '"senha"' localhost:5000/usuarios
   probe_body "health não expõe segredos" 'secret_key|db_path' localhost:5000/health
   probe "login com a senha do seed configurada" 200 -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com","senha":"senha-de-teste-123"}'

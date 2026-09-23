@@ -14,13 +14,24 @@ SENHA_TAMANHO_MAXIMO = 128  # evita gastar CPU de hashing com entradas enormes
 NOME_TAMANHO_MAXIMO = 200
 EMAIL_TAMANHO_MAXIMO = 254  # RFC 5321
 
+# Faixa de inteiros que o SQLite armazena (64 bits com sinal); fora dela o driver lança OverflowError.
+INTEIRO_MINIMO, INTEIRO_MAXIMO = -(2 ** 63), 2 ** 63 - 1
+
 
 def _eh_numero(valor):
-    return isinstance(valor, (int, float)) and not isinstance(valor, bool) and math.isfinite(valor)
+    if isinstance(valor, bool) or not isinstance(valor, (int, float)):
+        return False
+    return isinstance(valor, int) or math.isfinite(valor)
 
 
 def _eh_inteiro(valor):
     return isinstance(valor, int) and not isinstance(valor, bool)
+
+
+def _exigir_faixa(valor, campo):
+    """Inteiros precisam caber no banco (floats finitos sempre cabem numa coluna REAL)."""
+    if isinstance(valor, int) and not INTEIRO_MINIMO <= valor <= INTEIRO_MAXIMO:
+        raise ValidationError(f"{campo} fora do intervalo permitido")
 
 
 def exigir_objeto_json(dados, permitir_vazio=False):
@@ -45,6 +56,8 @@ def ler_produto(dados):
         raise ValidationError("Preço deve ser numérico")
     if not _eh_inteiro(dados["estoque"]):
         raise ValidationError("Estoque deve ser um número inteiro")
+    _exigir_faixa(dados["preco"], "Preço")
+    _exigir_faixa(dados["estoque"], "Estoque")
 
     return {
         "nome": dados["nome"],
@@ -107,6 +120,7 @@ def ler_pedido(dados):
         raise ValidationError("Usuario ID é obrigatório")
     if not _eh_inteiro(usuario_id):
         raise ValidationError("Usuario ID deve ser um número inteiro")
+    _exigir_faixa(usuario_id, "Usuario ID")
     if not itens:
         raise ValidationError("Pedido deve ter pelo menos 1 item")
     if not isinstance(itens, list):
@@ -119,6 +133,8 @@ def ler_pedido(dados):
             raise ValidationError("Item inválido: produto_id e quantidade devem ser números inteiros")
         if item["quantidade"] <= 0:
             raise ValidationError("Quantidade deve ser maior que zero")
+        _exigir_faixa(item["produto_id"], "Produto ID")
+        _exigir_faixa(item["quantidade"], "Quantidade")
         itens_validos.append({"produto_id": item["produto_id"], "quantidade": item["quantidade"]})
 
     return {"usuario_id": usuario_id, "itens": itens_validos}

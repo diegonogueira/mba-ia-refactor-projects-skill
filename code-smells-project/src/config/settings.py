@@ -10,8 +10,8 @@ API_VERSION = "1.0.0"
 
 FORMATO_LOG = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 NIVEL_LOG_PADRAO = "INFO"
-# Origens liberadas por padrão: apenas a própria aplicação. Use CORS_ORIGINS para abrir outras.
-CORS_ORIGINS_PADRAO = "http://127.0.0.1:5000"
+HOST_PADRAO = "127.0.0.1"
+PORTA_PADRAO = 5000
 
 
 def configure_logging(nivel=None):
@@ -56,13 +56,16 @@ class Settings:
 
 
 def load_settings():
+    host = os.environ.get("HOST", HOST_PADRAO)
+    port = int(os.environ.get("PORT", PORTA_PADRAO))
     return Settings(
         secret_key=_segredo("SECRET_KEY"),
         debug=_bool("FLASK_DEBUG", False),
-        host=os.environ.get("HOST", "127.0.0.1"),
-        port=int(os.environ.get("PORT", "5000")),
+        host=host,
+        port=port,
         database_path=os.environ.get("DATABASE_PATH", "loja.db"),
-        cors_origins=_lista("CORS_ORIGINS", CORS_ORIGINS_PADRAO),
+        # Padrão: apenas a origem da própria aplicação (host e porta efetivos). Use CORS_ORIGINS para abrir outras.
+        cors_origins=_lista("CORS_ORIGINS", f"http://{host}:{port}"),
         app_env=os.environ.get("APP_ENV", "producao"),
         seed_database=_bool("SEED_DATABASE", True),
         seed_password=os.environ.get("SEED_PASSWORD") or None,

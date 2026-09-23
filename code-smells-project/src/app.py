@@ -5,6 +5,7 @@ from flask_cors import CORS
 from src.config.settings import configure_logging, load_settings
 from src.middlewares.error_handler import register_error_handlers
 from src.models.database import init_database
+from src.views.converters import IdConverter
 from src.views.pedido_routes import pedido_bp
 from src.views.produto_routes import produto_bp
 from src.views.relatorio_routes import relatorio_bp
@@ -28,6 +29,7 @@ def create_app(settings=None):
         ADMIN_TOKEN=settings.admin_token,
     )
     CORS(app, origins=settings.cors_origins)
+    app.url_map.converters["int"] = IdConverter  # antes dos blueprints: as regras usam o conversor ao serem registradas
 
     for blueprint in (produto_bp, usuario_bp, pedido_bp, relatorio_bp, sistema_bp):
         app.register_blueprint(blueprint)

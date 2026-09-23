@@ -4,6 +4,8 @@ Execução com a skill v1.5.0, que acrescenta ao playbook a "Rule zero" (um find
 
 Como na execução v1.4.0, a Fase 1 analisa o **código já refatorado**.
 
+> **Execução descartada.** Esta rodada fechou com 403 listagens e CRUD do domínio (`GET /usuarios`, `GET /pedidos`, `GET /relatorios/vendas`, `DELETE /produtos/<id>`…), contrariando o requisito de que os endpoints originais continuem respondendo. A skill foi ajustada (v1.5.1) e a execução que vale está em [`rerun-v151-project-1-code-smells-project.md`](rerun-v151-project-1-code-smells-project.md).
+
 ```bash
 cd code-smells-project
 claude -p "/refactor-arch" --strict-mcp-config --output-format stream-json --verbose

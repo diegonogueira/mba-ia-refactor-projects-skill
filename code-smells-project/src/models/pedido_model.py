@@ -8,6 +8,15 @@ STATUS_ENVIADO = "enviado"
 STATUS_ENTREGUE = "entregue"
 STATUS_CANCELADO = "cancelado"
 STATUS_VALIDOS = (STATUS_PENDENTE, STATUS_APROVADO, STATUS_ENVIADO, STATUS_ENTREGUE, STATUS_CANCELADO)
+ESTADOS_FINAIS = (STATUS_CANCELADO, STATUS_ENTREGUE)
+
+# Soma de volta a cada produto as quantidades de todos os itens do pedido (um produto pode repetir).
+SQL_DEVOLVER_ESTOQUE = """
+    UPDATE produtos
+    SET estoque = estoque + (SELECT SUM(i.quantidade) FROM itens_pedido i
+                             WHERE i.pedido_id = ? AND i.produto_id = produtos.id)
+    WHERE id IN (SELECT produto_id FROM itens_pedido WHERE pedido_id = ?)
+"""
 
 SQL_PEDIDOS_COM_ITENS = """
     SELECT p.id, p.usuario_id, p.status, p.total, p.criado_em,
@@ -93,11 +102,26 @@ def listar(usuario_id=None):
 
 
 def atualizar_status(pedido_id, novo_status):
+    """Muda o status e retorna o anterior. Cancelar devolve o estoque dos itens, exatamente uma vez.
+
+    Cancelado e entregue são estados finais: sair deles reservaria de novo (ou devolveria)
+    um estoque que já foi compensado. Repetir o status atual não altera nada.
+    """
     if novo_status not in STATUS_VALIDOS:
         raise ValidationError("Status inválido")
-    with transaction() as conexao:
-        alterados = conexao.execute(
-            "UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id)
-        ).rowcount
-        if alterados == 0:
+    with transaction(immediate=True) as conexao:
+        linha = conexao.execute("SELECT status FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+        if linha is None:
             raise NotFoundError("Pedido não encontrado")
+        anterior = linha["status"]
+        if anterior == novo_status:
+            return anterior
+        if anterior in ESTADOS_FINAIS:
+            raise ValidationError(f"Pedido {anterior} não pode mudar de status")
+
+        alterados = conexao.execute(
+            "UPDATE pedidos SET status = ? WHERE id = ? AND status = ?", (novo_status, pedido_id, anterior)
+        ).rowcount
+        if alterados and novo_status == STATUS_CANCELADO:
+            conexao.execute(SQL_DEVOLVER_ESTOQUE, (pedido_id, pedido_id))
+    return anterior

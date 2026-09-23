@@ -4,6 +4,8 @@
 > (modelo `claude-opus-5-5[1m]`, sessão `21cc7aba-873f-4a13-b7a2-a3c441f690d9`). Nenhuma edição manual no conteúdo abaixo.
 > Contagem conferida automaticamente: CRITICAL 2 · HIGH 1 · MEDIUM 1 · LOW 3 · Total 7.
 
+> **Execução descartada.** Esta rodada fechou com 403 listagens e CRUD do domínio (`GET /usuarios`, `GET /pedidos`, `GET /relatorios/vendas`, `DELETE /produtos/<id>`…), contrariando o requisito de que os endpoints originais continuem respondendo. A skill foi ajustada (v1.5.1) e a execução que vale está em [`audit-project-1-rerun-v151.md`](audit-project-1-rerun-v151.md).
+
 ---
 
 ```text
