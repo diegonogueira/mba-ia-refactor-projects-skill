@@ -16,4 +16,4 @@ def status_pedido_alterado(pedido_id, novo_status):
     if novo_status == STATUS_APROVADO:
         logger.info("NOTIFICAÇÃO: Pedido %s foi aprovado! Preparar envio.", pedido_id)
     elif novo_status == STATUS_CANCELADO:
-        logger.info("NOTIFICAÇÃO: Pedido %s cancelado. Devolver estoque.", pedido_id)
+        logger.info("NOTIFICAÇÃO: Pedido %s cancelado. Estoque devolvido.", pedido_id)

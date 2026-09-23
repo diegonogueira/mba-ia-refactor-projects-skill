@@ -4,6 +4,7 @@ from flask import jsonify, request
 
 from src.controllers.validators import ler_login, ler_usuario
 from src.models import usuario_model
+from src.services import token_service
 from src.utils.errors import NotFoundError, UnauthorizedError
 from src.views.serializers import serializar_login, serializar_usuario
 
@@ -36,4 +37,5 @@ def login():
         logger.info("Login falhou")
         raise UnauthorizedError("Email ou senha inválidos")
     logger.info("Login bem-sucedido: usuario_id=%s", usuario["id"])
-    return jsonify({"dados": serializar_login(usuario), "sucesso": True, "mensagem": "Login OK"}), 200
+    token = token_service.emitir_token(usuario)
+    return jsonify({"dados": serializar_login(usuario, token), "sucesso": True, "mensagem": "Login OK"}), 200

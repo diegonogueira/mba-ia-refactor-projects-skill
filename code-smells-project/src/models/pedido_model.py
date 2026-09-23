@@ -8,6 +8,7 @@ STATUS_ENVIADO = "enviado"
 STATUS_ENTREGUE = "entregue"
 STATUS_CANCELADO = "cancelado"
 STATUS_VALIDOS = (STATUS_PENDENTE, STATUS_APROVADO, STATUS_ENVIADO, STATUS_ENTREGUE, STATUS_CANCELADO)
+STATUS_FINAIS = (STATUS_ENTREGUE, STATUS_CANCELADO)
 
 SQL_PEDIDOS_COM_ITENS = """
     SELECT p.id, p.usuario_id, p.status, p.total, p.criado_em,
@@ -93,11 +94,35 @@ def listar(usuario_id=None):
 
 
 def atualizar_status(pedido_id, novo_status):
+    """Troca o status e devolve o anterior. Cancelar devolve ao estoque os itens do pedido, uma única vez.
+
+    `cancelado` (estoque já devolvido) e `entregue` são estados finais: sair deles é recusado.
+    Repetir o status atual não altera nada — cancelar duas vezes não devolve o estoque em dobro.
+    """
     if novo_status not in STATUS_VALIDOS:
         raise ValidationError("Status inválido")
-    with transaction() as conexao:
-        alterados = conexao.execute(
-            "UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id)
-        ).rowcount
-        if alterados == 0:
+    with transaction(immediate=True) as conexao:
+        linha = conexao.execute("SELECT status FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+        if linha is None:
             raise NotFoundError("Pedido não encontrado")
+        status_anterior = linha["status"]
+        if status_anterior == novo_status:
+            return status_anterior
+        if status_anterior in STATUS_FINAIS:
+            raise ValidationError(f"Pedido {status_anterior} não pode mudar de status")
+
+        # compare-and-set: só quem de fato tirou o pedido do status anterior aplica a devolução
+        alterados = conexao.execute(
+            "UPDATE pedidos SET status = ? WHERE id = ? AND status = ?", (novo_status, pedido_id, status_anterior)
+        ).rowcount
+        if alterados and novo_status == STATUS_CANCELADO:
+            conexao.execute(
+                """
+                UPDATE produtos
+                SET estoque = estoque + (SELECT SUM(i.quantidade) FROM itens_pedido i
+                                         WHERE i.pedido_id = ? AND i.produto_id = produtos.id)
+                WHERE id IN (SELECT produto_id FROM itens_pedido WHERE pedido_id = ?)
+                """,
+                (pedido_id, pedido_id),
+            )
+    return status_anterior

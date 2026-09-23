@@ -4,9 +4,9 @@
 class AppError(Exception):
     status_code = 500
 
-    def __init__(self, mensagem):
-        super().__init__(mensagem)
-        self.mensagem = mensagem
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
 
 
 class ValidationError(AppError):

@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 
 DatabaseError = sqlite3.Error
 
+# Maior inteiro que o SQLite armazena (INTEGER de 64 bits com sinal); acima disso o driver lança OverflowError.
+SQLITE_INT_MAX = 2**63 - 1
+
 # Bytes de entropia da senha gerada para os usuários de demonstração quando SEED_PASSWORD não é definido.
 SEED_PASSWORD_BYTES = 16
 
@@ -74,73 +77,73 @@ USUARIOS_SEED = [
 
 def get_connection():
     if "db" not in g:
-        conexao = sqlite3.connect(current_app.config["DATABASE_PATH"])
-        conexao.row_factory = sqlite3.Row
-        conexao.execute("PRAGMA foreign_keys = ON")
-        g.db = conexao
+        connection = sqlite3.connect(current_app.config["DATABASE_PATH"])
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        g.db = connection
     return g.db
 
 
 def get_read_only_connection():
-    caminho = Path(current_app.config["DATABASE_PATH"]).resolve()
-    conexao = sqlite3.connect(f"{caminho.as_uri()}?mode=ro", uri=True)
-    conexao.row_factory = sqlite3.Row
-    conexao.execute("PRAGMA query_only = ON")
-    return conexao
+    path = Path(current_app.config["DATABASE_PATH"]).resolve()
+    connection = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA query_only = ON")
+    return connection
 
 
-def close_connection(_erro=None):
-    conexao = g.pop("db", None)
-    if conexao is not None:
-        conexao.close()
+def close_connection(_error=None):
+    connection = g.pop("db", None)
+    if connection is not None:
+        connection.close()
 
 
 @contextmanager
 def transaction(immediate=False):
     """Executa o bloco numa transação: commit no sucesso, rollback em qualquer exceção."""
-    conexao = get_connection()
-    conexao.execute("BEGIN IMMEDIATE" if immediate else "BEGIN")
+    connection = get_connection()
+    connection.execute("BEGIN IMMEDIATE" if immediate else "BEGIN")
     try:
-        yield conexao
+        yield connection
     except BaseException:
-        conexao.rollback()
+        connection.rollback()
         raise
-    conexao.commit()
+    connection.commit()
 
 
-def _senha_do_seed():
+def _seed_password():
     """Senha dos usuários de demonstração: de SEED_PASSWORD ou sorteada e exibida uma única vez."""
-    senha = current_app.config["SEED_PASSWORD"]
-    if senha:
-        return senha
-    senha = secrets.token_urlsafe(SEED_PASSWORD_BYTES)
+    password = current_app.config["SEED_PASSWORD"]
+    if password:
+        return password
+    password = secrets.token_urlsafe(SEED_PASSWORD_BYTES)
     logger.warning(
         "SEED_PASSWORD não definido; usuários de demonstração criados com a senha %s "
         "(exibida apenas agora — defina SEED_PASSWORD para escolher a sua ou SEED_DATABASE=false para não criá-los)",
-        senha,
+        password,
     )
-    return senha
+    return password
 
 
-def _seed(conexao):
-    if conexao.execute("SELECT COUNT(*) FROM produtos").fetchone()[0] > 0:
+def _seed(connection):
+    if connection.execute("SELECT COUNT(*) FROM produtos").fetchone()[0] > 0:
         return
-    senha_hash = generate_password_hash(_senha_do_seed())
-    with transaction() as transacao:
-        transacao.executemany(
+    password_hash = generate_password_hash(_seed_password())
+    with transaction() as tx:
+        tx.executemany(
             "INSERT INTO produtos (nome, descricao, preco, estoque, categoria) VALUES (?, ?, ?, ?, ?)",
             PRODUTOS_SEED,
         )
-        transacao.executemany(
+        tx.executemany(
             "INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)",
-            [(nome, email, senha_hash, tipo) for nome, email, tipo in USUARIOS_SEED],
+            [(nome, email, password_hash, tipo) for nome, email, tipo in USUARIOS_SEED],
         )
 
 
 def init_database(app):
     app.teardown_appcontext(close_connection)
     with app.app_context():
-        conexao = get_connection()
-        conexao.executescript(SCHEMA)
+        connection = get_connection()
+        connection.executescript(SCHEMA)
         if app.config["SEED_DATABASE"]:
-            _seed(conexao)
+            _seed(connection)

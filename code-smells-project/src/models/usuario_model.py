@@ -7,6 +7,7 @@ from src.models.database import get_connection, transaction
 from src.utils.errors import ConflictError
 
 TIPO_PADRAO = "cliente"
+TIPO_ADMIN = "admin"
 PREFIXOS_HASH = ("scrypt:", "pbkdf2:")
 
 COLUNAS_PUBLICAS = "id, nome, email, tipo, criado_em"

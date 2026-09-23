@@ -8,42 +8,42 @@ from src.utils.errors import AppError
 
 logger = logging.getLogger(__name__)
 
-MENSAGENS_HTTP = {
+HTTP_MESSAGES = {
     400: "Requisição inválida",
     404: "Recurso não encontrado",
     405: "Método não permitido",
     415: "Tipo de conteúdo não suportado",
 }
-ERRO_INTERNO = "Erro interno do servidor"
+INTERNAL_ERROR_MESSAGE = "Erro interno do servidor"
 
 
-def _resposta_erro(mensagem, status):
-    return jsonify({"erro": mensagem, "sucesso": False}), status
+def _error_response(message, status):
+    return jsonify({"erro": message, "sucesso": False}), status
 
 
-def _resposta_http_erro(erro):
+def _http_error_response(error):
     """Troca o corpo HTML da HTTPException pelo envelope JSON, preservando os headers do framework.
 
     Recriar a resposta do zero descartaria headers que fazem parte do contrato HTTP —
     `Allow` no 405, `WWW-Authenticate` no 401, `Retry-After` no 429.
     """
-    resposta = erro.get_response()
-    corpo = jsonify({"erro": MENSAGENS_HTTP.get(erro.code, erro.name), "sucesso": False})
-    resposta.data = corpo.data
-    resposta.content_type = corpo.content_type
-    return resposta
+    response = error.get_response()
+    body = jsonify({"erro": HTTP_MESSAGES.get(error.code, error.name), "sucesso": False})
+    response.data = body.data
+    response.content_type = body.content_type
+    return response
 
 
 def register_error_handlers(app):
     @app.errorhandler(AppError)
-    def tratar_erro_aplicacao(erro):
-        return _resposta_erro(erro.mensagem, erro.status_code)
+    def handle_app_error(error):
+        return _error_response(error.message, error.status_code)
 
     @app.errorhandler(HTTPException)
-    def tratar_erro_http(erro):
-        return _resposta_http_erro(erro)
+    def handle_http_error(error):
+        return _http_error_response(error)
 
     @app.errorhandler(Exception)
-    def tratar_erro_inesperado(_erro):
+    def handle_unexpected_error(_error):
         logger.exception("Erro não tratado")
-        return _resposta_erro(ERRO_INTERNO, 500)
+        return _error_response(INTERNAL_ERROR_MESSAGE, 500)
