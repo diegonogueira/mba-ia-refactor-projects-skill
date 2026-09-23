@@ -8,9 +8,26 @@
     "12": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "13": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "15": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
-    "17": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
-    "19": "usuário sem o campo senha (exceção 1: dados sensíveis)",
-    "20": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
+    "16": {
+      "status": "200->403",
+      "motivo": "DELETE /produtos/<id> — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original"
+    },
+    "17": {
+      "status": "404->403",
+      "motivo": "DELETE /produtos/<id> — o guard responde antes da busca; rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original"
+    },
+    "18": {
+      "status": "200->403",
+      "motivo": "GET /usuarios — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original"
+    },
+    "19": {
+      "status": "200->403",
+      "motivo": "GET /usuarios/<id> — rota com dados de um usuário específico (exceção 2, skill v1.5.0): só o próprio usuário ou um admin, via `Authorization: Bearer <token>`; anônimo recebe 403"
+    },
+    "20": {
+      "status": "404->403",
+      "motivo": "GET /usuarios/<id> — o guard responde antes da busca; rota com dados de um usuário específico (exceção 2, skill v1.5.0): só o próprio usuário ou um admin, via `Authorization: Bearer <token>`; anônimo recebe 403"
+    },
     "22": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "23": {
       "status": "200->401",
@@ -18,7 +35,19 @@
     },
     "25": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "29": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
+    "30": {
+      "status": "200->403",
+      "motivo": "GET /pedidos — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original"
+    },
+    "31": {
+      "status": "200->403",
+      "motivo": "GET /pedidos/usuario/<id> — rota com dados de um usuário específico (exceção 2, skill v1.5.0): só o próprio usuário ou um admin, via `Authorization: Bearer <token>`; anônimo recebe 403"
+    },
     "33": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
+    "34": {
+      "status": "200->403",
+      "motivo": "GET /relatorios/vendas — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original"
+    },
     "35": {
       "status": "200->403",
       "motivo": "POST /admin/query — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"

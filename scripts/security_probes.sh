@@ -59,6 +59,27 @@ probe_body() { # <descrição> <regex que NÃO pode aparecer no corpo> <curl arg
   fi
 }
 
+estoque_produto() { curl -s "localhost:5000/produtos/$1" | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"]["estoque"])'; }
+
+check() { # <descrição> <obtido> <esperado>
+  if [[ "$2" == "$3" ]]; then echo "  PASS  $1 ($2)"; else echo "  FAIL  $1 — esperado $3, obtido $2"; FAILED=1; fi
+}
+
+# Impact do HIGH de AP-07 no audit-project-1.md: "cancelar devolve estoque" era anunciado e não implementado.
+probe_estoque_cancelamento() {
+  local inicial pedido
+  inicial=$(estoque_produto 2)
+  pedido=$(curl -s -X POST localhost:5000/pedidos -H 'Content-Type: application/json' \
+    -d '{"usuario_id":1,"itens":[{"produto_id":2,"quantidade":3}]}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"]["pedido_id"])')
+  check "pedido baixa o estoque" "$(estoque_produto 2)" "$((inicial - 3))"
+  probe "cancelamento responde como antes" 200 -X PUT "localhost:5000/pedidos/$pedido/status" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
+  check "cancelar devolve o estoque" "$(estoque_produto 2)" "$inicial"
+  curl -s -o /dev/null -X PUT "localhost:5000/pedidos/$pedido/status" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
+  check "cancelar de novo não devolve em dobro" "$(estoque_produto 2)" "$inicial"
+  probe "reabrir pedido cancelado é recusado" 400 -X PUT "localhost:5000/pedidos/$pedido/status" -H 'Content-Type: application/json' -d '{"status":"aprovado"}'
+  check "reabrir pedido cancelado não mexe no estoque" "$(estoque_produto 2)" "$inicial"
+}
+
 probes_1() {
   echo "=== Projeto 1: code-smells-project ==="
   local d="$WORK/p1"; copy_project code-smells-project "$d"; python_env "$d" || return 1
@@ -68,6 +89,8 @@ probes_1() {
   probe "405 continua respondendo" 405 -X DELETE localhost:5000/health
   if curl -s -D- -o /dev/null -X DELETE localhost:5000/health | grep -qi '^allow:'; then
     echo "  PASS  405 preserva o header Allow"; else echo "  FAIL  405 sem header Allow"; FAILED=1; fi
+  probe "listagem de usuários fechada para anônimo" 403 localhost:5000/usuarios
+  probe "relatório de vendas fechado para anônimo" 403 localhost:5000/relatorios/vendas
   probe_body "listagem de usuários não expõe senha" '"senha"' localhost:5000/usuarios
   probe_body "health não expõe segredos" 'secret_key|db_path' localhost:5000/health
   probe "login com a senha do seed configurada" 200 -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com","senha":"senha-de-teste-123"}'
@@ -77,12 +100,14 @@ probes_1() {
   else
     echo "  PASS  CORS não reflete origem desconhecida"
   fi
+  probe_estoque_cancelamento
   stop
   echo "  -- com os endpoints administrativos habilitados --"
   start "$d" 5000 "$WORK/p1-admin.log" env ADMIN_ENDPOINTS_ENABLED=true ADMIN_TOKEN=token-de-teste SEED_PASSWORD=senha-de-teste-123 "$d/.venv/bin/python" app.py || return 1
   probe "consulta administrativa com token" 200 -X POST localhost:5000/admin/query -H 'Content-Type: application/json' -H 'X-Admin-Token: token-de-teste' -d '{"sql":"SELECT id FROM produtos"}'
   probe "consulta que cita coluna de credencial é recusada" 400 -X POST localhost:5000/admin/query -H 'Content-Type: application/json' -H 'X-Admin-Token: token-de-teste' -d '{"sql":"SELECT email, senha FROM usuarios"}'
   probe_body "SELECT * em usuarios não devolve hash" 'scrypt|pbkdf2' -X POST localhost:5000/admin/query -H 'Content-Type: application/json' -H 'X-Admin-Token: token-de-teste' -d '{"sql":"SELECT * FROM usuarios"}'
+  probe_body "consulta composta que renomeia colunas não devolve hash" 'scrypt|pbkdf2' -X POST localhost:5000/admin/query -H 'Content-Type: application/json' -H 'X-Admin-Token: token-de-teste' -d '{"sql":"SELECT * FROM (VALUES (0,0,0,0,0,0) UNION ALL SELECT * FROM usuarios)"}'
   probe "token errado é rejeitado" 403 -X POST localhost:5000/admin/query -H 'Content-Type: application/json' -H 'X-Admin-Token: errado' -d '{"sql":"SELECT 1"}'
   stop
 }

@@ -7,6 +7,8 @@ A skill `refactor-arch` (Claude Code) analisa uma codebase, audita anti-patterns
 **Resultado em uma linha:** a mesma skill (copiada sem alterações nos 3 projetos) detectou a stack correta, encontrou 26, 21 e 21 findings (6/5/3 CRITICAL), pausou para confirmação e refatorou tudo para MVC. As 3 APIs sobem e respondem a todas as rotas originais — validado pela skill e por dois scripts independentes: um compara request a request com o código original, o outro prova com as apps no ar que os achados de autorização foram mesmo fechados ([Resultados](#c-resultados)).
 
 > **Iteração pós-avaliação (skill v1.4.0).** Um feedback apontou que o relatório do projeto 3 classificava escalação de privilégio como HIGH, mas a Fase 3 tinha deixado `POST /users` aceitando `role: admin`. Investiguei, achei o padrão por trás disso e corrigi a skill e os 3 projetos — o relato está em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca).
+>
+> **Segunda iteração (skill v1.5.0).** Um novo feedback mostrou que o `audit-project-1.md` registrava "cancelar o pedido não devolve o estoque", mas a refatoração só tinha mudado o código de camada — o `notificacao_service` seguia apenas logando `"Devolver estoque."`. O playbook ganhou a regra de fechar o comportamento descrito no **Impact** (e não só mover o código) e a skill foi rodada de novo no projeto 1: cancelar agora devolve o estoque, uma única vez — ver [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150).
 
 ## Sumário
 
@@ -95,7 +97,7 @@ Escala usada (definida no enunciado): **CRITICAL** — segurança/arquitetura gr
 
 ### Estrutura
 
-Versão final: **v1.4.0** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
+Versão final: **v1.5.0** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
 
 ```text
 .claude/skills/refactor-arch/            # idêntica nos 3 projetos (diff -r vazio)
@@ -115,7 +117,7 @@ Versão final: **v1.4.0** (o histórico das iterações está em [Desafios](#des
 | Catálogo de anti-patterns | `anti-patterns-catalog.md` | 24 anti-patterns com regra de severidade, sinais de detecção (regex + checagens estruturais), falsos positivos ("Not a finding when") e transformação do playbook. Inclui a tabela de APIs deprecated (AP-18) |
 | Template de relatório | `report-template.md` | Formato exato da Fase 1, do relatório da Fase 2 (Summary, Findings, Deprecated APIs, Total) e do resumo da Fase 3, com regras de contagem e ordenação |
 | Guidelines de arquitetura | `mvc-guidelines.md` | Responsabilidades e proibições de cada camada, regra de dependências, layouts-alvo para Flask e Express, mapeamento para FastAPI/Django/NestJS/Spring/Rails, composition root, config, erros, **preservação de contrato** e estratégia por ponto de partida |
-| Playbook de refatoração | `refactoring-playbook.md` | 18 transformações (T-01 a T-18) com código antes/depois em Python e JavaScript |
+| Playbook de refatoração | `refactoring-playbook.md` | 19 transformações (T-01 a T-19) com código antes/depois em Python e JavaScript, precedidas da "Rule zero": o finding só fecha quando o Impact deixa de acontecer |
 
 ### Decisões de design
 
@@ -128,7 +130,7 @@ Versão final: **v1.4.0** (o histórico das iterações está em [Desafios](#des
 4. **Dynamic context injection (`` ```! ``):** ao carregar, a skill injeta a lista de arquivos do projeto (sem `node_modules`, `.venv`, `.git`) e o `git status`. Isso economiza chamadas na Fase 1 e permite avisar sobre alterações não commitadas antes da Fase 3 (o que aconteceu no projeto 2). Os comandos terminam com `|| true`, porque uma falha na injeção abortaria a skill inteira.
 5. **Pausa portável:** a Fase 2 termina com `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]` e **encerra o turno**, sem depender de uma ferramenta de pergunta. Assim funciona no modo interativo (`claude "/refactor-arch"`) e no headless (`claude -p` + `--resume <sessão> "y"`), que usei para gerar logs reproduzíveis.
 6. **Validação baseada em baseline:** antes de alterar qualquer arquivo, a Fase 3 sobe a aplicação **original**, roda um smoke test com todos os endpoints do inventário da Fase 1 e guarda o resultado fora do projeto. Depois da refatoração, roda o mesmo teste e compara status e shape das respostas. Por isso a linha "All endpoints respond correctly" é medida, não declarada.
-7. **Preservação de contrato com exceções explícitas:** rotas, métodos, nomes de campos, envelopes, porta e comando de start não mudam. Há 9 exceções permitidas, todas de segurança ou integridade (remover segredos/hashes das respostas, fechar endpoints destrutivos por padrão, 500 → 400 em entrada inválida, tirar segredos de log e seed, barrar escalação de privilégio, etc.), e cada uma precisa aparecer em "Contract Changes". Mudanças que exigem decisão de produto, como tornar autenticação obrigatória, vão para "Remaining Items".
+7. **Preservação de contrato com exceções explícitas:** rotas, métodos, nomes de campos, envelopes, porta e comando de start não mudam. Há 10 exceções permitidas, todas de segurança ou integridade (remover segredos/hashes das respostas, fechar endpoints destrutivos por padrão, 500 → 400 em entrada inválida, tirar segredos de log e seed, barrar escalação de privilégio, implementar a regra que o código anuncia e não executa, etc.), e cada uma precisa aparecer em "Contract Changes". Mudanças que exigem decisão de produto, como tornar autenticação obrigatória, vão para "Remaining Items".
 8. **Honestidade no resultado:** o template só permite ✓ para checagens realmente executadas. Nos 3 projetos a skill marcou ✗ em "Zero CRITICAL/HIGH remaining", porque manteve de propósito a ausência de autenticação para não quebrar o contrato, e explicou o motivo.
 9. **Auditoria de dependências obrigatória na Fase 2:** além dos greps de APIs obsoletas no código, a skill roda um audit somente leitura por ecossistema (`npm audit --package-lock-only`, campo `vulnerabilities` da API do PyPI) e precisa registrar no relatório se o registry estava inacessível, em vez de assumir que está tudo bem (veio da iteração 2).
 10. **Relatório em Markdown renderizável:** banners em blocos `text` e findings como listas com rótulos em negrito. A saída fica legível no terminal e pode ser salva direto em `reports/` sem edição.
@@ -166,6 +168,7 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 | 8 | Projetos 1 e 3 usam a mesma porta (5000), e a Fase 3 sobe a aplicação para validar | As Fases 1–2 dos 3 projetos rodaram em paralelo (somente leitura); nas Fases 3, projetos 1 e 2 rodaram juntos (portas 5000 e 3000) e o projeto 3 só começou depois do fim do projeto 1. |
 | 9 | Risco de *overfitting* da skill aos 3 projetos | Exemplos genéricos no playbook e sinais por responsabilidade (ver seção anterior). |
 | 11 | **Iteração 3 (v1.2.0 → v1.4.0), depois do feedback da banca:** a Fase 3 escondia correções possíveis atrás de "precisa de autenticação" — `POST /users` continuava aceitando `role: admin` no projeto 3, e o mesmo padrão aparecia em mais 7 pontos nos 3 projetos | Varredura finding-a-finding dos 68 achados, skill v1.3.0/v1.4.0 (exceção 9 para escalação de privilégio, exceção 8 para segredo em log/seed, guarda fechada por padrão, headers no contrato, fechamento finding a finding com `Status`), reexecução das 3 fases nos 3 projetos e `scripts/security_probes.sh` com 29 provas. Detalhes em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca). |
+| 12 | **Iteração 4 (v1.4.0 → v1.5.0), segundo feedback da banca:** o relatório do projeto 1 dizia que cancelar não devolve o estoque, mas a Fase 3 só moveu o `print` para `notificacao_service` — o Impact continuava acontecendo | Playbook com "Rule zero" (fechar o Impact, não só a camada) e T-19 (comportamento anunciado e não executado), sinal novo no AP-07, Recommendation obrigada a cobrir o Impact, `Fixed` só quando o cenário do Impact não se reproduz. Reexecução no projeto 1 e 4 provas de estoque em `security_probes.sh`. Detalhes em [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150). |
 | 10 | O limite de uso da conta (`You've hit your session limit`) interrompeu a Fase 3 dos projetos 1 e 2 no meio | Retomei a **mesma sessão** depois da renovação (`claude -p "...continue de onde parou" --resume <sessão>`) e a skill seguiu do ponto em que estava. Os logs e as métricas registram a interrupção e as duas invocações. |
 
 
@@ -311,7 +314,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/error_handler.py (AppError/HTTPException/Exception → JSON)
 - [x] Entry point claro — app.py → src/app.py:create_app()
 - [x] Aplicação inicia sem erros — `python app.py`, porta 5000, debug off, log sem traceback
-- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 19/36 checks idênticos + 17 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 2 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection, 1 login de demonstração sem senha fixa no seed — todas listadas em `docs/validation/expected-differences.json`). Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`
+- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 14/36 checks idênticos + 22 diferenças esperadas (9 só ganharam `"sucesso": false` no erro, 1 sem campos sensíveis, 2 admin → 403 por padrão, 8 rotas com dados de terceiros/destrutivas → 403 sem token de admin (v1.5.0), 1 busca imune a SQL injection, 1 login de demonstração sem senha fixa no seed — todas listadas em `docs/validation/expected-differences.json`). Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`
 ```
 
 #### Projeto 2 — ecommerce-api-legacy
@@ -380,7 +383,7 @@ Além da validação feita pela própria skill, **validei de forma independente*
 $ scripts/validate.sh all
 === Projeto 1: code-smells-project (Python/Flask) ===
   ✓ servidor respondeu na porta 5000
-  19/36 checks idênticos (status + shape); 17 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+  14/36 checks idênticos (status + shape); 22 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
   ✓ log do servidor sem tracebacks
 === Projeto 2: ecommerce-api-legacy (Node.js/Express) ===
   ✓ servidor respondeu na porta 3000
@@ -465,7 +468,7 @@ Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída
 
 O único CRITICAL/HIGH que segue aberto é o mesmo de antes e continua legítimo: **não existe autenticação nas rotas** do projeto 3 (e das rotas de gestão do projeto 1) — adicionar login obrigatório transformaria requisições hoje bem-sucedidas em 401. A parte corrigível desse mesmo finding foi fechada, e a skill agora é obrigada a dizer explicitamente o que fechou e o que não fechou.
 
-**Provas, não declarações.** Criei [`scripts/security_probes.sh`](scripts/security_probes.sh): sobe cada aplicação e verifica na prática o que os relatórios afirmam — 29 provas, todas passando. A prova do vazamento no log força um `IntegrityError` de verdade (o e-mail duplicado é barrado pelo validador antes do banco, então a versão ingênua não detectaria nada) e foi conferida com controle negativo: reativando `hide_parameters=False` numa cópia, ela falha como esperado.
+**Provas, não declarações.** Criei [`scripts/security_probes.sh`](scripts/security_probes.sh): sobe cada aplicação e verifica na prática o que os relatórios afirmam — 29 provas, todas passando (38 depois da segunda iteração). A prova do vazamento no log força um `IntegrityError` de verdade (o e-mail duplicado é barrado pelo validador antes do banco, então a versão ingênua não detectaria nada) e foi conferida com controle negativo: reativando `hide_parameters=False` numa cópia, ela falha como esperado.
 
 ```text
 === Projeto 1: code-smells-project ===
@@ -491,12 +494,56 @@ O único CRITICAL/HIGH que segue aberto é o mesmo de antes e continua legítimo
 
 **Mudanças de contrato desta iteração** (as visíveis pelo smoke test estão em `docs/validation/expected-differences.json`, com o motivo): rotas administrativas fechadas por padrão nos 3 projetos (403 sem configuração, idêntico ao original com flag + token); login de demonstração passa a depender de `SEED_PASSWORD` (ou da senha sorteada e registrada no primeiro boot), porque o seed não tem mais senha no código; checkout duplicado recusado no projeto 2; `tags` acima do limite recusadas no projeto 3. **Uma mudança não aparece no gate porque o smoke test não manda `Origin`:** o CORS deixou de refletir qualquer origem — o padrão passou a ser `http://127.0.0.1:5000` (projeto 1) e `http://localhost:3000,http://127.0.0.1:3000` (projeto 3), configurável por `CORS_ORIGINS` (`CORS_ORIGINS=*` reproduz o comportamento original). As provas de segurança cobrem esse caso.
 
+### Segunda iteração: o Impact que não fechava (skill v1.5.0)
+
+**O apontamento.** O `audit-project-1.md` registra, no HIGH de lógica no controller (AP-07), que cancelar um pedido não devolve o estoque. No código refatorado, `pedido_model.atualizar_status` só trocava o status e `notificacao_service` apenas registrava `"Pedido %s cancelado. Devolver estoque."`. Procede — reproduzi com a app no ar antes de mexer em qualquer coisa:
+
+```text
+  PASS  pedido baixa o estoque (47)
+  PASS  cancelamento responde como antes (HTTP 200)
+  FAIL  cancelar devolve o estoque — esperado 50, obtido 47
+```
+
+**A causa raiz.** A Recommendation daquele finding falava em *onde* pôr o código ("fluxo do pedido e notificações para `services/`"), não no comportamento que o Impact descrevia. A Fase 3 cumpriu a Recommendation ao pé da letra e a v1.4.0 marcava `Fixed` com base nela. Ou seja: a skill fechava findings pela **camada**, não pela **consequência**.
+
+**A correção na skill (v1.4.0 → v1.5.0):**
+
+- `refactoring-playbook.md` abre com a **"Rule zero — close the Impact, not just the layer"**: para cada finding, listar as consequências do Impact e mapear cada uma para a mudança que a remove; transformações estruturais (T-03, T-11, T-13, T-16) resolvem o desenho, e o comportamento precisa de mudança própria. Mover para `services/` com o comportamento ainda faltando é `Partially fixed`.
+- Nova **T-19 — Implement the behavior the Impact says is missing**, com antes/depois em Python e Node (exemplo neutro: reserva cancelada que libera assentos): ação compensatória na **mesma transação** da troca de estado, **idempotente** (compare-and-set no status anterior), notificação só depois do commit e estado compensado tratado como terminal.
+- A T-16 lembra que trocar `print` por logger não muda o que a mensagem afirma.
+- `anti-patterns-catalog.md` (AP-07): sinal de **comportamento anunciado e não executado** (log/comentário "devolver", "refund", "release", `TODO` sem o `UPDATE` correspondente), válido mesmo em código já em MVC.
+- `report-template.md`: a Recommendation precisa cobrir **cada consequência** do Impact; uma linha só é `Fixed` quando o Impact não se reproduz.
+- `mvc-guidelines.md` §9: exceção 10 — implementar a regra que o código já anuncia é correção de integridade, não decisão de produto; e "mover código não é corrigir".
+- `SKILL.md` 3.5: relê o Impact (não só a Recommendation) e ganha uma 5ª prova de fechamento — reproduzir na app rodando o cenário de cada Impact de comportamento, lendo os dados antes e depois e repetindo a requisição.
+
+**A reexecução no projeto 1.** A Fase 2 da v1.5.0 encontrou o problema sozinha e com a recomendação certa — `[HIGH] Announced-but-missing Behavior — cancelling an order does not restore stock`, pedindo transação, tabela de transições e devolução exatamente uma vez (T-19). A Fase 3 implementou em `src/models/pedido_model.py` (`atualizar_status`): `BEGIN IMMEDIATE`, leitura do status atual, `cancelado`/`entregue` como estados finais (sair deles → 400), repetir o status atual → 200 sem efeito, `UPDATE ... WHERE status = <anterior>` e devolução das quantidades de `itens_pedido` na mesma transação; o `pedido_service` só notifica quando o status mudou de fato, e o log passou a dizer "Estoque devolvido".
+
+| Findings na reauditoria | Resultado | Relatório | Log |
+|---|---|---|---|
+| 7 (2 CRITICAL, 1 HIGH, 1 MEDIUM, 3 LOW) | 6 `Fixed`, 1 `Partially fixed` (autenticação obrigatória nas escritas comuns) | [`audit-project-1-rerun-v150.md`](reports/audit-project-1-rerun-v150.md) | [log](docs/execution-logs/rerun-v150-project-1-code-smells-project.md) |
+
+Além do estoque, a reauditoria achou e fechou um bypass real no `/admin/query` (uma consulta `VALUES ... UNION ALL SELECT * FROM usuarios` renomeava as colunas e escapava do filtro por nome, devolvendo o hash; agora o SQLite `set_authorizer` devolve `NULL` para colunas de credencial), inteiros acima de 2^63−1 que davam 500, e passou a emitir token assinado no `POST /login`.
+
+**Provas.** `scripts/security_probes.sh` ganhou as provas do Impact, que falhavam antes e passam agora:
+
+```text
+  PASS  pedido baixa o estoque (47)
+  PASS  cancelamento responde como antes (HTTP 200)
+  PASS  cancelar devolve o estoque (50)
+  PASS  cancelar de novo não devolve em dobro (50)
+  PASS  reabrir pedido cancelado é recusado (HTTP 400)
+  PASS  reabrir pedido cancelado não mexe no estoque (50)
+  PASS  consulta composta que renomeia colunas não devolve hash
+```
+
+**Mudanças de contrato desta iteração** (declaradas em `expected-differences.json`, gate `validate.sh` passando com 0 diferenças não esperadas): `PUT /pedidos/<id>/status` devolve o estoque ao cancelar e recusa com 400 a saída de `cancelado`/`entregue`; `POST /login` ganhou o campo `token`; `GET /usuarios`, `GET /pedidos`, `GET /relatorios/vendas` e `DELETE /produtos/<id>` passaram a exigir o token de um admin (403 sem ele), e `GET /usuarios/<id>` e `GET /pedidos/usuario/<id>` o do próprio usuário ou de um admin — a skill aplicou aqui a exceção 2 (dados de terceiros), a mesma que já fechava o relatório financeiro do projeto 2.
+
 ### Pendências conhecidas (assumidas de propósito)
 
 | Item | Onde | Por quê |
 |---|---|---|
 | Ausência de autenticação nas rotas (AP-06) — no projeto 2 o finding é CRITICAL | 3 projetos | Exigir login transformaria requisições hoje bem-sucedidas em 401, o que precisa de decisão de produto. A parte corrigível desse mesmo finding **foi fechada**: endpoints destrutivos e administrativos (`/admin/*` no projeto 1, relatório financeiro e `DELETE /api/users/:id` no projeto 2, `DELETE /users/<id>` no projeto 3) ficam 403 por padrão e só abrem com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN`; e nenhum campo de privilégio (`role`, `active`) é mais aceito de cliente anônimo |
-| Rotas de leitura/escrita comuns seguem públicas | 3 projetos | Mesmo motivo acima: `GET /usuarios`, `PUT /produtos/<id>`, `PUT /tasks/<id>` etc. continuam sem autenticação, como no original |
+| Rotas de escrita comuns seguem públicas | 3 projetos | Mesmo motivo acima: `POST`/`PUT /produtos`, `PUT /pedidos/<id>/status` e `POST /pedidos` (projeto 1), `PUT /tasks/<id>` etc. continuam sem autenticação, como no original. No projeto 1 os guards (`admin_required`, `owner_or_admin`) já existem e são aplicados às leituras de dados de terceiros; estendê-los às escritas depende só de aprovar a mudança de contrato |
 | Política de senha mais dura muda o cadastro | code-smells-project, task-manager-api | Mínimo de 8 caracteres foi aplicado (era 4/nenhum); contas antigas continuam autenticando, mas cadastros com senha curta agora recebem 400 |
 | Sem testes automatizados | 3 projetos | Fora do escopo do desafio; o smoke test e as provas de segurança do repositório cobrem o contrato |
 
@@ -554,7 +601,7 @@ Validação automática (instala dependências em diretório temporário, sobe c
 ```bash
 scripts/validate.sh all          # ou: scripts/validate.sh 1 | 2 | 3
 scripts/validate.sh all --save   # também atualiza os resultados em docs/validation/
-scripts/security_probes.sh all   # 29 provas de segurança com as aplicações no ar
+scripts/security_probes.sh all   # 38 provas de segurança com as aplicações no ar
 ```
 
 O script termina com código `0` só se as 3 aplicações subirem, os logs ficarem sem traceback e todas as diferenças em relação ao código original estiverem declaradas em `docs/validation/expected-differences.json`.

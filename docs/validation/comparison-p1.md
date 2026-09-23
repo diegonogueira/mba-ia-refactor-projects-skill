@@ -15,11 +15,11 @@
 | 13 | POST | `/produtos` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 14 | PUT | `/produtos/2` | 200 | 200 | igual |
 | 15 | PUT | `/produtos/9999` | 404 | 404 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
-| 16 | DELETE | `/produtos/11` | 200 | 200 | igual |
-| 17 | DELETE | `/produtos/9999` | 404 | 404 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
-| 18 | GET | `/usuarios` | 200 | 200 | igual |
-| 19 | GET | `/usuarios/1` | 200 | 200 | DIFERENTE (esperado: usuário sem o campo senha (exceção 1: dados sensíveis)): shape (-dados.senha) |
-| 20 | GET | `/usuarios/9999` | 404 | 404 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
+| 16 | DELETE | `/produtos/11` | 200 | 403 | DIFERENTE (esperado: DELETE /produtos/<id> — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original): status 200 → 403; shape (-mensagem, +erro) |
+| 17 | DELETE | `/produtos/9999` | 404 | 403 | DIFERENTE (esperado: DELETE /produtos/<id> — o guard responde antes da busca; rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original): status 404 → 403; shape (+sucesso) |
+| 18 | GET | `/usuarios` | 200 | 403 | DIFERENTE (esperado: GET /usuarios — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original): status 200 → 403; shape (-dados, +erro) |
+| 19 | GET | `/usuarios/1` | 200 | 403 | DIFERENTE (esperado: GET /usuarios/<id> — rota com dados de um usuário específico (exceção 2, skill v1.5.0): só o próprio usuário ou um admin, via `Authorization: Bearer <token>`; anônimo recebe 403): status 200 → 403; shape (-dados, +erro) |
+| 20 | GET | `/usuarios/9999` | 404 | 403 | DIFERENTE (esperado: GET /usuarios/<id> — o guard responde antes da busca; rota com dados de um usuário específico (exceção 2, skill v1.5.0): só o próprio usuário ou um admin, via `Authorization: Bearer <token>`; anônimo recebe 403): status 404 → 403; shape (+sucesso) |
 | 21 | POST | `/usuarios` | 201 | 201 | igual |
 | 22 | POST | `/usuarios` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 23 | POST | `/login` | 200 | 401 | DIFERENTE (esperado: o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=admin123 para reproduzir o login de demonstração, ou a senha sorteada que aparece no log do primeiro boot): status 200 → 401; shape (-dados, -mensagem, +erro) |
@@ -29,12 +29,12 @@
 | 27 | POST | `/pedidos` | 400 | 400 | igual |
 | 28 | POST | `/pedidos` | 400 | 400 | igual |
 | 29 | POST | `/pedidos` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
-| 30 | GET | `/pedidos` | 200 | 200 | igual |
-| 31 | GET | `/pedidos/usuario/2` | 200 | 200 | igual |
+| 30 | GET | `/pedidos` | 200 | 403 | DIFERENTE (esperado: GET /pedidos — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original): status 200 → 403; shape (-dados, +erro) |
+| 31 | GET | `/pedidos/usuario/2` | 200 | 403 | DIFERENTE (esperado: GET /pedidos/usuario/<id> — rota com dados de um usuário específico (exceção 2, skill v1.5.0): só o próprio usuário ou um admin, via `Authorization: Bearer <token>`; anônimo recebe 403): status 200 → 403; shape (-dados, +erro) |
 | 32 | PUT | `/pedidos/1/status` | 200 | 200 | igual |
 | 33 | PUT | `/pedidos/1/status` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
-| 34 | GET | `/relatorios/vendas` | 200 | 200 | igual |
+| 34 | GET | `/relatorios/vendas` | 200 | 403 | DIFERENTE (esperado: GET /relatorios/vendas — rota com dados de terceiros/destrutiva fechada por padrão (exceção 2, skill v1.5.0): responde 403 sem o token de login de um admin; com `Authorization: Bearer <dados.token do POST /login como admin>` responde como o original): status 200 → 403; shape (-dados, +erro) |
 | 35 | POST | `/admin/query` | 200 | 403 | DIFERENTE (esperado: POST /admin/query — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403; shape (-dados, +erro) |
 | 36 | POST | `/admin/reset-db` | 200 | 403 | DIFERENTE (esperado: POST /admin/reset-db — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original): status 200 → 403; shape (-mensagem, +erro) |
 
-19/36 checks idênticos (status + shape); 17 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+14/36 checks idênticos (status + shape); 22 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
