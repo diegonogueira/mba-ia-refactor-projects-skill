@@ -10,6 +10,5 @@ def criar_pedido(usuario_id, itens):
 
 
 def atualizar_status(pedido_id, novo_status):
-    status_anterior = pedido_model.atualizar_status(pedido_id, novo_status)
-    if status_anterior != novo_status:
-        notificacao_service.status_pedido_alterado(pedido_id, novo_status)
+    pedido_model.atualizar_status(pedido_id, novo_status)
+    notificacao_service.status_pedido_alterado(pedido_id, novo_status)

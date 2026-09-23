@@ -2,7 +2,6 @@
 import math
 import re
 
-from src.models.database import SQLITE_INT_MAX
 from src.models.produto_model import CATEGORIA_PADRAO
 from src.utils.errors import ValidationError
 
@@ -21,8 +20,7 @@ def _eh_numero(valor):
 
 
 def _eh_inteiro(valor):
-    """Inteiro que o SQLite consegue armazenar; valores maiores derrubariam o driver com OverflowError (500)."""
-    return isinstance(valor, int) and not isinstance(valor, bool) and -SQLITE_INT_MAX <= valor <= SQLITE_INT_MAX
+    return isinstance(valor, int) and not isinstance(valor, bool)
 
 
 def exigir_objeto_json(dados, permitir_vazio=False):
