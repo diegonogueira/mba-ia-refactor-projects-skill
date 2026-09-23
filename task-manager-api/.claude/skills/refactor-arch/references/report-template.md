@@ -93,9 +93,10 @@ Rules:
 2. One heading per finding: `### [<SEVERITY>] <Anti-pattern name>`. When the same anti-pattern has distinct root causes with different severities, create separate findings with a distinguishing suffix (e.g. `Unprotected Destructive Endpoints — raw SQL execution`).
 3. `File:` uses paths relative to the project root and **verified** line numbers, each location in backticks. Ranges use `start-end`. Several locations are comma separated; no "etc.", no "...".
 4. `Description` must quote the concrete evidence (function name, literal, query) so the reader can find it without opening the file. Keep each field in a single bullet (sub-bullets allowed for lists of cases).
-5. Ordering: severity (CRITICAL, HIGH, MEDIUM, LOW), then file path, then first line.
-6. Deprecated APIs appear both as findings (AP-18) and in the table.
-7. The confirmation question is the **last line of the message**, outside any code fence.
+5. `Recommendation` must cover **every consequence listed in `Impact`**. If the Impact says a rule is announced but not implemented, or that data ends up wrong, the Recommendation says how the behavior will be fixed (e.g. "restore the stock in the same transaction as the cancellation, exactly once — Playbook T-19"), not only where the code will be moved.
+6. Ordering: severity (CRITICAL, HIGH, MEDIUM, LOW), then file path, then first line.
+7. Deprecated APIs appear both as findings (AP-18) and in the table.
+8. The confirmation question is the **last line of the message**, outside any code fence.
 
 ### Example finding (format reference)
 
@@ -163,5 +164,6 @@ PHASE 3: REFACTORING COMPLETE
 Rules:
 - Only print ✓ for checks you actually executed in this session and that passed; use ✗ otherwise.
 - The endpoint count must match the Phase 1 inventory; list any mismatch explicitly.
+- A row is `Fixed` only when the consequence described in the finding's **Impact** no longer reproduces on the running app; relocating the code without changing that outcome is `Partially fixed`.
 - **Every finding of the Phase 2 report appears in "Findings Addressed"**, with the same name and severity, and with an explicit status. The number of rows equals the number of findings.
 - `Partially fixed` and `Not fixed` rows must name, in "Remaining Items", exactly what is missing and which contract rule blocks it. A finding may only stay unfixed when the fix is outside the allowed exceptions of `mvc-guidelines.md` §9.

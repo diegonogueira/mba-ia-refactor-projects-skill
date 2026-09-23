@@ -28,7 +28,7 @@ Escalation rules:
 | AP-04 | Sensitive data exposure (responses and logs) | CRITICAL | T-05 |
 | AP-05 | Insecure password storage | CRITICAL | T-04 |
 | AP-06 | Unprotected destructive/debug endpoints and broken authentication | CRITICAL / HIGH | T-06 |
-| AP-07 | Business logic in routes/controllers (fat controller) | HIGH | T-03, T-13 |
+| AP-07 | Business logic in routes/controllers (fat controller) | HIGH | T-03, T-13, T-19 |
 | AP-08 | Tight coupling without dependency injection / no composition root | HIGH | T-11 |
 | AP-09 | Mutable global state | HIGH | T-11, T-18 |
 | AP-10 | Insecure runtime configuration (debug mode, open bind, wildcard CORS) | HIGH | T-01 |
@@ -152,8 +152,9 @@ Escalation rules:
 - ORM/SQL calls directly inside route handlers (`Model.query`, `db.session`, `cursor.execute`, `db.run`) — the route is doing the model's job.
 - Side effects (e-mail, SMS, payment, notifications — even simulated with print/log) triggered inline in handlers.
 - A `services/` folder that exists but is not imported by the routes.
+- **Announced-but-missing behavior**: a log/print/notification text or comment that states an effect (`restore stock`, `devolver estoque`, `refund`, `release`, `revoke`, `TODO`) with no write that performs it — grep `-rniE '(devolv|restor|refund|reembols|releas|liber|revog|revok|TODO|FIXME)'` and check the surrounding code for the matching UPDATE/INSERT. Report it in the **Impact** as a correctness problem ("the rule X is announced but not implemented") and make the **Recommendation** say how to implement it (Playbook T-19), not only where to move the code.
 
-**Not a finding when:** the handler only parses input, calls one model/service method and maps the result to a response.
+**Not a finding when:** the handler only parses input, calls one model/service method and maps the result to a response — **and** every effect it announces is actually performed. A service that only logs "restore stock" is still a finding, even in an already-MVC codebase.
 
 ---
 

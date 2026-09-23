@@ -13,7 +13,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(npm audit *)
 metadata:
-  version: 1.4.0
+  version: 1.5.0
   phases: analysis, audit, refactoring
 ---
 
@@ -80,7 +80,7 @@ Print the Phase 1 block exactly as defined in `references/report-template.md` �
 Read `references/anti-patterns-catalog.md` and `references/report-template.md`, then:
 
 1. **Scan** every application source file against **every** catalog entry, using its detection signals (run the grep patterns, then read the surrounding code). Do not stop at the first hits: legacy code usually has issues in every layer.
-2. **Verify** each candidate by reading the exact lines. Discard false positives (see each entry's "Not a finding when").
+2. **Verify** each candidate by reading the exact lines. For every message, log or comment that announces an effect (e.g. "restore stock", "refund"), check that the code actually performs it — an announced-but-missing behavior is a finding even when the code already sits in the right layer (catalog AP-07). Discard false positives (see each entry's "Not a finding when").
 3. **Classify** with the catalog's severity rules (CRITICAL, HIGH, MEDIUM, LOW). When in doubt between two levels, use the definitions at the top of the catalog.
 4. **Consolidate**: one finding per anti-pattern per root cause; when the same anti-pattern repeats, list every location in the `File:` line instead of creating near-duplicate findings.
 5. **Deprecated APIs and vulnerable dependencies** — always do both checks:
@@ -105,7 +105,7 @@ Following the validation guide: prepare the runtime (virtualenv / `npm install`)
 
 ### 3.2 Plan
 - Choose the target layout from the guidelines for the detected stack.
-- Map **every** Phase 2 finding to a playbook transformation (`T-xx`).
+- Map **every** Phase 2 finding to a playbook transformation (`T-xx`) — and every consequence in its **Impact** to the change that removes it (playbook "Rule zero"): structural moves fix the design, T-19/T-09/T-12 fix the behavior.
 - Adapt to the starting point:
   - **Monolith / flat files** → build the full layer structure and split code by domain.
   - **Partially layered** (folders already exist) → keep what is already correct, move modules into the canonical layers, extract the missing layers (controllers, config, error handling) and thin out fat routes. Do not rewrite working code without a finding that justifies it.
@@ -125,14 +125,15 @@ Boot the refactored app and rerun the same smoke test. Compare with the baseline
 
 ### 3.5 Re-audit and finding-by-finding closure
 1. Rerun the catalog detection signals on the new code.
-2. Go through the Phase 2 report **finding by finding**, re-reading the **Recommendation you wrote** for each one, and classify it as `Fixed`, `Partially fixed` or `Not fixed`, with the evidence (file, and the check you ran). Every finding must appear in the "Findings Addressed" table with that status — none may be silently dropped. If you implemented something different from your own recommendation (e.g. the recommendation said "remove this endpoint" and you only protected it), the status is `Partially fixed` and the difference goes to "Remaining Items".
+2. Go through the Phase 2 report **finding by finding**, re-reading the **Impact and the Recommendation you wrote** for each one, and classify it as `Fixed`, `Partially fixed` or `Not fixed`, with the evidence (file, and the check you ran). Every finding must appear in the "Findings Addressed" table with that status — none may be silently dropped. A finding is `Fixed` only when the consequence in its **Impact** can no longer be reproduced — moving the code to the right layer while the behavior stays the same (e.g. a service that only logs "restore stock") is `Partially fixed` (see "Rule zero" in the playbook). If you implemented something different from your own recommendation (e.g. the recommendation said "remove this endpoint" and you only protected it), the status is `Partially fixed` and the difference goes to "Remaining Items".
 3. A finding may only stay `Partially fixed`/`Not fixed` when the missing part is outside the allowed exceptions of `references/mvc-guidelines.md` §9 (typically: adding mandatory authentication where everything was public, or changing the response envelope). Everything else must be fixed before you finish — including the part of a finding that is fixable while the rest is blocked (see §9, "Do not hide a fixable problem behind a bigger one"): privilege fields accepted from anonymous clients, predictable tokens, missing validation, integrity fixes.
 4. Whatever stays open goes to "Remaining Items" with the reason and the recommendation, and the validation block must show `✗` for "Zero CRITICAL/HIGH anti-patterns remaining".
 5. Run these closure probes against the running app before declaring a security finding fixed (they are the ones that catch "fixed on paper"):
    - privilege field sent by an anonymous client (`{"role": "admin"}`) on create **and** update → the created/updated record must keep the default role;
    - protected/destructive endpoint **without** any configuration → must answer 403 (not 200);
    - an error forced on a write (duplicate key) → the log must not contain the bound parameters (no password hashes);
-   - an error status the framework used to decorate (405) → the header (`Allow`) must still be there.
+   - an error status the framework used to decorate (405) → the header (`Allow`) must still be there;
+   - **every Impact that describes a wrong or missing behavior** (e.g. "cancelling does not restore the stock", "a negative quantity increases the stock") → reproduce that scenario on the running app, reading the affected data before and after, and repeat the request to prove the fix is not applied twice.
 
 ### 3.6 Clean up
 Stop every process you started, delete runtime artifacts you created inside the project that are not versioned (database files, logs, `__pycache__`), and keep dependency folders out of version control.

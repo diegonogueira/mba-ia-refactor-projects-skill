@@ -2,6 +2,17 @@
 
 Concrete transformations, each mapped to catalog entries. Examples show Python/Flask and Node.js/Express; apply the same idea to other stacks using the framework's idioms. Examples are illustrative — adapt names, envelopes and messages to the project so the public contract is preserved.
 
+## Rule zero — close the Impact, not just the layer
+
+A transformation is a means; the finding is closed only when the consequence written in its **Impact** can no longer be reproduced. Moving code into the right layer keeps its bugs: a handler that *announces* an action without performing it (`print("Order cancelled. Restore stock.")`, a `# TODO: refund`, a notification that says "your seats were released") becomes a service that still does not perform it.
+
+For every finding, before choosing the `T-xx`:
+1. Read the **Impact** and list each concrete consequence it describes (data corrupted, action announced but missing, rule documented but not enforced, secret leaked…).
+2. Map **each** consequence to the change that removes it. Structural transformations (T-03, T-11, T-13, T-16) fix the *design* part; the *behavior* part needs its own change — usually T-19 (missing rule / compensating action), T-09 (atomicity) or T-12 (validation).
+3. In step 3.5, prove it: reproduce the scenario of the Impact against the running app and show the new outcome (e.g. cancel an order → the stock goes back; cancel it again → the stock does not go back twice).
+
+A row may say `Fixed` only when both parts are done. "Moved to `services/`" with the behavior still missing is `Partially fixed` — and the missing behavior is fixable within `mvc-guidelines.md` §9 (exception 10), so it may not be left for "Remaining Items".
+
 ## Index
 
 | ID | Transformation | Fixes |
@@ -24,8 +35,9 @@ Concrete transformations, each mapped to catalog entries. Examples show Python/F
 | T-16 | Remove dead code, replace prints with a logger, simplify conditionals | AP-22, AP-23, AP-24 |
 | T-17 | Enforce referential integrity on delete | AP-12 |
 | T-18 | Replace mutable globals with scoped state | AP-09 |
+| T-19 | Implement the behavior the Impact says is missing (announced-but-not-performed rules, compensating actions on state changes) | AP-07, AP-11, AP-16, any finding whose Impact describes wrong behavior |
 
-Recommended execution order: T-01 → T-11 → T-02/T-04/T-09 (models) → T-13/T-08 → T-12 → T-03 (controllers + views) → T-07 → T-05/T-06 → T-14/T-15/T-16/T-17/T-18 → validation.
+Recommended execution order: T-01 → T-11 → T-02/T-04/T-09 (models) → T-13/T-08 → T-19 → T-12 → T-03 (controllers + views) → T-07 → T-05/T-06 → T-14/T-15/T-16/T-17/T-18 → validation.
 
 ---
 
@@ -981,6 +993,8 @@ if isinstance(items, list): ...
 ```
 Delete functions/modules/config keys with no references (confirm with `grep -rn name`). Unused but meaningful services (e.g. notification) should be either wired into the use case that needs them or removed — never left orphaned.
 
+Replacing a `print` with a logger does not change what the message claims. If the text announces an action (`"Restore stock"`, `"Refund issued"`, `"Seats released"`), check that the action is actually performed; if not, apply T-19 — never ship a log line that describes something the code does not do.
+
 ---
 
 ## T-17 — Enforce referential integrity on delete
@@ -1068,3 +1082,78 @@ class RecentActivityCache {
 }
 // created once in createApp() and passed to the service that needs it — or removed if nothing reads it
 ```
+
+---
+
+## T-19 — Implement the behavior the Impact says is missing
+**Fixes:** AP-07 (rule announced in a handler but not performed), AP-11/AP-16 (rule enforced on one path and not on another) and any finding whose Impact describes a wrong outcome. See "Rule zero" at the top of this file.
+
+Typical signals: a log/print/notification text or comment that announces an effect (`restore stock`, `release seats`, `refund`, `revoke access`, `TODO`) with no write that produces it; a status change that should have a compensating action; a rule applied on create but not on update/delete.
+
+Before — the rule exists only as a message (moving it to a service does not change this):
+```python
+def update_status(booking_id, new_status):
+    db.execute("UPDATE bookings SET status = ? WHERE id = ?", (new_status, booking_id))
+    db.commit()
+    if new_status == "cancelled":
+        logger.info("Booking %s cancelled. Release seats.", booking_id)   # seats are never released
+```
+
+After — Model (`src/models/booking_model.py`): the state change and its compensating action in **one transaction**, guarded by a conditional update so it runs **exactly once**:
+```python
+CANCELLED = "cancelled"
+
+def update_status(booking_id: int, new_status: str) -> str:
+    """Returns the previous status. Cancelling releases the reserved seats exactly once."""
+    with transaction(immediate=True) as conn:
+        row = conn.execute("SELECT status FROM bookings WHERE id = ?", (booking_id,)).fetchone()
+        if row is None:
+            raise NotFoundError("Booking not found")
+        previous = row["status"]
+        if previous == CANCELLED and new_status != CANCELLED:
+            # seats were already released; re-reserving them could oversell → terminal state
+            raise ValidationError("A cancelled booking cannot change status")
+        changed = conn.execute(
+            "UPDATE bookings SET status = ? WHERE id = ? AND status = ?",   # compare-and-set: no double release
+            (new_status, booking_id, previous),
+        ).rowcount
+        if changed and new_status == CANCELLED and previous != CANCELLED:
+            conn.execute(
+                "UPDATE events SET seats_available = seats_available + "
+                "(SELECT SUM(quantity) FROM booking_items WHERE booking_items.event_id = events.id AND booking_id = ?) "
+                "WHERE id IN (SELECT event_id FROM booking_items WHERE booking_id = ?)",
+                (booking_id, booking_id),
+            )
+    return previous
+```
+
+After — Service: notify **after** the commit, and only what really happened:
+```python
+def change_booking_status(booking_id, new_status):
+    previous = booking_model.update_status(booking_id, new_status)
+    if new_status == CANCELLED and previous != CANCELLED:
+        notifications.booking_cancelled(booking_id)          # "seats released" is now true
+```
+
+Node.js (with `withTransaction` from T-09):
+```js
+async function cancelBooking(db, bookingId) {
+  return withTransaction(db, async () => {
+    const { changes } = await db.run(
+      "UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status <> 'cancelled'", [bookingId]);
+    if (changes === 0) return false;                     // already cancelled (or missing) → nothing to release
+    await db.run(
+      `UPDATE events SET seats_available = seats_available +
+         (SELECT SUM(quantity) FROM booking_items bi WHERE bi.event_id = events.id AND bi.booking_id = ?)
+       WHERE id IN (SELECT event_id FROM booking_items WHERE booking_id = ?)`, [bookingId, bookingId]);
+    return true;
+  });
+}
+```
+
+Rules:
+- Implement the rule **as the code documents it** (message, comment, README). Where its edges are ambiguous (e.g. can a cancelled order be reopened?), choose the option that cannot corrupt data — usually "the compensated state is terminal" — and report the choice under "Contract Changes".
+- The compensating action is **idempotent**: repeating the same request must not apply it twice (compare-and-set on the previous state, or a flag/column recording that it ran).
+- Same transaction as the state change; side effects outside the database (notifications) only after the commit.
+- Legitimate requests keep their route, method, success status and envelope. A transition that would corrupt data (leaving the terminal state) is rejected with 400 (`mvc-guidelines.md` §9, exceptions 6 and 10).
+- Closure probe (step 3.5): run the Impact's scenario on the running app and compare the numbers before/after (stock before order → after order → after cancel → after a second cancel).

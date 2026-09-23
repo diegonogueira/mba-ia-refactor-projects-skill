@@ -185,7 +185,11 @@ Allowed exceptions (each must be listed under "Contract Changes" in the Phase 3 
 8. **Secrets in logs and seeds**: stop logging values that may carry credentials (disable driver/ORM parameter echoing — e.g. `SQLALCHEMY_ENGINE_OPTIONS = {"hide_parameters": True}` — or log only the exception type/message), and stop seeding privileged accounts with well-known passwords (read them from the environment, or generate a random one at first boot and log it once).
 9. **Privilege escalation**: a field that grants privileges (`role`, `is_admin`, `type`, `permissions`, `plan`, `scopes`) must stop being honoured when it comes from an **unauthenticated** client. Ignore it and use the least-privileged default, or reject the privileged value with the project's error envelope (400/403); the route, the method and the success status stay the same. **This is a required security fix, not a product decision** — it does not need authentication to exist, it only needs the endpoint to stop granting privileges to anonymous callers. The same applies to update endpoints: without a guard that proves who is calling, a public endpoint may not change a privilege field.
 
+10. **Documented-but-missing behavior**: when the code announces an effect that it does not perform (a log/notification/comment such as "cancelled — restore stock", a README rule, a `TODO` on a state change) and the audit's Impact describes it, **implementing it is a required integrity fix, not a product decision** (playbook T-19). The route, method, success status and envelope stay the same; the data now reflects what the API already claimed. A request that would corrupt data because of the new rule (e.g. leaving a compensated terminal state) is rejected with 400.
+
 Not allowed without asking the user: adding mandatory authentication to endpoints that were public (i.e. turning a 200 into a 401 for a legitimate request), renaming routes/fields, changing ports, changing response envelopes. Report these as "Remaining Items" recommendations instead.
+
+**Moving code is not fixing it.** Relocating a handler into models/services preserves its behavior, bugs included. A finding whose Impact is still reproducible after the move is not fixed (see "Rule zero" in the playbook).
 
 **Do not hide a fixable problem behind a bigger one.** "This needs authentication" only covers the part that really needs authentication. When a finding has a portion that can be fixed within the exceptions above (e.g. the privilege field of exception 9, a predictable token that can be signed, a missing ownership check that can become a 404), fix that portion now and keep only the genuinely blocked part in "Remaining Items", saying explicitly what was fixed and what was not.
 
@@ -218,4 +222,5 @@ When moving a module, update every import and remove the old file — no duplica
 - [ ] Single, clear entry point / composition root; original start command works.
 - [ ] Application boots without errors.
 - [ ] Every original endpoint responds as in the baseline (except documented contract changes).
+- [ ] The consequence described in each finding's Impact no longer reproduces on the running app (behavior fixed, not only relocated).
 - [ ] Re-audit shows no remaining CRITICAL/HIGH findings (or they are justified in "Remaining Items").
