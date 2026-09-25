@@ -59,6 +59,7 @@ Coverage rules:
 - Happy path with realistic payloads (take them from `api.http`, README, seed data, or the handler code).
 - For each resource: one not-found (`/resource/999999`) and one invalid payload case, when the original handles them.
 - Order requests so that dependent data exists (create before update/delete) and **destructive endpoints run last** (e.g. database reset, delete user).
+- When the refactoring adds authentication to management routes (mvc-guidelines §9 exception 11), the smoke test logs in as the seeded admin first and sends `Authorization: Bearer <token>` to those routes in **both** runs (the original ignores the header), so the comparison stays like for like; 401/403 are checked by separate probes.
 - Include one security probe per CRITICAL fix when applicable (e.g. SQL injection payload `' OR '1'='1` in a search/login field; request to a disabled admin endpoint).
 
 For each request record: method, path, HTTP status, content type, and the response **shape** (JSON keys at the first two levels, or the text body for plain-text responses).

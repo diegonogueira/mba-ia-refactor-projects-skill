@@ -5,6 +5,11 @@ Uso: python3 scripts/smoke_test.py <p1|p2|p3> <base_url> <saida.json>
 
 Os checks estão na mesma ordem para o código original e o refatorado, o que permite
 comparar as duas execuções com scripts/compare_results.py.
+
+Projeto 1: antes dos checks, faz login como o admin do seed. Se a resposta trouxer um token
+(código refatorado, rotas de gestão autenticadas), ele vai em `Authorization: Bearer` em todas
+as requisições; o código original não emite token e ignora o header. Assim as duas execuções
+são comparáveis. Os casos 401/403 ficam em scripts/security_probes.sh.
 """
 import json
 import sys
@@ -122,11 +127,16 @@ def shape(value, depth=0):
     return type(value).__name__
 
 
-def call(base, method, path, body):
+ADMIN_LOGIN = {"p1": ("/login", {"email": "admin@loja.com", "senha": "admin123"})}
+
+
+def call(base, method, path, body, token=None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(base + path, data=data, method=method)
     if data is not None:
         req.add_header("Content-Type", "application/json")
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             status, raw, ctype = resp.status, resp.read(), resp.headers.get("Content-Type", "")
@@ -145,9 +155,17 @@ def call(base, method, path, body):
 def main():
     project, base, out = sys.argv[1], sys.argv[2].rstrip("/"), sys.argv[3]
     plan = {"p1": P1, "p2": P2, "p3": P3}[project]
+    token = None
+    if project in ADMIN_LOGIN:
+        login = call(base, "POST", *ADMIN_LOGIN[project])
+        try:
+            token = json.loads(login.get("body", "{}")).get("dados", {}).get("token")
+        except ValueError:
+            token = None
+        print(f"login de admin: HTTP {login['status']}, token {'recebido' if token else 'ausente'}")
     results = []
     for method, path, body in plan:
-        res = call(base, method, path, body)
+        res = call(base, method, path, body, token)
         res.update({"method": method, "path": path})
         results.append(res)
         print(f"{method:6} {path:70} -> {res['status']}")

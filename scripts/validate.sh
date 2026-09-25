@@ -108,7 +108,7 @@ check_project() { # <n> <port> — smoke test + comparação com o baseline + lo
 validate_1() {
   echo "=== Projeto 1: code-smells-project (Python/Flask) ==="
   local d="$WORK/p1"; copy_project code-smells-project "$d"; python_env "$d" || return 1
-  start_server "$d" 5000 "$OUT/server-p1.log" "$d/.venv/bin/python" app.py || { stop_server; return 1; }
+  start_server "$d" 5000 "$OUT/server-p1.log" env SEED_PASSWORD=admin123 "$d/.venv/bin/python" app.py || { stop_server; return 1; }
   check_project 1 5000
 }
 

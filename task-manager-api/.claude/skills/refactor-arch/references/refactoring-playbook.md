@@ -426,7 +426,106 @@ function createAdminGuard({ adminToken, adminEndpointsEnabled }) {
 }
 ```
 
-Use guards on routes that were already "admin"/debug by nature only when allowed by the contract rules (see mvc-guidelines §9); otherwise list authentication as a remaining item.
+The flag + admin-token guard above is for routes that are administrative/debug by nature (§9 exception 2). Management routes of the domain get user authentication with roles, below (§9 exception 11).
+
+### Authentication for management routes (signed token + role guard)
+
+Before — login checks the password but returns no credential, so no route can tell who is calling:
+```python
+def login():
+    user = user_model.authenticate(email, password)
+    return jsonify({"data": serialize_login(user), "success": True}), 200
+
+bp.add_url_rule("/products/<int:product_id>", "delete_product", controller.delete_product, methods=["DELETE"])
+bp.add_url_rule("/users", "list_users", controller.list_users, methods=["GET"])
+```
+
+After — token service (`src/services/token_service.py`): signed with `SECRET_KEY`, expiring, carrying only the user id:
+```python
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from flask import current_app
+
+SALT = "login-token"
+
+def _serializer():
+    return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt=SALT)
+
+def issue(user_id: int) -> str:
+    return _serializer().dumps({"user_id": user_id})
+
+def read_user_id(token: str) -> int | None:
+    try:
+        data = _serializer().loads(token, max_age=current_app.config["TOKEN_MAX_AGE"])
+    except (BadSignature, SignatureExpired):
+        return None
+    return data.get("user_id")
+```
+
+After — guards (`src/middlewares/auth_guard.py`): the role comes from the database, never from the request:
+```python
+from functools import wraps
+from flask import g, request
+
+def _current_user():
+    header = request.headers.get("Authorization", "")
+    token = header[7:] if header.startswith("Bearer ") else ""
+    user_id = token_service.read_user_id(token) if token else None
+    user = user_model.find_by_id(user_id) if user_id else None
+    if user is None:
+        raise UnauthorizedError("Authentication required")          # 401
+    return user
+
+def admin_required(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        g.user = _current_user()
+        if g.user["role"] != ROLE_ADMIN:
+            raise ForbiddenError("Admin role required")             # 403
+        return view(*args, **kwargs)
+    return wrapper
+
+def owner_or_admin(param):
+    def decorator(view):
+        @wraps(view)
+        def wrapper(*args, **kwargs):
+            g.user = _current_user()
+            if g.user["role"] != ROLE_ADMIN and g.user["id"] != kwargs[param]:
+                raise ForbiddenError("Access denied")
+            return view(*args, **kwargs)
+        return wrapper
+    return decorator
+```
+
+After — login adds the token (same route, status and fields, plus `token`), and the routes the finding lists get the guard:
+```python
+def login():
+    user = user_model.authenticate(email, password)
+    body = serialize_login(user) | {"token": token_service.issue(user["id"])}
+    return jsonify({"data": body, "success": True}), 200
+
+bp.add_url_rule("/products/<int:product_id>", "delete_product", admin_required(controller.delete_product), methods=["DELETE"])
+bp.add_url_rule("/users", "list_users", admin_required(controller.list_users), methods=["GET"])
+bp.add_url_rule("/orders/user/<int:user_id>", "user_orders", owner_or_admin("user_id")(controller.user_orders), methods=["GET"])
+bp.add_url_rule("/products", "list_products", controller.list_products, methods=["GET"])   # storefront read stays public
+```
+
+Node.js (Express + `jsonwebtoken`, or `crypto.createHmac` when no dependency may be added):
+```js
+function authenticate({ tokenService, userModel }) {
+  return async (req, res, next) => {
+    const [, token] = (req.get('Authorization') || '').split(' ');
+    const userId = token && tokenService.readUserId(token);
+    req.user = userId && (await userModel.findById(userId));
+    return req.user ? next() : next(new UnauthorizedError('Authentication required'));
+  };
+}
+const requireRole = (role) => (req, res, next) =>
+  (req.user.role === role ? next() : next(new ForbiddenError('Forbidden')));
+
+router.get('/api/reports/sales', authenticate(deps), requireRole('admin'), asyncHandler(reportController.sales));
+```
+
+Rules: `SECRET_KEY` from config (ephemeral with a warning when unset, never a literal); 401 for missing/invalid/expired tokens, 403 for the wrong role; guarded routes return exactly the original response for an admin; document the guarded routes and how to obtain the token in "Contract Changes" and in the project README.
 
 Privilege escalation on public endpoints — before:
 ```python

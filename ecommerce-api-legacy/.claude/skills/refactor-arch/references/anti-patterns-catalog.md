@@ -140,7 +140,7 @@ Escalation rules:
 
 **Not a finding when:** a guard (decorator/middleware) validates a signed token/session and role before the handler runs.
 
-**Phase 3 obligation:** the *privilege escalation* part of this finding (a `role`/`is_admin`/`permissions` field accepted from an anonymous client, on create or update) and the *predictable token* part must be fixed in Phase 3 — see `refactoring-playbook.md` T-06 and `mvc-guidelines.md` §9 exception 9. Only "every route is public and there is no authentication at all" may stay in "Remaining Items", and the report must say which part was fixed and which part was not.
+**Phase 3 obligation:** the *privilege escalation* part of this finding (a `role`/`is_admin`/`permissions` field accepted from an anonymous client, on create or update) and the *predictable token* part must be fixed in Phase 3 — see `refactoring-playbook.md` T-06 and `mvc-guidelines.md` §9 exception 9. When the login issues no credential and management routes are anonymous, the Recommendation must be a signed login token plus role guards on the routes the finding lists, and Phase 3 **implements it** (`mvc-guidelines.md` §9 exception 11) — it is not a "Remaining Item". Only routes the finding does not list (storefront reads, sign-up) stay public.
 
 ---
 

@@ -166,4 +166,4 @@ Rules:
 - The endpoint count must match the Phase 1 inventory; list any mismatch explicitly.
 - A row is `Fixed` only when the consequence described in the finding's **Impact** no longer reproduces on the running app; relocating the code without changing that outcome is `Partially fixed`.
 - **Every finding of the Phase 2 report appears in "Findings Addressed"**, with the same name and severity, and with an explicit status. The number of rows equals the number of findings.
-- `Partially fixed` and `Not fixed` rows must name, in "Remaining Items", exactly what is missing and which contract rule blocks it. A finding may only stay unfixed when the fix is outside the allowed exceptions of `mvc-guidelines.md` §9.
+- `Partially fixed` and `Not fixed` rows must name, in "Remaining Items", exactly what is missing and which contract rule blocks it. A finding may only stay unfixed when the fix is outside the allowed exceptions of `mvc-guidelines.md` §9 — authentication of the management routes listed in an AP-06 finding is inside them (exception 11) and is never a remaining item.
