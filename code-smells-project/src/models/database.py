@@ -8,6 +8,8 @@ from pathlib import Path
 from flask import current_app, g
 from werkzeug.security import generate_password_hash
 
+from src.models.tipos_usuario import TIPO_ADMIN, TIPO_CLIENTE
+
 logger = logging.getLogger(__name__)
 
 DatabaseError = sqlite3.Error
@@ -15,7 +17,7 @@ DatabaseError = sqlite3.Error
 # Bytes de entropia da senha gerada para os usuários de demonstração quando SEED_PASSWORD não é definido.
 SEED_PASSWORD_BYTES = 16
 
-SCHEMA = """
+SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS produtos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT,
@@ -31,7 +33,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nome TEXT,
     email TEXT,
     senha TEXT,
-    tipo TEXT DEFAULT 'cliente',
+    tipo TEXT DEFAULT '{TIPO_CLIENTE}',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS pedidos (
@@ -66,9 +68,9 @@ PRODUTOS_SEED = [
 # Usuários de demonstração (desative com SEED_DATABASE=false). A senha NÃO fica no código:
 # vem de SEED_PASSWORD ou é sorteada no primeiro boot e registrada no log uma única vez.
 USUARIOS_SEED = [
-    ("Admin", "admin@loja.com", "admin"),
-    ("João Silva", "joao@email.com", "cliente"),
-    ("Maria Santos", "maria@email.com", "cliente"),
+    ("Admin", "admin@loja.com", TIPO_ADMIN),
+    ("João Silva", "joao@email.com", TIPO_CLIENTE),
+    ("Maria Santos", "maria@email.com", TIPO_CLIENTE),
 ]
 
 

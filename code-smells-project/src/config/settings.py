@@ -12,6 +12,7 @@ FORMATO_LOG = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 NIVEL_LOG_PADRAO = "INFO"
 HOST_PADRAO = "127.0.0.1"
 PORTA_PADRAO = 5000
+TOKEN_VALIDADE_PADRAO_SEGUNDOS = 8 * 60 * 60  # validade do token de login
 
 
 def configure_logging(nivel=None):
@@ -53,6 +54,7 @@ class Settings:
     seed_password: str | None
     admin_endpoints_enabled: bool
     admin_token: str | None
+    token_max_age: int
 
 
 def load_settings():
@@ -71,4 +73,5 @@ def load_settings():
         seed_password=os.environ.get("SEED_PASSWORD") or None,
         admin_endpoints_enabled=_bool("ADMIN_ENDPOINTS_ENABLED", False),
         admin_token=os.environ.get("ADMIN_TOKEN") or None,
+        token_max_age=int(os.environ.get("TOKEN_MAX_AGE_SECONDS", TOKEN_VALIDADE_PADRAO_SEGUNDOS)),
     )

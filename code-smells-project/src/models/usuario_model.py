@@ -4,9 +4,10 @@ import hmac
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from src.models.database import get_connection, transaction
+from src.models.tipos_usuario import TIPO_CLIENTE
 from src.utils.errors import ConflictError
 
-TIPO_PADRAO = "cliente"
+TIPO_PADRAO = TIPO_CLIENTE
 PREFIXOS_HASH = ("scrypt:", "pbkdf2:")
 
 COLUNAS_PUBLICAS = "id, nome, email, tipo, criado_em"

@@ -14,7 +14,7 @@
     "22": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "23": {
       "status": "200->401",
-      "motivo": "o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=admin123 para reproduzir o login de demonstração, ou a senha sorteada que aparece no log do primeiro boot"
+      "motivo": "login ganhou o campo dados.token (exceção 11: token assinado para as rotas de gestão). O validate.sh sobe a API com SEED_PASSWORD=admin123; sem essa variável o seed sorteia a senha (exceção 8) e o login com admin123 responde 401"
     },
     "25": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",
     "29": "erro agora inclui \"sucesso\": false (envelope de erro padronizado)",

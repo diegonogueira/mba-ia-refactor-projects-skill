@@ -19,8 +19,8 @@ def serializar_usuario(usuario):
     return _selecionar(usuario, CAMPOS_USUARIO)
 
 
-def serializar_login(usuario):
-    return _selecionar(usuario, CAMPOS_USUARIO_LOGIN)
+def serializar_login(usuario, token):
+    return {**_selecionar(usuario, CAMPOS_USUARIO_LOGIN), "token": token}
 
 
 def _serializar_item(item):

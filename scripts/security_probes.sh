@@ -59,6 +59,31 @@ probe_body() { # <descrição> <regex que NÃO pode aparecer no corpo> <curl arg
   fi
 }
 
+token_de() { # <email> — token do POST /login com a senha do seed usada nas provas
+  curl -s -X POST localhost:5000/login -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"senha\":\"senha-de-teste-123\"}" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"].get("token",""))'
+}
+
+# HIGH/CRITICAL de Broken Authentication (AP-06): login emite token assinado e as rotas de gestão exigem papel.
+probe_rotas_de_gestao() {
+  local admin cliente rota metodo
+  admin=$(token_de admin@loja.com); cliente=$(token_de joao@email.com)
+  if [[ -n "$admin" ]]; then echo "  PASS  login devolve token assinado"; else echo "  FAIL  login sem token"; FAILED=1; fi
+  for rota in "GET /usuarios" "GET /pedidos" "GET /relatorios/vendas" "PUT /produtos/1" "DELETE /produtos/9999" "PUT /pedidos/9999/status" "GET /usuarios/3" "GET /pedidos/usuario/3"; do
+    metodo=${rota%% *}; rota=${rota#* }
+    probe "$metodo $rota sem token" 401 -X "$metodo" "localhost:5000$rota" -H 'Content-Type: application/json' -d '{}'
+  done
+  probe "token adulterado é recusado" 401 localhost:5000/usuarios -H "Authorization: Bearer ${admin}x"
+  probe "cliente não lista usuários" 403 localhost:5000/usuarios -H "Authorization: Bearer $cliente"
+  probe "cliente não altera produto" 403 -X PUT localhost:5000/produtos/1 -H "Authorization: Bearer $cliente" -H 'Content-Type: application/json' -d '{"nome":"X","preco":1,"estoque":1}'
+  probe "cliente não lê pedidos de outro usuário" 403 localhost:5000/pedidos/usuario/3 -H "Authorization: Bearer $cliente"
+  probe "cliente lê os próprios pedidos" 200 localhost:5000/pedidos/usuario/2 -H "Authorization: Bearer $cliente"
+  probe "admin lista usuários" 200 localhost:5000/usuarios -H "Authorization: Bearer $admin"
+  probe "admin lê o relatório de vendas" 200 localhost:5000/relatorios/vendas -H "Authorization: Bearer $admin"
+  probe "vitrine continua pública" 200 localhost:5000/produtos
+  probe "cadastro continua público" 201 -X POST localhost:5000/usuarios -H 'Content-Type: application/json' -d '{"nome":"Probe","email":"probe.p1@teste.com","senha":"segredo123"}'
+}
+
 estoque_produto() { curl -s "localhost:5000/produtos/$1" | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"]["estoque"])'; }
 
 check() { # <descrição> <obtido> <esperado>
@@ -67,16 +92,17 @@ check() { # <descrição> <obtido> <esperado>
 
 # Impact do HIGH de AP-07 no audit-project-1.md: "cancelar devolve estoque" era anunciado e não implementado.
 probe_estoque_cancelamento() {
-  local inicial pedido
+  local inicial pedido admin
+  admin=$(token_de admin@loja.com)
   inicial=$(estoque_produto 2)
   pedido=$(curl -s -X POST localhost:5000/pedidos -H 'Content-Type: application/json' \
     -d '{"usuario_id":1,"itens":[{"produto_id":2,"quantidade":3}]}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"]["pedido_id"])')
   check "pedido baixa o estoque" "$(estoque_produto 2)" "$((inicial - 3))"
-  probe "cancelamento responde como antes" 200 -X PUT "localhost:5000/pedidos/$pedido/status" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
+  probe "cancelamento responde como antes" 200 -X PUT "localhost:5000/pedidos/$pedido/status" -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
   check "cancelar devolve o estoque" "$(estoque_produto 2)" "$inicial"
-  curl -s -o /dev/null -X PUT "localhost:5000/pedidos/$pedido/status" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
+  curl -s -o /dev/null -X PUT "localhost:5000/pedidos/$pedido/status" -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
   check "cancelar de novo não devolve em dobro" "$(estoque_produto 2)" "$inicial"
-  probe "reabrir pedido cancelado é recusado" 400 -X PUT "localhost:5000/pedidos/$pedido/status" -H 'Content-Type: application/json' -d '{"status":"aprovado"}'
+  probe "reabrir pedido cancelado é recusado" 400 -X PUT "localhost:5000/pedidos/$pedido/status" -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' -d '{"status":"aprovado"}'
   check "reabrir pedido cancelado não mexe no estoque" "$(estoque_produto 2)" "$inicial"
 }
 
@@ -89,9 +115,8 @@ probes_1() {
   probe "405 continua respondendo" 405 -X DELETE localhost:5000/health
   if curl -s -D- -o /dev/null -X DELETE localhost:5000/health | grep -qi '^allow:'; then
     echo "  PASS  405 preserva o header Allow"; else echo "  FAIL  405 sem header Allow"; FAILED=1; fi
-  probe "listagem de usuários continua respondendo (contrato original)" 200 localhost:5000/usuarios
-  probe "relatório de vendas continua respondendo (contrato original)" 200 localhost:5000/relatorios/vendas
-  probe_body "listagem de usuários não expõe senha" '"senha"' localhost:5000/usuarios
+  probe_rotas_de_gestao
+  probe_body "listagem de usuários (admin) não expõe senha" '"senha"' localhost:5000/usuarios -H "Authorization: Bearer $(token_de admin@loja.com)"
   probe_body "health não expõe segredos" 'secret_key|db_path' localhost:5000/health
   probe "login com a senha do seed configurada" 200 -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com","senha":"senha-de-teste-123"}'
   probe "injeção de SQL no login não autentica" 401 -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com'"'"' --","senha":"x"}'

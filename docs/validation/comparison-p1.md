@@ -22,7 +22,7 @@
 | 20 | GET | `/usuarios/9999` | 404 | 404 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 21 | POST | `/usuarios` | 201 | 201 | igual |
 | 22 | POST | `/usuarios` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
-| 23 | POST | `/login` | 200 | 401 | DIFERENTE (esperado: o seed deixou de ter senha no código (exceção 8): use SEED_PASSWORD=admin123 para reproduzir o login de demonstração, ou a senha sorteada que aparece no log do primeiro boot): status 200 → 401; shape (-dados, -mensagem, +erro) |
+| 23 | POST | `/login` | 200 | 200 | DIFERENTE (esperado: login ganhou o campo dados.token (exceção 11: token assinado para as rotas de gestão). O validate.sh sobe a API com SEED_PASSWORD=admin123; sem essa variável o seed sorteia a senha (exceção 8) e o login com admin123 responde 401): shape (+dados.token) |
 | 24 | POST | `/login` | 401 | 401 | igual |
 | 25 | POST | `/login` | 400 | 400 | DIFERENTE (esperado: erro agora inclui "sucesso": false (envelope de erro padronizado)): shape (+sucesso) |
 | 26 | POST | `/pedidos` | 201 | 201 | igual |

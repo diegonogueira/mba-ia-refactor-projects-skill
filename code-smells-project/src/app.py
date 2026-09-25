@@ -27,6 +27,7 @@ def create_app(settings=None):
         SEED_PASSWORD=settings.seed_password,
         ADMIN_ENDPOINTS_ENABLED=settings.admin_endpoints_enabled,
         ADMIN_TOKEN=settings.admin_token,
+        TOKEN_MAX_AGE=settings.token_max_age,
     )
     CORS(app, origins=settings.cors_origins)
     app.url_map.converters["int"] = IdConverter  # antes dos blueprints: as regras usam o conversor ao serem registradas

@@ -9,6 +9,8 @@ A skill `refactor-arch` (Claude Code) analisa uma codebase, audita anti-patterns
 > **Iteração pós-avaliação (skill v1.4.0).** Um feedback apontou que o relatório do projeto 3 classificava escalação de privilégio como HIGH, mas a Fase 3 tinha deixado `POST /users` aceitando `role: admin`. Investiguei, achei o padrão por trás disso e corrigi a skill e os 3 projetos — o relato está em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca).
 >
 > **Segunda iteração (skill v1.5.0/v1.5.1).** Um novo feedback mostrou que o `audit-project-1.md` registrava "cancelar o pedido não devolve o estoque", mas a refatoração só tinha mudado o código de camada — o `notificacao_service` seguia apenas logando `"Devolver estoque."`. O playbook ganhou a regra de fechar o comportamento descrito no **Impact** (e não só mover o código) e a skill foi rodada de novo no projeto 1: cancelar agora devolve o estoque, uma única vez, e todos os endpoints originais continuam respondendo como antes — ver [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151).
+>
+> **Terceira iteração (skill v1.6.0).** O feedback seguinte apontou que o finding de Broken Authentication do projeto 1 recomendava token assinado e guard por papel nas rotas de gestão, mas a Fase 3 tinha deixado isso como pendência. Agora a skill trata essa recomendação como correção obrigatória. No projeto 1, o login emite um token assinado e as rotas de gestão exigem o papel certo — ver [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160).
 
 ## Sumário
 
@@ -97,7 +99,7 @@ Escala usada (definida no enunciado): **CRITICAL** — segurança/arquitetura gr
 
 ### Estrutura
 
-Versão final: **v1.5.1** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
+Versão final: **v1.6.0** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
 
 ```text
 .claude/skills/refactor-arch/            # idêntica nos 3 projetos (diff -r vazio)
@@ -130,7 +132,7 @@ Versão final: **v1.5.1** (o histórico das iterações está em [Desafios](#des
 4. **Dynamic context injection (`` ```! ``):** ao carregar, a skill injeta a lista de arquivos do projeto (sem `node_modules`, `.venv`, `.git`) e o `git status`. Isso economiza chamadas na Fase 1 e permite avisar sobre alterações não commitadas antes da Fase 3 (o que aconteceu no projeto 2). Os comandos terminam com `|| true`, porque uma falha na injeção abortaria a skill inteira.
 5. **Pausa portável:** a Fase 2 termina com `Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]` e **encerra o turno**, sem depender de uma ferramenta de pergunta. Assim funciona no modo interativo (`claude "/refactor-arch"`) e no headless (`claude -p` + `--resume <sessão> "y"`), que usei para gerar logs reproduzíveis.
 6. **Validação baseada em baseline:** antes de alterar qualquer arquivo, a Fase 3 sobe a aplicação **original**, roda um smoke test com todos os endpoints do inventário da Fase 1 e guarda o resultado fora do projeto. Depois da refatoração, roda o mesmo teste e compara status e shape das respostas. Por isso a linha "All endpoints respond correctly" é medida, não declarada.
-7. **Preservação de contrato com exceções explícitas:** rotas, métodos, nomes de campos, envelopes, porta e comando de start não mudam. Há 10 exceções permitidas, todas de segurança ou integridade (remover segredos/hashes das respostas, fechar endpoints destrutivos por padrão, 500 → 400 em entrada inválida, tirar segredos de log e seed, barrar escalação de privilégio, implementar a regra que o código anuncia e não executa, etc.), e cada uma precisa aparecer em "Contract Changes". Mudanças que exigem decisão de produto, como tornar autenticação obrigatória, vão para "Remaining Items".
+7. **Preservação de contrato com exceções explícitas:** rotas, métodos, nomes de campos, envelopes, porta e comando de start não mudam. Há 11 exceções permitidas, todas de segurança ou integridade (remover segredos/hashes das respostas, fechar endpoints destrutivos por padrão, 500 → 400 em entrada inválida, tirar segredos de log e seed, barrar escalação de privilégio, implementar a regra que o código anuncia e não executa, autenticar com token e papel as rotas de gestão que a auditoria aponta, etc.), e cada uma precisa aparecer em "Contract Changes". O que fica fora delas (renomear rotas, mudar envelopes, autenticar rotas que a auditoria não aponta) vai para "Remaining Items".
 8. **Honestidade no resultado:** o template só permite ✓ para checagens realmente executadas. Nos 3 projetos a skill marcou ✗ em "Zero CRITICAL/HIGH remaining", porque manteve de propósito a ausência de autenticação para não quebrar o contrato, e explicou o motivo.
 9. **Auditoria de dependências obrigatória na Fase 2:** além dos greps de APIs obsoletas no código, a skill roda um audit somente leitura por ecossistema (`npm audit --package-lock-only`, campo `vulnerabilities` da API do PyPI) e precisa registrar no relatório se o registry estava inacessível, em vez de assumir que está tudo bem (veio da iteração 2).
 10. **Relatório em Markdown renderizável:** banners em blocos `text` e findings como listas com rótulos em negrito. A saída fica legível no terminal e pode ser salva direto em `reports/` sem edição.
@@ -168,7 +170,8 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 | 8 | Projetos 1 e 3 usam a mesma porta (5000), e a Fase 3 sobe a aplicação para validar | As Fases 1–2 dos 3 projetos rodaram em paralelo (somente leitura); nas Fases 3, projetos 1 e 2 rodaram juntos (portas 5000 e 3000) e o projeto 3 só começou depois do fim do projeto 1. |
 | 9 | Risco de *overfitting* da skill aos 3 projetos | Exemplos genéricos no playbook e sinais por responsabilidade (ver seção anterior). |
 | 11 | **Iteração 3 (v1.2.0 → v1.4.0), depois do feedback da banca:** a Fase 3 escondia correções possíveis atrás de "precisa de autenticação" — `POST /users` continuava aceitando `role: admin` no projeto 3, e o mesmo padrão aparecia em mais 7 pontos nos 3 projetos | Varredura finding-a-finding dos 68 achados, skill v1.3.0/v1.4.0 (exceção 9 para escalação de privilégio, exceção 8 para segredo em log/seed, guarda fechada por padrão, headers no contrato, fechamento finding a finding com `Status`), reexecução das 3 fases nos 3 projetos e `scripts/security_probes.sh` com 29 provas. Detalhes em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca). |
-| 12 | **Iteração 4 (v1.4.0 → v1.5.1), segundo feedback da banca:** o relatório do projeto 1 dizia que cancelar não devolve o estoque, mas a Fase 3 só moveu o `print` para `notificacao_service` — o Impact continuava acontecendo | Playbook com "Rule zero" (fechar o Impact, não só a camada) e T-19 (comportamento anunciado e não executado), sinal novo no AP-07, Recommendation obrigada a cobrir o Impact, `Fixed` só quando o cenário do Impact não se reproduz. A primeira reexecução (v1.5.0) fechou listagens do domínio com 403; a v1.5.1 restringiu a exceção 2 ao que é administrativo por natureza e a reexecução final manteve o contrato. Provas de estoque em `security_probes.sh`. Detalhes em [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150). |
+| 12 | **Iteração 4 (v1.4.0 → v1.5.1), segundo feedback da banca:** o relatório do projeto 1 dizia que cancelar não devolve o estoque, mas a Fase 3 só moveu o `print` para `notificacao_service` — o Impact continuava acontecendo | Playbook com "Rule zero" (fechar o Impact, não só a camada) e T-19 (comportamento anunciado e não executado), sinal novo no AP-07, Recommendation obrigada a cobrir o Impact, `Fixed` só quando o cenário do Impact não se reproduz. A primeira reexecução (v1.5.0) fechou listagens do domínio com 403; a v1.5.1 restringiu a exceção 2 ao que é administrativo por natureza e a reexecução final manteve o contrato. Provas de estoque em `security_probes.sh`. Detalhes em [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151). |
+| 13 | **Iteração 5 (v1.5.1 → v1.6.0), terceiro feedback da banca:** o finding de Broken Authentication do projeto 1 recomendava token assinado e guard por papel, mas a Fase 3 deixava a própria recomendação como pendência | Exceção 11 nas guidelines (autenticação das rotas de gestão é obrigatória), regra de que a própria Recommendation não pode virar "Remaining Item", T-06 com token service e guards, smoke test autenticado e 16 provas novas de 401/403/200. Detalhes em [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160). |
 | 10 | O limite de uso da conta (`You've hit your session limit`) interrompeu a Fase 3 dos projetos 1 e 2 no meio | Retomei a **mesma sessão** depois da renovação (`claude -p "...continue de onde parou" --resume <sessão>`) e a skill seguiu do ponto em que estava. Os logs e as métricas registram a interrupção e as duas invocações. |
 
 
@@ -176,7 +179,7 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 
 ## C) Resultados
 
-Os relatórios `audit-project-{1,2,3}.md`, os números e as comparações desta seção vêm das execuções da **skill v1.2.0** (Claude Code 2.1.273, modelo `claude-opus-5[1m]`) sobre o código original (commit `6d1ce62`). Depois disso, o código foi refinado em reexecuções da skill sobre o próprio código refatorado, descritas em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca) e na [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151): projetos 2 e 3 com a v1.4.0, projeto 1 com a v1.5.1 (Claude Code 2.1.280, modelo `claude-opus-5-5[1m]`). Os logs completos de cada projeto — saída das Fases 1 e 3, confirmação e linha do tempo de todas as chamadas de ferramenta — estão em [`docs/execution-logs/`](docs/execution-logs/).
+Os relatórios `audit-project-{1,2,3}.md`, os números e as comparações desta seção vêm das execuções da **skill v1.2.0** (Claude Code 2.1.273, modelo `claude-opus-5[1m]`) sobre o código original (commit `6d1ce62`). Depois disso, o código foi refinado em reexecuções da skill sobre o próprio código refatorado, descritas em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca) e na [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151): projetos 2 e 3 com a v1.4.0, projeto 1 com a v1.6.0 (Claude Code 2.1.282, modelo `claude-opus-5-5`); a [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160) descreve essa última rodada. Os logs completos de cada projeto — saída das Fases 1 e 3, confirmação e linha do tempo de todas as chamadas de ferramenta — estão em [`docs/execution-logs/`](docs/execution-logs/).
 
 ### Resumo dos relatórios de auditoria
 
@@ -220,7 +223,7 @@ Valores tirados do campo `total_cost_usd` e das durações dos eventos `result` 
 
 ### Antes × depois
 
-#### Projeto 1 — code-smells-project (4 arquivos / 780 linhas → 35 arquivos / 1239 linhas)
+#### Projeto 1 — code-smells-project (4 arquivos / 780 linhas → 38 arquivos / 1349 linhas)
 
 ```text
 ANTES                                        DEPOIS
@@ -233,11 +236,11 @@ code-smells-project/                         code-smells-project/
 │                   # regras de 4 domínios       ├── config/            # settings.py (env vars)
 ├── database.py     # conexão global +           ├── models/            # database (conexão por request + transação),
 │                   # schema + seed              │                      # produto, usuario, pedido, relatorio, sistema
-└── requirements.txt                             ├── services/          # pedido_service, notificacao_service
+└── requirements.txt                             ├── services/          # pedido_service, notificacao_service, token_service
                                                  ├── controllers/      # produto, usuario, pedido, relatorio, sistema
                                                  │                      # + validators.py
                                                  ├── views/             # *_routes.py (blueprints) + serializers.py + converters.py
-                                                 ├── middlewares/       # error_handler.py, admin_guard.py
+                                                 ├── middlewares/       # error_handler.py, admin_guard.py, auth_guard.py (token + papel)
                                                  └── utils/             # errors.py
 ```
 
@@ -314,7 +317,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/error_handler.py (AppError/HTTPException/Exception → JSON)
 - [x] Entry point claro — app.py → src/app.py:create_app()
 - [x] Aplicação inicia sem erros — `python app.py`, porta 5000, debug off, log sem traceback
-- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 19/36 checks idênticos + 17 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 2 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection, 1 login de demonstração sem senha fixa no seed — todas listadas em `docs/validation/expected-differences.json`). Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`
+- [x] Endpoints originais respondem corretamente — 19/19 rotas registradas; 19/36 checks idênticos + 17 diferenças esperadas (11 só ganharam `"sucesso": false` no erro, 2 sem campos sensíveis, 2 admin → 403 por padrão, 1 busca imune a SQL injection, 1 login que ganhou o campo `token` — todas listadas em `docs/validation/expected-differences.json`). O smoke test faz login como admin e envia o token às rotas de gestão; sem token elas respondem 401, o que é verificado à parte pelo `security_probes.sh`. Os endpoints `/admin/*` continuam registrados e respondendo: 403 enquanto desabilitados e 200 com `ADMIN_ENDPOINTS_ENABLED=true` + `X-Admin-Token`
 ```
 
 #### Projeto 2 — ecommerce-api-legacy
@@ -429,7 +432,7 @@ Durante a Fase 3 a própria skill fez validações extras, registradas nos logs 
 
 ### Ajustes manuais depois da execução da skill
 
-Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída da Fase 3 da skill**, sem retoques. Os projetos 2 e 3 vêm da reexecução com a v1.4.0 e o projeto 1 da reexecução com a v1.5.1. Quando uma execução não serviu (a v1.5.0 no projeto 1), eu restaurei o código anterior e corrigi a skill, sem editar o código à mão. A única exceção é este ajuste, feito por mim depois da revisão independente:
+Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída da Fase 3 da skill**, sem retoques. Os projetos 2 e 3 vêm da reexecução com a v1.4.0 e o projeto 1 da reexecução com a v1.6.0. Quando uma execução não serviu (a v1.5.0 no projeto 1), eu restaurei o código anterior e corrigi a skill, sem editar o código à mão. A única exceção é este ajuste, feito por mim depois da revisão independente:
 
 - `code-smells-project/requirements.txt` e `task-manager-api/requirements.txt` passaram a declarar `werkzeug==3.1.8` (usado em `generate_password_hash`/`check_password_hash` e nos handlers de erro) e `itsdangerous==2.2.0` (token assinado do projeto 3). Os dois vinham só como dependência transitiva do Flask, o que é frágil num upgrade — e é exatamente o tipo de problema que os relatórios da skill cobram do código legado.
 
@@ -559,14 +562,71 @@ Além do estoque, a reauditoria achou e fechou três outros problemas:
 - `PUT /pedidos/<id>/status`: cancelar devolve o estoque, e sair de `cancelado` ou `entregue` responde 400.
 - Inteiros fora da faixa de 64 bits: 500 → 400/404.
 
-O gate `validate.sh` do projeto 1 volta a ter o mesmo resultado de antes desta iteração: 19/36 checks idênticos e 17 diferenças esperadas, com 0 diferenças não esperadas. Nenhuma rota que respondia 200 passou a responder 401/403.
+O gate `validate.sh` do projeto 1 volta a ter o mesmo resultado de antes desta iteração: 19/36 checks idênticos e 17 diferenças esperadas, com 0 diferenças não esperadas. Nenhuma rota que respondia 200 passou a responder 401/403 — decisão revista na iteração seguinte.
+
+### Terceira iteração: a recomendação que virava pendência (skill v1.6.0)
+
+**O apontamento.** O finding HIGH de Broken Authentication do `audit-project-1.md` recomenda "autenticação com token assinado e guards por papel (`admin`) nas rotas de gestão". Mesmo assim, `PUT`/`DELETE /produtos/<id>`, `GET /usuarios`, `GET /pedidos` e `GET /relatorios/vendas` continuavam abertos, e o login não emitia token. A skill tratava isso como "decisão de produto" e jogava para "Remaining Items" e para as pendências do README. A v1.5.1 tinha até reforçado essa leitura.
+
+**A causa raiz.** As guidelines listavam "tornar autenticação obrigatória" entre as mudanças proibidas sem perguntar. A Fase 3 então descartava a recomendação que a própria Fase 2 tinha escrito. O fechamento finding a finding já exigia reler a Recommendation, mas aceitava "bloqueada pelo contrato" como justificativa.
+
+**A correção na skill (v1.5.1 → v1.6.0):**
+- **`mvc-guidelines.md` §9, exceção 11:** quando o login não emite credencial e as rotas de gestão são anônimas, implementar a recomendação é **obrigatório**, e o item não pode ir para "Remaining Items".
+  - O `POST /login` mantém rota, status e campos e **acrescenta** um token assinado com `SECRET_KEY`, com validade e só com o id do usuário. O papel é lido do banco a cada requisição.
+  - As rotas que o finding aponta como gestão exigem `Authorization: Bearer <token>`: 401 sem token ou com token inválido, 403 sem o papel, e a resposta original para quem tem o papel. Recursos de um único usuário aceitam o dono ou um admin.
+  - Vitrine, cadastro, login e o pedido feito pelo próprio cliente continuam públicos.
+- **"Not allowed without asking"** agora proíbe só autenticar rotas que a auditoria **não** aponta.
+- **`SKILL.md` 3.5:** a própria Recommendation da Fase 2 não pode virar "Remaining Item" quando cabe numa exceção. Nova prova de fechamento: 401, token adulterado, 403 e 200 em cada rota protegida.
+- **`refactoring-playbook.md` T-06:** exemplo de *token service* + `admin_required`/`owner_or_admin` em Python e Node.
+- **Catálogo AP-06, template e `validation-guide.md`:** alinhados. O smoke test faz login de admin e envia o token nas duas execuções, e o código original simplesmente ignora o header.
+
+**A reexecução no projeto 1.** A Fase 2 apontou `[CRITICAL] Unprotected Management Endpoints — login issues no credential`, com a lista de rotas e o plano acima. A Fase 3 implementou:
+- `src/services/token_service.py`: `itsdangerous.URLSafeTimedSerializer` com `SECRET_KEY`, validade de 8 h configurável;
+- `src/middlewares/auth_guard.py`: `admin_required` e `owner_or_admin`, com o papel lido do banco;
+- login devolvendo `dados.token`;
+- guards em 9 rotas.
+
+| Findings na reauditoria | Resultado | Relatório | Log |
+|---|---|---|---|
+| 2 (1 CRITICAL, 1 LOW) | 2 `Fixed`; "Remaining Items: None"; ✓ em "Zero CRITICAL/HIGH" | [`audit-project-1-rerun-v160.md`](reports/audit-project-1-rerun-v160.md) | [log](docs/execution-logs/rerun-v160-project-1-code-smells-project.md) |
+
+| Rotas | Sem token | Token de cliente | Token de admin |
+|---|---|---|---|
+| `POST /produtos`, `PUT`/`DELETE /produtos/<id>`, `PUT /pedidos/<id>/status`, `GET /usuarios`, `GET /pedidos`, `GET /relatorios/vendas` | 401 | 403 | resposta original |
+| `GET /usuarios/<id>`, `GET /pedidos/usuario/<id>` | 401 | 200 se for o dono, 403 se não for | resposta original |
+| `GET /produtos*`, `POST /usuarios`, `POST /login`, `POST /pedidos`, `GET /`, `GET /health` | públicas, como no original | | |
+
+**Provas.** O `security_probes.sh` agora tem 54 provas, todas passando. As novas do projeto 1:
+
+```text
+  PASS  login devolve token assinado
+  PASS  GET /usuarios sem token (HTTP 401)
+  PASS  GET /pedidos sem token (HTTP 401)
+  PASS  GET /relatorios/vendas sem token (HTTP 401)
+  PASS  PUT /produtos/1 sem token (HTTP 401)
+  PASS  DELETE /produtos/9999 sem token (HTTP 401)
+  PASS  PUT /pedidos/9999/status sem token (HTTP 401)
+  PASS  GET /usuarios/3 sem token (HTTP 401)
+  PASS  GET /pedidos/usuario/3 sem token (HTTP 401)
+  PASS  token adulterado é recusado (HTTP 401)
+  PASS  cliente não lista usuários (HTTP 403)
+  PASS  cliente não altera produto (HTTP 403)
+  PASS  cliente não lê pedidos de outro usuário (HTTP 403)
+  PASS  cliente lê os próprios pedidos (HTTP 200)
+  PASS  admin lista usuários (HTTP 200)
+  PASS  admin lê o relatório de vendas (HTTP 200)
+  PASS  vitrine continua pública (HTTP 200)
+  PASS  cadastro continua público (HTTP 201)
+```
+
+O `validate.sh` do projeto 1, com o token de admin, tem 19/36 checks idênticos e 17 diferenças esperadas (o login ganhou `token`), com 0 diferenças não esperadas. As provas de estoque da iteração anterior continuam passando; agora o cancelamento é feito com o token de admin.
 
 ### Pendências conhecidas (assumidas de propósito)
 
 | Item | Onde | Por quê |
 |---|---|---|
-| Ausência de autenticação nas rotas (AP-06) — no projeto 2 o finding é CRITICAL | 3 projetos | Exigir login transformaria requisições hoje bem-sucedidas em 401, o que precisa de decisão de produto. A parte corrigível desse mesmo finding **foi fechada**: endpoints destrutivos e administrativos (`/admin/*` no projeto 1, relatório financeiro e `DELETE /api/users/:id` no projeto 2, `DELETE /users/<id>` no projeto 3) ficam 403 por padrão e só abrem com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN`; e nenhum campo de privilégio (`role`, `active`) é mais aceito de cliente anônimo |
-| Rotas comuns do domínio seguem públicas | 3 projetos | Mesmo motivo acima: `GET /usuarios`, `GET /pedidos`, `GET /relatorios/vendas`, `PUT`/`DELETE /produtos/<id>`, `PUT /pedidos/<id>/status` (projeto 1), `PUT /tasks/<id>` etc. continuam sem autenticação, como no original. Desde a v1.5.1 essa regra está explícita nas guidelines da skill |
+| Ausência de autenticação nas rotas (AP-06) — no projeto 2 o finding é CRITICAL | ecommerce-api-legacy, task-manager-api | Esses dois projetos foram refatorados com a v1.4.0, antes da exceção 11. A parte corrigível do finding **foi fechada**: endpoints destrutivos e administrativos (relatório financeiro e `DELETE /api/users/:id` no projeto 2, `DELETE /users/<id>` no projeto 3) ficam 403 por padrão e só abrem com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN`, e nenhum campo de privilégio (`role`, `active`) é aceito de cliente anônimo. No **projeto 1** o item foi resolvido na [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160) |
+| `POST /pedidos` aceita qualquer `usuario_id` | code-smells-project | Criar pedido é uma ação do próprio cliente e ficou pública, como o finding recomendava. Amarrar o pedido ao dono do token mudaria essa rota; a própria Fase 3 da v1.6.0 registrou o ponto como sugestão fora da auditoria |
 | Política de senha mais dura muda o cadastro | code-smells-project, task-manager-api | Mínimo de 8 caracteres foi aplicado (era 4/nenhum); contas antigas continuam autenticando, mas cadastros com senha curta agora recebem 400 |
 | Sem testes automatizados | 3 projetos | Fora do escopo do desafio; o smoke test e as provas de segurança do repositório cobrem o contrato |
 
@@ -578,7 +638,7 @@ O gate `validate.sh` do projeto 1 volta a ter o mesmo resultado de antes desta i
 
 | Ferramenta | Versão usada | Observação |
 |---|---|---|
-| [Claude Code](https://code.claude.com/docs/en/overview) | 2.1.273 (execuções originais) · 2.1.280 (reexecução v1.5.1) | `curl -fsSL https://claude.ai/install.sh \| bash`, depois `claude` para fazer login |
+| [Claude Code](https://code.claude.com/docs/en/overview) | 2.1.273 (execuções originais) · 2.1.282 (reexecução v1.6.0) | `curl -fsSL https://claude.ai/install.sh \| bash`, depois `claude` para fazer login |
 | Python | 3.14.7 (≥ 3.10) | Projetos 1 e 3 (`uv` é opcional, mas acelera a instalação) |
 | Node.js + npm | 26.8.1 / 12.0.2 (Node ≥ 20.17) | Projeto 2 (`sqlite3@6` exige Node ≥ 20.17) |
 | git, curl | — | Validação |
@@ -624,7 +684,7 @@ Validação automática (instala dependências em diretório temporário, sobe c
 ```bash
 scripts/validate.sh all          # ou: scripts/validate.sh 1 | 2 | 3
 scripts/validate.sh all --save   # também atualiza os resultados em docs/validation/
-scripts/security_probes.sh all   # 38 provas de segurança com as aplicações no ar
+scripts/security_probes.sh all   # 54 provas de segurança com as aplicações no ar
 ```
 
 O script termina com código `0` só se as 3 aplicações subirem, os logs ficarem sem traceback e todas as diferenças em relação ao código original estiverem declaradas em `docs/validation/expected-differences.json`.
@@ -637,11 +697,15 @@ cd code-smells-project && pip install -r requirements.txt
 SEED_PASSWORD=admin123 python app.py      # sem SEED_PASSWORD o seed sorteia a senha e a mostra uma vez no log
 curl localhost:5000/health
 curl "localhost:5000/produtos/busca?q=Mouse"
-curl -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"admin@loja.com","senha":"admin123"}'
+# o login devolve dados.token; as rotas de gestão exigem esse token (401 sem ele, 403 sem o papel)
+TOKEN=$(curl -s -X POST localhost:5000/login -H 'Content-Type: application/json' \
+  -d '{"email":"admin@loja.com","senha":"admin123"}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"]["token"])')
+curl localhost:5000/usuarios                                   # 401
+curl -H "Authorization: Bearer $TOKEN" localhost:5000/usuarios # 200
 # cancelar devolve o estoque: veja o estoque do produto 2, faça um pedido, cancele e veja de novo
 curl localhost:5000/produtos/2
 curl -X POST localhost:5000/pedidos -H 'Content-Type: application/json' -d '{"usuario_id":1,"itens":[{"produto_id":2,"quantidade":3}]}'
-curl -X PUT localhost:5000/pedidos/1/status -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
+curl -X PUT localhost:5000/pedidos/1/status -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
 curl localhost:5000/produtos/2
 
 # Projeto 2
