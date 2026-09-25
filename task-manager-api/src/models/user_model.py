@@ -1,12 +1,14 @@
 """Entidade User: dados, credenciais e consultas."""
-from sqlalchemy import func, select
+from sqlalchemy import select
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from src.models.database import PersistableMixin, db
 from src.utils.datetime_utils import utcnow_naive
 
-USER_ROLES = ('user', 'admin', 'manager')
 DEFAULT_ROLE = 'user'
+ADMIN_ROLE = 'admin'
+MANAGER_ROLE = 'manager'
+USER_ROLES = (DEFAULT_ROLE, ADMIN_ROLE, MANAGER_ROLE)
 # Papéis que um cliente anônimo pode pedir para si; os demais só por uma rota administrativa autenticada.
 SELF_SIGNUP_ROLES = (DEFAULT_ROLE,)
 MIN_PASSWORD_LENGTH = 8
@@ -24,6 +26,7 @@ class User(PersistableMixin, db.Model):
     __tablename__ = 'users'
 
     CREATE_ERROR_MESSAGE = 'Erro ao criar usuário'
+    NOT_FOUND_MESSAGE = USER_NOT_FOUND_MESSAGE
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(MAX_NAME_LENGTH), nullable=False)
@@ -50,6 +53,16 @@ class User(PersistableMixin, db.Model):
         if password is not None:
             self.set_password(password)
 
+    # --- autorização ------------------------------------------------------
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role == ADMIN_ROLE
+
+    def can_act_for(self, user_id) -> bool:
+        """Pode ler/alterar dados do usuário `user_id`: é o próprio, é admin, ou o dado não tem dono."""
+        return user_id is None or self.is_admin or user_id == self.id
+
     @classmethod
     def register(cls, *, name: str, email: str, password: str, role: str = DEFAULT_ROLE) -> 'User':
         user = cls(name=name, email=email, role=role)
@@ -60,26 +73,10 @@ class User(PersistableMixin, db.Model):
     # --- consultas ---------------------------------------------------------
 
     @classmethod
-    def get_by_id(cls, user_id) -> 'User | None':
-        return db.session.get(cls, user_id)
-
-    @classmethod
     def get_by_email(cls, email: str) -> 'User | None':
         return db.session.execute(select(cls).where(cls.email == email)).scalar_one_or_none()
-
-    @classmethod
-    def exists(cls, user_id) -> bool:
-        return cls.get_by_id(user_id) is not None
 
     @classmethod
     def email_in_use(cls, email: str, *, exclude_id=None) -> bool:
         user = cls.get_by_email(email)
         return user is not None and user.id != exclude_id
-
-    @classmethod
-    def list_all(cls) -> list['User']:
-        return list(db.session.execute(select(cls).order_by(cls.id)).scalars())
-
-    @classmethod
-    def count_all(cls) -> int:
-        return db.session.scalar(select(func.count(cls.id)))

@@ -1,5 +1,5 @@
-2026-09-21T15:55:40.134Z [WARN] Rotas administrativas fechadas (403): defina ADMIN_ENDPOINTS_ENABLED=true e ADMIN_TOKEN para habilitá-las.
-2026-09-21T15:55:40.140Z [INFO] LMS API rodando em http://127.0.0.1:3000
-2026-09-21T15:55:40.626Z [INFO] Processando pagamento de 497 no cartão ****4444
-2026-09-21T15:55:40.829Z [INFO] Processando pagamento de 497 no cartão ****4444
-2026-09-21T15:55:41.033Z [INFO] Processando pagamento de 997 no cartão ****4444
+2026-09-25T18:39:40.475Z [WARN] Rotas administrativas fechadas (403): defina ADMIN_ENDPOINTS_ENABLED=true e ADMIN_TOKEN para habilitá-las.
+2026-09-25T18:39:40.481Z [INFO] LMS API rodando em http://127.0.0.1:3000
+2026-09-25T18:39:40.957Z [INFO] Processando pagamento de 497 no cartão ****4444
+2026-09-25T18:39:41.406Z [INFO] Processando pagamento de 997 no cartão ****4444
+2026-09-25T18:39:41.416Z [INFO] SIGTERM recebido, encerrando

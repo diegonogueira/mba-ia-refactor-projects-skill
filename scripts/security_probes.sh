@@ -81,6 +81,9 @@ probe_rotas_de_gestao() {
   probe "admin lista usuários" 200 localhost:5000/usuarios -H "Authorization: Bearer $admin"
   probe "admin lê o relatório de vendas" 200 localhost:5000/relatorios/vendas -H "Authorization: Bearer $admin"
   probe "vitrine continua pública" 200 localhost:5000/produtos
+  probe "pedido anônimo é recusado" 401 -X POST localhost:5000/pedidos -H 'Content-Type: application/json' -d '{"usuario_id":2,"itens":[{"produto_id":1,"quantidade":1}]}'
+  probe "cliente não faz pedido em nome de outro usuário" 403 -X POST localhost:5000/pedidos -H "Authorization: Bearer $cliente" -H 'Content-Type: application/json' -d '{"usuario_id":3,"itens":[{"produto_id":1,"quantidade":1}]}'
+  probe "cliente faz o próprio pedido" 201 -X POST localhost:5000/pedidos -H "Authorization: Bearer $cliente" -H 'Content-Type: application/json' -d '{"usuario_id":2,"itens":[{"produto_id":1,"quantidade":1}]}'
   probe "cadastro continua público" 201 -X POST localhost:5000/usuarios -H 'Content-Type: application/json' -d '{"nome":"Probe","email":"probe.p1@teste.com","senha":"segredo123"}'
 }
 
@@ -95,7 +98,7 @@ probe_estoque_cancelamento() {
   local inicial pedido admin
   admin=$(token_de admin@loja.com)
   inicial=$(estoque_produto 2)
-  pedido=$(curl -s -X POST localhost:5000/pedidos -H 'Content-Type: application/json' \
+  pedido=$(curl -s -X POST localhost:5000/pedidos -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' \
     -d '{"usuario_id":1,"itens":[{"produto_id":2,"quantidade":3}]}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["dados"]["pedido_id"])')
   check "pedido baixa o estoque" "$(estoque_produto 2)" "$((inicial - 3))"
   probe "cancelamento responde como antes" 200 -X PUT "localhost:5000/pedidos/$pedido/status" -H "Authorization: Bearer $admin" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
@@ -145,6 +148,8 @@ probes_2() {
   probe "relatório financeiro fechado por padrão" 403 localhost:3000/api/admin/financial-report
   probe "exclusão de usuário fechada por padrão" 403 -X DELETE localhost:3000/api/users/1
   probe "checkout continua público" 200 -X POST localhost:3000/api/checkout -H 'Content-Type: application/json' -d '{"usr":"Ana","eml":"ana.probe@teste.com","pwd":"segredo123","c_id":2,"card":"4111222233334444"}'
+  probe "checkout em conta existente com senha errada é recusado" 401 -X POST localhost:3000/api/checkout -H 'Content-Type: application/json' -d '{"usr":"Ana","eml":"ana.probe@teste.com","pwd":"senha-errada","c_id":1,"card":"4111222233334444"}'
+  probe "cartão com poucos dígitos é recusado" 400 -X POST localhost:3000/api/checkout -H 'Content-Type: application/json' -d '{"usr":"Bia","eml":"bia.probe@teste.com","pwd":"segredo123","c_id":1,"card":"4"}'
   probe "checkout duplicado é recusado" 400 -X POST localhost:3000/api/checkout -H 'Content-Type: application/json' -d '{"usr":"Ana","eml":"ana.probe@teste.com","pwd":"segredo123","c_id":2,"card":"4111222233334444"}'
   if grep -qE '4111222233334444|pk_live' "$WORK/p2.log"; then echo "  FAIL  log expõe cartão/chave"; FAILED=1; else echo "  PASS  log não expõe cartão nem chave do gateway"; fi
   stop
@@ -155,18 +160,35 @@ probes_2() {
   stop
 }
 
+token3() { # <email> — token do POST /login do projeto 3 (seed com SEED_PASSWORD=senha1234)
+  curl -s -X POST localhost:5000/login -H 'Content-Type: application/json' -d "{\"email\":\"$1\",\"password\":\"senha1234\"}" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin).get("token",""))'
+}
+
 probes_3() {
   echo "=== Projeto 3: task-manager-api ==="
   local d="$WORK/p3"; copy_project task-manager-api "$d"; python_env "$d" || return 1
-  (cd "$d" && .venv/bin/python seed.py >/dev/null 2>&1)
+  (cd "$d" && SEED_PASSWORD=senha1234 .venv/bin/python seed.py >/dev/null 2>&1)
   start "$d" 5000 "$WORK/p3.log" "$d/.venv/bin/python" app.py || return 1
   probe "auto-cadastro como admin é recusado" 403 -X POST localhost:5000/users -H 'Content-Type: application/json' -d '{"name":"Probe","email":"probe.admin@teste.com","password":"segredo123","role":"admin"}'
   probe "auto-cadastro como manager é recusado" 403 -X POST localhost:5000/users -H 'Content-Type: application/json' -d '{"name":"Probe","email":"probe.manager@teste.com","password":"segredo123","role":"manager"}'
   probe "auto-cadastro comum continua funcionando" 201 -X POST localhost:5000/users -H 'Content-Type: application/json' -d '{"name":"Probe","email":"probe.user@teste.com","password":"segredo123","role":"user"}'
-  probe "promoção de conta alheia é recusada" 403 -X PUT localhost:5000/users/2 -H 'Content-Type: application/json' -d '{"role":"admin"}'
-  probe "desativar conta alheia é recusado" 403 -X PUT localhost:5000/users/2 -H 'Content-Type: application/json' -d '{"active":false}'
-  probe "atualização legítima continua funcionando" 200 -X PUT localhost:5000/users/2 -H 'Content-Type: application/json' -d '{"name":"Maria S."}'
-  probe_body "resposta de usuário não traz hash de senha" '"password"' localhost:5000/users/1
+  local admin3 maria
+  admin3=$(token3 joao@email.com); maria=$(token3 maria@email.com)
+  if [[ -n "$admin3" && -n "$maria" ]]; then echo "  PASS  login devolve token assinado"; else echo "  FAIL  login sem token"; FAILED=1; fi
+  probe "atualização anônima de usuário é recusada" 401 -X PUT localhost:5000/users/2 -H 'Content-Type: application/json' -d '{"name":"X"}'
+  probe "usuário não se promove a admin" 403 -X PUT localhost:5000/users/2 -H "Authorization: Bearer $maria" -H 'Content-Type: application/json' -d '{"role":"admin"}'
+  probe "usuário não desativa conta alheia" 403 -X PUT localhost:5000/users/1 -H "Authorization: Bearer $maria" -H 'Content-Type: application/json' -d '{"active":false}'
+  probe "atualização da própria conta funciona" 200 -X PUT localhost:5000/users/2 -H "Authorization: Bearer $maria" -H 'Content-Type: application/json' -d '{"name":"Maria S."}'
+  probe "listagem de usuários sem token" 401 localhost:5000/users
+  probe "listagem de usuários com token de usuário comum" 403 localhost:5000/users -H "Authorization: Bearer $maria"
+  probe "listagem de usuários com token de admin" 200 localhost:5000/users -H "Authorization: Bearer $admin3"
+  probe "relatório geral sem token" 401 localhost:5000/reports/summary
+  probe "token adulterado é recusado" 401 localhost:5000/users -H "Authorization: Bearer ${admin3}x"
+  probe "usuário não cria task em nome de outro" 403 -X POST localhost:5000/tasks -H "Authorization: Bearer $maria" -H 'Content-Type: application/json' -d '{"title":"Task alheia","user_id":1}'
+  probe "criar categoria sem token" 401 -X POST localhost:5000/categories -H 'Content-Type: application/json' -d '{"name":"Probe"}'
+  probe "leitura pública de tasks continua aberta" 200 localhost:5000/tasks
+  probe_body "resposta de usuário não traz hash de senha" '"password"' localhost:5000/users/1 -H "Authorization: Bearer $admin3"
   if curl -s -D- -o /dev/null -H 'Origin: http://origem-desconhecida.example' localhost:5000/tasks | grep -qi 'access-control-allow-origin'; then
     echo "  FAIL  CORS reflete origem desconhecida"; FAILED=1
   else

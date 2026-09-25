@@ -37,6 +37,7 @@ class Task(PersistableMixin, db.Model):
     __tablename__ = 'tasks'
 
     CREATE_ERROR_MESSAGE = 'Erro ao criar task'
+    NOT_FOUND_MESSAGE = TASK_NOT_FOUND_MESSAGE
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(MAX_TITLE_LENGTH), nullable=False)
@@ -98,10 +99,6 @@ class Task(PersistableMixin, db.Model):
         super().update()
 
     # --- consultas ---------------------------------------------------------
-
-    @classmethod
-    def get_by_id(cls, task_id) -> 'Task | None':
-        return db.session.get(cls, task_id)
 
     @classmethod
     def list_all(cls, *, with_relations: bool = False) -> list['Task']:

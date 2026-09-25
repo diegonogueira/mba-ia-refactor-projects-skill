@@ -23,6 +23,16 @@ def validate_bounded_text(value, max_length: int, *, invalid_message: str, too_l
     return value
 
 
+def validate_required_text(value, max_length: int, *, required_message: str, invalid_message: str,
+                           too_long_message: str) -> str:
+    """Texto obrigatório: além do tipo e do limite, não pode ser vazio nem só espaços."""
+    text = validate_bounded_text(value, max_length, invalid_message=invalid_message,
+                                 too_long_message=too_long_message)
+    if not text.strip():
+        raise ValidationError(required_message)
+    return text
+
+
 def validate_optional_bounded_text(value, max_length: int, *, invalid_message: str,
                                    too_long_message: str):
     """Mesma regra de `validate_bounded_text`, aceitando ausência de valor."""

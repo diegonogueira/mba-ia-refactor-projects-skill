@@ -28,7 +28,8 @@ valor efêmero a cada boot e registra um aviso.
 
 | Variável | Default | Descrição |
 |---|---|---|
-| `SECRET_KEY` | efêmera | Chave usada para assinar os tokens de login |
+| `SECRET_KEY` | efêmera | Chave usada para assinar os tokens de login (efêmera = tokens caem a cada boot) |
+| `TOKEN_MAX_AGE` | `28800` | Validade, em segundos, do token devolvido por `POST /login` |
 | `DATABASE_URL` | `sqlite:///tasks.db` | Banco de dados (SQLite relativo fica em `instance/`) |
 | `HOST` | `127.0.0.1` | Interface do servidor (use `0.0.0.0` para expor na rede) |
 | `PORT` | `5000` | Porta do servidor |
@@ -51,53 +52,64 @@ src/
 ├── services/           # autenticação e relatórios (casos de uso)
 ├── controllers/        # fluxo da requisição + validadores de payload
 ├── views/              # blueprints (URL → controller) e serializers
-├── middlewares/        # tratamento de erros centralizado e guard administrativo
+├── middlewares/        # erros centralizados, guards de autenticação (token + papel) e guard administrativo
 └── utils/              # erros, validadores e helpers sem dependência de framework
 ```
 
 ## Endpoints
 
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/` | Identificação da API |
-| GET | `/health` | Health check |
-| GET | `/tasks` | Lista tasks (com nome do usuário e da categoria) |
-| POST | `/tasks` | Cria uma task |
-| GET | `/tasks/search` | Busca por `q`, `status`, `priority`, `user_id` |
-| GET | `/tasks/stats` | Estatísticas das tasks |
-| GET/PUT/DELETE | `/tasks/<id>` | Detalha, atualiza e remove uma task |
-| GET | `/users` | Lista usuários com total de tasks |
-| POST | `/users` | Cria um usuário |
-| GET/PUT | `/users/<id>` | Detalha e atualiza um usuário |
-| DELETE | `/users/<id>` | Remove um usuário e as tasks dele — **endpoint administrativo** (ver abaixo) |
-| GET | `/users/<id>/tasks` | Tasks de um usuário |
-| POST | `/login` | Autentica e devolve um token assinado |
-| GET | `/reports/summary` | Relatório geral |
-| GET | `/reports/user/<id>` | Relatório de um usuário |
-| GET | `/categories` | Lista categorias com total de tasks |
-| POST | `/categories` | Cria uma categoria |
-| PUT/DELETE | `/categories/<id>` | Atualiza e remove uma categoria |
+| Método | Rota | Descrição | Acesso |
+|---|---|---|---|
+| GET | `/` | Identificação da API | público |
+| GET | `/health` | Health check | público |
+| GET | `/tasks` | Lista tasks (com nome do usuário e da categoria) | público |
+| POST | `/tasks` | Cria uma task | autenticado; `user_id` = o próprio (ou admin) |
+| GET | `/tasks/search` | Busca por `q`, `status`, `priority`, `user_id` | público |
+| GET | `/tasks/stats` | Estatísticas das tasks | público |
+| GET | `/tasks/<id>` | Detalha uma task | público |
+| PUT/DELETE | `/tasks/<id>` | Atualiza e remove uma task | autenticado; dono da task (ou admin) |
+| GET | `/users` | Lista usuários com total de tasks | admin |
+| POST | `/users` | Cria um usuário (cadastro) | público |
+| GET/PUT | `/users/<id>` | Detalha e atualiza um usuário | o próprio usuário (ou admin) |
+| DELETE | `/users/<id>` | Remove um usuário e as tasks dele | **endpoint administrativo** (ver abaixo) |
+| GET | `/users/<id>/tasks` | Tasks de um usuário | o próprio usuário (ou admin) |
+| POST | `/login` | Autentica e devolve um token assinado | público |
+| GET | `/reports/summary` | Relatório geral | admin |
+| GET | `/reports/user/<id>` | Relatório de um usuário | o próprio usuário (ou admin) |
+| GET | `/categories` | Lista categorias com total de tasks | público |
+| POST | `/categories` | Cria uma categoria | admin |
+| PUT/DELETE | `/categories/<id>` | Atualiza e remove uma categoria | admin |
 
 Todas as respostas, inclusive as de erro, são JSON. Erros usam o envelope `{"error": "mensagem"}`.
 
+## Autenticação
+
+1. Faça login: `POST /login` com `{"email": "...", "password": "..."}`. A resposta traz o campo `token`.
+2. Envie o token nas rotas protegidas: `Authorization: Bearer <token>`.
+
+```bash
+TOKEN=$(curl -s -X POST localhost:5000/login -H 'Content-Type: application/json' \
+  -d '{"email": "joao@email.com", "password": "<SEED_PASSWORD>"}' | python -c 'import sys, json; print(json.load(sys.stdin)["token"])')
+curl -s localhost:5000/users -H "Authorization: Bearer $TOKEN"
+```
+
+- O token é assinado com `SECRET_KEY`, expira após `TOKEN_MAX_AGE` segundos e carrega só o id do usuário; o
+  papel é lido do banco a cada requisição (rebaixar ou desativar um usuário vale imediatamente).
+- Sem token, com token adulterado ou expirado → **401** (`WWW-Authenticate: Bearer`); token válido sem
+  permissão para a rota → **403**; usuário inativo → **403**.
+- Tasks com dono só são alteradas/removidas pelo dono ou por um admin; tasks sem `user_id` são do time e
+  qualquer usuário autenticado pode editá-las. Criar ou reatribuir uma task para outro usuário exige ser admin.
+- No seed, `joao@email.com` é o admin; `maria@email.com` é um usuário comum.
+
 ## Regras de segurança dos endpoints de usuário
 
-A API ainda não exige autenticação (veja as limitações abaixo), então os endpoints públicos não concedem
-privilégios a quem chama:
-
-- `POST /users` cria sempre com `role: "user"`. Pedir `admin` ou `manager` devolve **403**.
-- `PUT /users/<id>` não altera `role` nem `active`: ambos devolvem **403**. Esses campos só devem mudar
-  por uma rota administrativa autenticada.
+- `POST /users` é o cadastro público e cria sempre com `role: "user"`. Pedir `admin` ou `manager` devolve **403**.
+- `PUT /users/<id>` edita o perfil (nome, e-mail, senha) e não altera `role` nem `active`: ambos devolvem **403**.
 - Senhas têm no mínimo 8 caracteres e são gravadas com hash `scrypt` (Werkzeug).
-- `name`, `email`, `description`, `color` e `tags` são validados contra os limites das colunas; `color`
-  precisa ser hexadecimal no formato `#RRGGBB`.
-- `DELETE /users/<id>` apaga o usuário **e todas as tasks dele**. Por ser destrutivo e não haver
-  autenticação, ele nasce **fechado**: responde **403** até que `ADMIN_ENDPOINTS_ENABLED=true` e
-  `ADMIN_TOKEN` estejam definidos e a requisição traga o header `X-Admin-Token` correspondente.
+- `name`, `email`, `description`, `color` e `tags` são validados contra os limites das colunas; nomes não podem
+  ser vazios nem só espaços (na criação e na atualização); `color` precisa ser hexadecimal no formato `#RRGGBB`.
+- `DELETE /users/<id>` apaga o usuário **e todas as tasks dele**. Por ser destrutivo, ele nasce **fechado**:
+  responde **403** até que `ADMIN_ENDPOINTS_ENABLED=true` e `ADMIN_TOKEN` estejam definidos e a requisição
+  traga o header `X-Admin-Token` correspondente.
 - Falhas de gravação são registradas apenas pelo tipo do erro, e o SQLAlchemy roda com
   `hide_parameters`: nenhum hash de senha chega aos logs.
-
-**Limitação conhecida:** nenhuma rota exige autenticação. O token devolvido por `POST /login` é assinado,
-mas ainda não é verificado por nenhum endpoint — qualquer cliente com acesso de rede consegue ler, alterar
-e apagar dados. Antes de expor a API fora do ambiente local, adicione um middleware que valide esse token
-(e o papel do usuário) nas rotas de escrita.

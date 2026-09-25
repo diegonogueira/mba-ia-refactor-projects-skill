@@ -47,15 +47,16 @@ curl -s http://127.0.0.1:5000/relatorios/vendas -H "Authorization: Bearer $TOKEN
 
 | Acesso | Rotas |
 |---|---|
-| Público | `GET /`, `GET /health`, `GET /produtos`, `GET /produtos/busca`, `GET /produtos/<id>`, `POST /usuarios`, `POST /login`, `POST /pedidos` |
+| Público | `GET /`, `GET /health`, `GET /produtos`, `GET /produtos/busca`, `GET /produtos/<id>`, `POST /usuarios`, `POST /login` |
 | Administrador (`tipo = admin`) | `POST /produtos`, `PUT /produtos/<id>`, `DELETE /produtos/<id>`, `GET /usuarios`, `GET /pedidos`, `PUT /pedidos/<id>/status`, `GET /relatorios/vendas` |
-| O próprio usuário ou administrador | `GET /usuarios/<id>`, `GET /pedidos/usuario/<id>` |
+| O próprio usuário ou administrador | `GET /usuarios/<id>`, `GET /pedidos/usuario/<id>`, `POST /pedidos` (o `usuario_id` do corpo deve ser o do token) |
 | `X-Admin-Token` + `ADMIN_ENDPOINTS_ENABLED=true` | `POST /admin/reset-db`, `POST /admin/query` |
 
 Sem token, com token adulterado ou expirado a resposta é `401`; com token válido de um usuário sem permissão, `403`. O papel é lido do banco a cada requisição (o token carrega apenas o id do usuário).
 
 ## Regras de pedido
 
+- Criar um pedido exige login: um cliente só cria pedidos em seu próprio nome (`usuario_id` igual ao do token); administradores podem criar para qualquer usuário.
 - Criar um pedido baixa o estoque dos produtos na mesma transação.
 - Mudar o status para `cancelado` devolve ao estoque as quantidades dos itens, uma única vez.
 - `cancelado` e `entregue` são estados finais: tentar sair deles responde 400. Repetir o status atual não altera nada.

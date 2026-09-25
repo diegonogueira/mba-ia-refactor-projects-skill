@@ -1,6 +1,6 @@
 """Relatório de vendas: agregações sobre pedidos e regra de desconto por faturamento."""
 from src.models.database import get_connection
-from src.models.pedido_model import STATUS_APROVADO, STATUS_CANCELADO, STATUS_PENDENTE
+from src.models.status_pedido import STATUS_APROVADO, STATUS_CANCELADO, STATUS_PENDENTE
 
 # (faturamento mínimo exclusivo, taxa de desconto) — da maior faixa para a menor
 FAIXAS_DESCONTO = (

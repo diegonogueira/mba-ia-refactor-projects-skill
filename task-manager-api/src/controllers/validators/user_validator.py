@@ -2,7 +2,7 @@
 from src.models.user_model import (DEFAULT_ROLE, MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, MIN_PASSWORD_LENGTH,
                                    SELF_SIGNUP_ROLES, USER_ROLES)
 from src.utils.errors import ConflictError, ForbiddenError, ValidationError
-from src.utils.validators import is_valid_email, require_json_object, validate_bounded_text
+from src.utils.validators import is_valid_email, require_json_object, validate_required_text
 
 NAME_REQUIRED_MESSAGE = 'Nome é obrigatório'
 NAME_INVALID_MESSAGE = 'Nome inválido'
@@ -18,9 +18,11 @@ PASSWORD_TOO_SHORT_ON_UPDATE_MESSAGE = 'Senha muito curta'
 ROLE_INVALID_MESSAGE = 'Role inválido'
 CREDENTIALS_REQUIRED_MESSAGE = 'Email e senha são obrigatórios'
 
-# Enquanto os endpoints de usuário não exigem autenticação, nenhum cliente pode escolher privilégios.
+# O cadastro é público: quem se cadastra não escolhe privilégios.
 ROLE_FORBIDDEN_MESSAGE = 'Não é possível definir esse role sem autenticação'
-ACTIVE_FORBIDDEN_MESSAGE = 'Não é possível alterar o campo active sem autenticação'
+# A atualização é do próprio usuário (ou de um admin agindo como ele): privilégios não mudam por ela.
+ROLE_CHANGE_FORBIDDEN_MESSAGE = 'Não é possível alterar o role por esta rota'
+ACTIVE_CHANGE_FORBIDDEN_MESSAGE = 'Não é possível alterar o campo active por esta rota'
 
 
 def _password(value, too_short_message: str) -> str:
@@ -32,8 +34,8 @@ def _password(value, too_short_message: str) -> str:
 
 
 def _name(value) -> str:
-    return validate_bounded_text(value, MAX_NAME_LENGTH, invalid_message=NAME_INVALID_MESSAGE,
-                                 too_long_message=NAME_TOO_LONG_MESSAGE)
+    return validate_required_text(value, MAX_NAME_LENGTH, required_message=NAME_REQUIRED_MESSAGE,
+                                  invalid_message=NAME_INVALID_MESSAGE, too_long_message=NAME_TOO_LONG_MESSAGE)
 
 
 def _email(value) -> str:
@@ -78,11 +80,11 @@ def validate_new_user(payload, *, email_in_use) -> dict:
 def validate_user_changes(payload, *, email_in_use) -> dict:
     data = require_json_object(payload)
 
-    # Sem um guard que prove quem está chamando, campos de privilégio não podem ser alterados.
+    # Esta rota edita o perfil; papel e ativação são gestão de privilégios e não passam por ela.
     if 'role' in data:
-        raise ForbiddenError(ROLE_FORBIDDEN_MESSAGE)
+        raise ForbiddenError(ROLE_CHANGE_FORBIDDEN_MESSAGE)
     if 'active' in data:
-        raise ForbiddenError(ACTIVE_FORBIDDEN_MESSAGE)
+        raise ForbiddenError(ACTIVE_CHANGE_FORBIDDEN_MESSAGE)
 
     changes = {}
     if 'name' in data:

@@ -50,6 +50,8 @@ src/
 
 ## Regras de negócio relevantes
 
+- O checkout identifica o cliente pelo `eml` (sem diferenciar maiúsculas/minúsculas e ignorando espaços nas pontas). Se o e-mail já tem conta, o `pwd` precisa ser a senha dessa conta: senha ausente ou errada responde `401` antes de qualquer cobrança. Contas criadas sem `pwd` não podem ser reutilizadas em outro checkout.
+- O `card` precisa ter de 13 a 19 dígitos (espaços e hífens entre os grupos são aceitos); caso contrário, `400`.
 - Um usuário não pode se matricular duas vezes no mesmo curso: o segundo `POST /api/checkout` com o mesmo `eml` e `c_id` responde `400` e o cartão não é cobrado.
 - Se a gravação da matrícula falhar depois da autorização do pagamento, a autorização é estornada e o estorno fica registrado em `audit_logs`.
 - `DELETE /api/users/:id` responde `400` para um id inválido e `404` quando não existe usuário com aquele id.

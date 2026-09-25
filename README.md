@@ -10,7 +10,7 @@ A skill `refactor-arch` (Claude Code) analisa uma codebase, audita anti-patterns
 >
 > **Segunda iteração (skill v1.5.0/v1.5.1).** Um novo feedback mostrou que o `audit-project-1.md` registrava "cancelar o pedido não devolve o estoque", mas a refatoração só tinha mudado o código de camada — o `notificacao_service` seguia apenas logando `"Devolver estoque."`. O playbook ganhou a regra de fechar o comportamento descrito no **Impact** (e não só mover o código) e a skill foi rodada de novo no projeto 1: cancelar agora devolve o estoque, uma única vez, e todos os endpoints originais continuam respondendo como antes — ver [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151).
 >
-> **Terceira iteração (skill v1.6.0).** O feedback seguinte apontou que o finding de Broken Authentication do projeto 1 recomendava token assinado e guard por papel nas rotas de gestão, mas a Fase 3 tinha deixado isso como pendência. Agora a skill trata essa recomendação como correção obrigatória. No projeto 1, o login emite um token assinado e as rotas de gestão exigem o papel certo — ver [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160).
+> **Terceira iteração (skill v1.6.0/v1.6.1).** O feedback seguinte apontou que o finding de Broken Authentication do projeto 1 recomendava token assinado e guard por papel nas rotas de gestão, mas a Fase 3 tinha deixado isso como pendência. Agora a skill trata essa recomendação como correção obrigatória, e a versão final foi rodada de novo nos **3 projetos**. Nos três, as rotas de gestão exigem token e papel, e nenhuma ação é feita em nome de outro usuário. Não há pendência de segurança aberta — ver [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160).
 
 ## Sumário
 
@@ -99,7 +99,7 @@ Escala usada (definida no enunciado): **CRITICAL** — segurança/arquitetura gr
 
 ### Estrutura
 
-Versão final: **v1.6.0** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
+Versão final: **v1.6.1** (o histórico das iterações está em [Desafios](#desafios-encontrados-e-como-resolvi) e em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca)).
 
 ```text
 .claude/skills/refactor-arch/            # idêntica nos 3 projetos (diff -r vazio)
@@ -171,7 +171,7 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 | 9 | Risco de *overfitting* da skill aos 3 projetos | Exemplos genéricos no playbook e sinais por responsabilidade (ver seção anterior). |
 | 11 | **Iteração 3 (v1.2.0 → v1.4.0), depois do feedback da banca:** a Fase 3 escondia correções possíveis atrás de "precisa de autenticação" — `POST /users` continuava aceitando `role: admin` no projeto 3, e o mesmo padrão aparecia em mais 7 pontos nos 3 projetos | Varredura finding-a-finding dos 68 achados, skill v1.3.0/v1.4.0 (exceção 9 para escalação de privilégio, exceção 8 para segredo em log/seed, guarda fechada por padrão, headers no contrato, fechamento finding a finding com `Status`), reexecução das 3 fases nos 3 projetos e `scripts/security_probes.sh` com 29 provas. Detalhes em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca). |
 | 12 | **Iteração 4 (v1.4.0 → v1.5.1), segundo feedback da banca:** o relatório do projeto 1 dizia que cancelar não devolve o estoque, mas a Fase 3 só moveu o `print` para `notificacao_service` — o Impact continuava acontecendo | Playbook com "Rule zero" (fechar o Impact, não só a camada) e T-19 (comportamento anunciado e não executado), sinal novo no AP-07, Recommendation obrigada a cobrir o Impact, `Fixed` só quando o cenário do Impact não se reproduz. A primeira reexecução (v1.5.0) fechou listagens do domínio com 403; a v1.5.1 restringiu a exceção 2 ao que é administrativo por natureza e a reexecução final manteve o contrato. Provas de estoque em `security_probes.sh`. Detalhes em [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151). |
-| 13 | **Iteração 5 (v1.5.1 → v1.6.0), terceiro feedback da banca:** o finding de Broken Authentication do projeto 1 recomendava token assinado e guard por papel, mas a Fase 3 deixava a própria recomendação como pendência | Exceção 11 nas guidelines (autenticação das rotas de gestão é obrigatória), regra de que a própria Recommendation não pode virar "Remaining Item", T-06 com token service e guards, smoke test autenticado e 16 provas novas de 401/403/200. Detalhes em [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160). |
+| 13 | **Iteração 5 (v1.5.1 → v1.6.0), terceiro feedback da banca:** o finding de Broken Authentication do projeto 1 recomendava token assinado e guard por papel, mas a Fase 3 deixava a própria recomendação como pendência | Exceção 11 nas guidelines (autenticação das rotas de gestão é obrigatória), regra de que a própria Recommendation não pode virar "Remaining Item", T-06 com token service e guards, smoke test autenticado e provas de 401/403/200. A v1.6.1 estendeu a regra a ações feitas em nome de outro usuário, e a skill foi reexecutada nos 3 projetos. Detalhes em [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160). |
 | 10 | O limite de uso da conta (`You've hit your session limit`) interrompeu a Fase 3 dos projetos 1 e 2 no meio | Retomei a **mesma sessão** depois da renovação (`claude -p "...continue de onde parou" --resume <sessão>`) e a skill seguiu do ponto em que estava. Os logs e as métricas registram a interrupção e as duas invocações. |
 
 
@@ -179,7 +179,7 @@ O **AP-18** traz uma tabela de APIs obsoletas com o substituto moderno: `datetim
 
 ## C) Resultados
 
-Os relatórios `audit-project-{1,2,3}.md`, os números e as comparações desta seção vêm das execuções da **skill v1.2.0** (Claude Code 2.1.273, modelo `claude-opus-5[1m]`) sobre o código original (commit `6d1ce62`). Depois disso, o código foi refinado em reexecuções da skill sobre o próprio código refatorado, descritas em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca) e na [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151): projetos 2 e 3 com a v1.4.0, projeto 1 com a v1.6.0 (Claude Code 2.1.282, modelo `claude-opus-5-5`); a [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160) descreve essa última rodada. Os logs completos de cada projeto — saída das Fases 1 e 3, confirmação e linha do tempo de todas as chamadas de ferramenta — estão em [`docs/execution-logs/`](docs/execution-logs/).
+Os relatórios `audit-project-{1,2,3}.md`, os números e as comparações desta seção vêm das execuções da **skill v1.2.0** (Claude Code 2.1.273, modelo `claude-opus-5[1m]`) sobre o código original (commit `6d1ce62`). Depois disso, o código foi refinado em reexecuções da skill sobre o próprio código refatorado, descritas em [Iteração pós-avaliação](#iteração-pós-avaliação-feedback-da-banca) e na [Segunda iteração](#segunda-iteração-o-impact-que-não-fechava-skill-v150-e-v151): os 3 projetos terminaram com a v1.6.1 (Claude Code 2.1.282, modelo `claude-opus-5-5`); a [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160) descreve essa última rodada. Os logs completos de cada projeto — saída das Fases 1 e 3, confirmação e linha do tempo de todas as chamadas de ferramenta — estão em [`docs/execution-logs/`](docs/execution-logs/).
 
 ### Resumo dos relatórios de auditoria
 
@@ -223,7 +223,7 @@ Valores tirados do campo `total_cost_usd` e das durações dos eventos `result` 
 
 ### Antes × depois
 
-#### Projeto 1 — code-smells-project (4 arquivos / 780 linhas → 38 arquivos / 1349 linhas)
+#### Projeto 1 — code-smells-project (4 arquivos / 780 linhas → 39 arquivos / 1369 linhas)
 
 ```text
 ANTES                                        DEPOIS
@@ -244,7 +244,7 @@ code-smells-project/                         code-smells-project/
                                                  └── utils/             # errors.py
 ```
 
-#### Projeto 2 — ecommerce-api-legacy (3 arquivos / 180 linhas → 28 arquivos / 666 linhas)
+#### Projeto 2 — ecommerce-api-legacy (3 arquivos / 180 linhas → 28 arquivos / 803 linhas)
 
 ```text
 ANTES                                        DEPOIS
@@ -265,7 +265,7 @@ ecommerce-api-legacy/                        ecommerce-api-legacy/
                                                  └── utils/            # errors, constants, logger, password, validators
 ```
 
-#### Projeto 3 — task-manager-api (15 arquivos / 1158 linhas → 39 arquivos / 1536 linhas)
+#### Projeto 3 — task-manager-api (15 arquivos / 1158 linhas → 41 arquivos / 1794 linhas)
 
 ```text
 ANTES                                        DEPOIS
@@ -283,7 +283,7 @@ task-manager-api/                            task-manager-api/
 │                 # (nunca usado)               │                      # + validators/ por domínio
 └── utils/        # helpers.py (nunca usado)     ├── views/            # *_routes.py (blueprints, categorias separadas
                                                  │                      # dos relatórios) + serializers.py
-                                                 ├── middlewares/      # error_handler.py
+                                                 ├── middlewares/      # error_handler.py, auth_guard.py (token + papel)
                                                  └── utils/            # errors, validators, datetime_utils, math_utils
 ```
 
@@ -346,7 +346,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/errorHandler.js + asyncHandler.js (erros em texto, como no original)
 - [x] Entry point claro — `npm start` → src/app.js → src/createApp.js
 - [x] Aplicação inicia sem erros — `npm ci` limpo (build nativo do sqlite3 ok) + `node src/app.js`, porta 3000
-- [x] Endpoints originais respondem corretamente — 3/3 rotas; 5/8 checks idênticos + 3 diferenças esperadas (as 2 rotas administrativas passaram a ser fechadas por padrão — com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN` respondem como o original)
+- [x] Endpoints originais respondem corretamente — 3/3 rotas; 4/8 checks idênticos + 4 diferenças esperadas (as 2 rotas administrativas passaram a ser fechadas por padrão — com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN` respondem como o original; checkout em conta existente com senha errada → 401)
 ```
 
 #### Projeto 3 — task-manager-api
@@ -375,7 +375,7 @@ Cada item traz, depois do travessão, a evidência que conferi.
 - [x] Error handling centralizado — src/middlewares/error_handler.py (nenhuma resposta HTML restante)
 - [x] Entry point claro — app.py e seed.py usam src/app.py:create_app()
 - [x] Aplicação inicia sem erros — `python seed.py && python app.py`, porta 5000, sem DeprecationWarning
-- [x] Endpoints originais respondem corretamente — 22/22 rotas; 39/44 checks idênticos + 5 diferenças esperadas (hash de senha fora das respostas, login de demonstração sem senha fixa no seed, `DELETE /users/<id>` atrás da guarda administrativa)
+- [x] Endpoints originais respondem corretamente — 22/22 rotas; 39/44 checks idênticos + 5 diferenças esperadas (hash de senha fora das respostas, login de demonstração sem senha fixa no seed, `DELETE /users/<id>` atrás da guarda administrativa). O smoke test faz login como admin e envia o token às rotas de gestão; sem token elas respondem 401, o que é verificado à parte pelo `security_probes.sh`
 ```
 
 ### Evidências: aplicações rodando após a refatoração
@@ -390,7 +390,7 @@ $ scripts/validate.sh all
   ✓ log do servidor sem tracebacks
 === Projeto 2: ecommerce-api-legacy (Node.js/Express) ===
   ✓ servidor respondeu na porta 3000
-  5/8 checks idênticos (status + shape); 3 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
+  4/8 checks idênticos (status + shape); 4 diferenças esperadas (mudanças de contrato documentadas); 0 diferenças não esperadas.
   ✓ log do servidor sem tracebacks
 === Projeto 3: task-manager-api (Python/Flask) ===
   Seed concluído com sucesso!
@@ -432,7 +432,7 @@ Durante a Fase 3 a própria skill fez validações extras, registradas nos logs 
 
 ### Ajustes manuais depois da execução da skill
 
-Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída da Fase 3 da skill**, sem retoques. Os projetos 2 e 3 vêm da reexecução com a v1.4.0 e o projeto 1 da reexecução com a v1.6.0. Quando uma execução não serviu (a v1.5.0 no projeto 1), eu restaurei o código anterior e corrigi a skill, sem editar o código à mão. A única exceção é este ajuste, feito por mim depois da revisão independente:
+Para manter a rastreabilidade: **o código versionado dos 3 projetos é a saída da Fase 3 da skill**, sem retoques. Os 3 projetos vêm da reexecução com a v1.6.1. Quando uma execução não serviu (a v1.5.0 no projeto 1), eu restaurei o código anterior e corrigi a skill, sem editar o código à mão. A única exceção é este ajuste, feito por mim depois da revisão independente:
 
 - `code-smells-project/requirements.txt` e `task-manager-api/requirements.txt` passaram a declarar `werkzeug==3.1.8` (usado em `generate_password_hash`/`check_password_hash` e nos handlers de erro) e `itsdangerous==2.2.0` (token assinado do projeto 3). Os dois vinham só como dependência transitiva do Flask, o que é frágil num upgrade — e é exatamente o tipo de problema que os relatórios da skill cobram do código legado.
 
@@ -596,7 +596,7 @@ O gate `validate.sh` do projeto 1 volta a ter o mesmo resultado de antes desta i
 | `GET /usuarios/<id>`, `GET /pedidos/usuario/<id>` | 401 | 200 se for o dono, 403 se não for | resposta original |
 | `GET /produtos*`, `POST /usuarios`, `POST /login`, `POST /pedidos`, `GET /`, `GET /health` | públicas, como no original | | |
 
-**Provas.** O `security_probes.sh` agora tem 54 provas, todas passando. As novas do projeto 1:
+**Provas.** As provas novas do projeto 1 na v1.6.0 (o total de provas atual está no fim desta seção):
 
 ```text
   PASS  login devolve token assinado
@@ -621,13 +621,30 @@ O gate `validate.sh` do projeto 1 volta a ter o mesmo resultado de antes desta i
 
 O `validate.sh` do projeto 1, com o token de admin, tem 19/36 checks idênticos e 17 diferenças esperadas (o login ganhou `token`), com 0 diferenças não esperadas. As provas de estoque da iteração anterior continuam passando; agora o cancelamento é feito com o token de admin.
 
-### Pendências conhecidas (assumidas de propósito)
+**Fechando nos 3 projetos (v1.6.0 → v1.6.1).** Restavam duas pendências no README:
+- `POST /pedidos` do projeto 1 aceitava qualquer `usuario_id`: qualquer pessoa fazia pedido em nome de outra.
+- Os projetos 2 e 3 tinham sido refatorados antes da exceção 11.
+
+A v1.6.1 acrescentou à exceção 11 a regra de **agir em nome de um usuário**: toda escrita em que o cliente informa o usuário (`usuario_id`/`user_id` no corpo) exige o token desse usuário ou de um admin. Continuam públicos os fluxos que autenticam o cliente na própria requisição, como um checkout com e-mail + senha. Rodei as 3 fases de novo nos 3 projetos:
+
+| Projeto | Findings na reauditoria | O que a Fase 3 fez | Relatório | Log |
+|---|---|---|---|---|
+| 1 — code-smells-project | 4 (1 HIGH, 3 LOW) | `POST /pedidos` exige token (anônimo → 401; cliente pedindo por outro → 403; o próprio cliente ou um admin → 201), constantes de status de pedido e limpeza. 3 `Fixed`, 1 `Partially fixed` (a skill concluiu que parte da própria recomendação estava errada e explicou por quê) | [`audit-project-1-rerun-v161.md`](reports/audit-project-1-rerun-v161.md) | [log](docs/execution-logs/rerun-v161-project-1-code-smells-project.md) |
+| 2 — ecommerce-api-legacy | 4 (1 HIGH, 2 MEDIUM, 1 LOW) | Checkout em conta existente exige a senha da conta (senão 401, sem cobrança), e-mail normalizado, cartão com 13–19 dígitos, encerramento limpo. 3 `Fixed`, 1 `Not fixed` (dependência transitiva sem versão corrigida, ver abaixo) | [`audit-project-2-rerun-v161.md`](reports/audit-project-2-rerun-v161.md) | [log](docs/execution-logs/rerun-v161-project-2-ecommerce-api-legacy.md) |
+| 3 — task-manager-api | 3 (1 CRITICAL, 2 MEDIUM) | O token do login passa a ser verificado (com expiração). Admin em `GET /users`, relatório geral e escrita de categorias; dono ou admin em `/users/<id>`, `PUT /users/<id>`, `/users/<id>/tasks` e `/reports/user/<id>`; escrita de tasks exige login e só o dono altera (a leitura continua pública). Também: nomes em branco recusados e consultas duplicadas unificadas. 3 `Fixed`, "Remaining Items: None" | [`audit-project-3-rerun-v161.md`](reports/audit-project-3-rerun-v161.md) | [log](docs/execution-logs/rerun-v161-project-3-task-manager-api.md) |
+
+O único item que sobrou é de terceiros: o `sqlite3@6.0.1` (projeto 2, versão mais recente publicada) ainda puxa `prebuild-install`, marcado como deprecated e usado só na instalação. Não existe versão sem ele, e trocar o driver está fora do escopo. O `npm audit` aponta 0 vulnerabilidades.
+
+**Estado final das provas:** `validate.sh all` passa nos 3 projetos com 0 diferenças não esperadas, e o `security_probes.sh all` passa com **69 provas**. Entre elas: pedido/task em nome de outro usuário → 403, checkout em conta alheia com senha errada → 401, rotas de gestão do projeto 3 → 401/403/200.
+
+### Limitações conhecidas
+
+Não há pendência de segurança ou de arquitetura aberta nos 3 projetos. O que segue são limites de ambiente ou de escopo:
 
 | Item | Onde | Por quê |
 |---|---|---|
-| Ausência de autenticação nas rotas (AP-06) — no projeto 2 o finding é CRITICAL | ecommerce-api-legacy, task-manager-api | Esses dois projetos foram refatorados com a v1.4.0, antes da exceção 11. A parte corrigível do finding **foi fechada**: endpoints destrutivos e administrativos (relatório financeiro e `DELETE /api/users/:id` no projeto 2, `DELETE /users/<id>` no projeto 3) ficam 403 por padrão e só abrem com `ADMIN_ENDPOINTS_ENABLED` + `ADMIN_TOKEN`, e nenhum campo de privilégio (`role`, `active`) é aceito de cliente anônimo. No **projeto 1** o item foi resolvido na [Terceira iteração](#terceira-iteração-a-recomendação-que-virava-pendência-skill-v160) |
-| `POST /pedidos` aceita qualquer `usuario_id` | code-smells-project | Criar pedido é uma ação do próprio cliente e ficou pública, como o finding recomendava. Amarrar o pedido ao dono do token mudaria essa rota; a própria Fase 3 da v1.6.0 registrou o ponto como sugestão fora da auditoria |
-| Política de senha mais dura muda o cadastro | code-smells-project, task-manager-api | Mínimo de 8 caracteres foi aplicado (era 4/nenhum); contas antigas continuam autenticando, mas cadastros com senha curta agora recebem 400 |
+| `prebuild-install` deprecated, transitiva do `sqlite3@6.0.1` | ecommerce-api-legacy | O `sqlite3` já está na última versão publicada e o driver não pode ser trocado; é usado só na instalação, e o `npm audit` aponta 0 vulnerabilidades |
+| `SECRET_KEY` precisa ser definida em produção | code-smells-project, task-manager-api | Sem ela, a app gera uma chave efêmera e avisa no log; os tokens de login deixam de valer a cada reinício |
 | Sem testes automatizados | 3 projetos | Fora do escopo do desafio; o smoke test e as provas de segurança do repositório cobrem o contrato |
 
 ---
@@ -638,7 +655,7 @@ O `validate.sh` do projeto 1, com o token de admin, tem 19/36 checks idênticos 
 
 | Ferramenta | Versão usada | Observação |
 |---|---|---|
-| [Claude Code](https://code.claude.com/docs/en/overview) | 2.1.273 (execuções originais) · 2.1.282 (reexecução v1.6.0) | `curl -fsSL https://claude.ai/install.sh \| bash`, depois `claude` para fazer login |
+| [Claude Code](https://code.claude.com/docs/en/overview) | 2.1.273 (execuções originais) · 2.1.282 (reexecução v1.6.1) | `curl -fsSL https://claude.ai/install.sh \| bash`, depois `claude` para fazer login |
 | Python | 3.14.7 (≥ 3.10) | Projetos 1 e 3 (`uv` é opcional, mas acelera a instalação) |
 | Node.js + npm | 26.8.1 / 12.0.2 (Node ≥ 20.17) | Projeto 2 (`sqlite3@6` exige Node ≥ 20.17) |
 | git, curl | — | Validação |
@@ -684,7 +701,7 @@ Validação automática (instala dependências em diretório temporário, sobe c
 ```bash
 scripts/validate.sh all          # ou: scripts/validate.sh 1 | 2 | 3
 scripts/validate.sh all --save   # também atualiza os resultados em docs/validation/
-scripts/security_probes.sh all   # 54 provas de segurança com as aplicações no ar
+scripts/security_probes.sh all   # 69 provas de segurança com as aplicações no ar
 ```
 
 O script termina com código `0` só se as 3 aplicações subirem, os logs ficarem sem traceback e todas as diferenças em relação ao código original estiverem declaradas em `docs/validation/expected-differences.json`.
@@ -704,7 +721,7 @@ curl localhost:5000/usuarios                                   # 401
 curl -H "Authorization: Bearer $TOKEN" localhost:5000/usuarios # 200
 # cancelar devolve o estoque: veja o estoque do produto 2, faça um pedido, cancele e veja de novo
 curl localhost:5000/produtos/2
-curl -X POST localhost:5000/pedidos -H 'Content-Type: application/json' -d '{"usuario_id":1,"itens":[{"produto_id":2,"quantidade":3}]}'
+curl -X POST localhost:5000/pedidos -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"usuario_id":1,"itens":[{"produto_id":2,"quantidade":3}]}'
 curl -X PUT localhost:5000/pedidos/1/status -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"status":"cancelado"}'
 curl localhost:5000/produtos/2
 
@@ -719,9 +736,12 @@ curl -H 'X-Admin-Token: segredo' localhost:3000/api/admin/financial-report   # o
 # Projeto 3
 cd task-manager-api && pip install -r requirements.txt
 SEED_PASSWORD=senha1234 python seed.py && python app.py   # seed sem senha fixa (mínimo 8 caracteres)
-curl localhost:5000/tasks
-curl localhost:5000/reports/summary
-curl -X POST localhost:5000/login -H 'Content-Type: application/json' -d '{"email":"joao@email.com","password":"senha1234"}'
+curl localhost:5000/tasks                                   # leitura pública
+# joao é o admin do seed; o login devolve "token"
+TOKEN=$(curl -s -X POST localhost:5000/login -H 'Content-Type: application/json' \
+  -d '{"email":"joao@email.com","password":"senha1234"}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+curl localhost:5000/reports/summary                                   # 401
+curl -H "Authorization: Bearer $TOKEN" localhost:5000/reports/summary # 200
 ```
 
 Variáveis de ambiente de cada projeto (todas opcionais para rodar localmente) estão no `.env.example` e no README de cada projeto.

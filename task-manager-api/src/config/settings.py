@@ -20,6 +20,8 @@ DEFAULT_LOG_LEVEL = 'INFO'
 TRUTHY_VALUES = {'1', 'true', 'yes', 'on'}
 # Endpoints administrativos nascem fechados: liberar exige a flag E o token no ambiente.
 DEFAULT_ADMIN_ENDPOINTS_ENABLED = False
+# Validade do token devolvido por POST /login.
+DEFAULT_TOKEN_MAX_AGE_SECONDS = 8 * 60 * 60
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,7 @@ class Settings:
     log_level: str
     admin_token: str
     admin_endpoints_enabled: bool
+    token_max_age: int
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -73,4 +76,5 @@ def load_settings() -> Settings:
         # sem default: um token ausente mantém os endpoints administrativos recusando
         admin_token=os.environ.get('ADMIN_TOKEN', ''),
         admin_endpoints_enabled=_bool('ADMIN_ENDPOINTS_ENABLED', DEFAULT_ADMIN_ENDPOINTS_ENABLED),
+        token_max_age=int(os.environ.get('TOKEN_MAX_AGE', DEFAULT_TOKEN_MAX_AGE_SECONDS)),
     )

@@ -1,14 +1,7 @@
 """Acesso a dados e regras da entidade pedido (e seus itens)."""
 from src.models.database import get_connection, transaction
+from src.models.status_pedido import ESTADOS_FINAIS, STATUS_CANCELADO, STATUS_PENDENTE, STATUS_VALIDOS
 from src.utils.errors import NotFoundError, ValidationError
-
-STATUS_PENDENTE = "pendente"
-STATUS_APROVADO = "aprovado"
-STATUS_ENVIADO = "enviado"
-STATUS_ENTREGUE = "entregue"
-STATUS_CANCELADO = "cancelado"
-STATUS_VALIDOS = (STATUS_PENDENTE, STATUS_APROVADO, STATUS_ENVIADO, STATUS_ENTREGUE, STATUS_CANCELADO)
-ESTADOS_FINAIS = (STATUS_CANCELADO, STATUS_ENTREGUE)
 
 # Soma de volta a cada produto as quantidades de todos os itens do pedido (um produto pode repetir).
 SQL_DEVOLVER_ESTOQUE = """

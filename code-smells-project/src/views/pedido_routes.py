@@ -1,11 +1,12 @@
 from flask import Blueprint
 
 from src.controllers import pedido_controller as controller
-from src.middlewares.auth_guard import admin_required, owner_or_admin
+from src.middlewares.auth_guard import admin_required, login_required, owner_or_admin
 
 pedido_bp = Blueprint("pedidos", __name__)
 
-pedido_bp.add_url_rule("/pedidos", "criar_pedido", controller.criar_pedido, methods=["POST"])
+# Criar pedido exige login; o controller confere se o usuario_id do corpo é o do token (ou se é admin).
+pedido_bp.add_url_rule("/pedidos", "criar_pedido", login_required(controller.criar_pedido), methods=["POST"])
 pedido_bp.add_url_rule(
     "/pedidos", "listar_todos_pedidos", admin_required(controller.listar_todos_pedidos), methods=["GET"]
 )

@@ -5,11 +5,12 @@ const { PAYMENT_STATUS } = require('../utils/constants');
 const RANDOM_PASSWORD_BYTES = 24;
 
 // AUTOINCREMENT on tables that allow deletes: ids are never reused, so audit log references stay unambiguous.
+// users.email is case-insensitive: lookups and the UNIQUE constraint treat Gui@x.com and gui@x.com as one account.
 const SCHEMA = `
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE COLLATE NOCASE,
         pass TEXT
     );
     CREATE TABLE IF NOT EXISTS courses (

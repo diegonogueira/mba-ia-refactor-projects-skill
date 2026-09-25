@@ -1,7 +1,8 @@
 function createUserModel(db) {
     return {
-        findByEmail(email) {
-            return db.get('SELECT id, name, email FROM users WHERE email = ?', [email]);
+        // Only for authentication: the stored hash never leaves the service that verifies it.
+        findCredentialsByEmail(email) {
+            return db.get('SELECT id, pass AS passwordHash FROM users WHERE email = ?', [email]);
         },
 
         // Receives the derived hash, never the raw password: the KDF runs outside the transaction.

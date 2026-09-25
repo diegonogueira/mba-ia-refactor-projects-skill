@@ -23,6 +23,17 @@ async function main() {
         logger.error('Falha no servidor HTTP', err);
         process.exit(1);
     });
+
+    // Stops accepting requests, lets the in-flight ones finish and only then closes the database.
+    const shutdown = (signal) => {
+        logger.info(`${signal} recebido, encerrando`);
+        server.close(() => db.close().then(() => process.exit(0), (err) => {
+            logger.error('Falha ao fechar o banco', err);
+            process.exit(1);
+        }));
+    };
+    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', shutdown);
 }
 
 main().catch((err) => {

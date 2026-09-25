@@ -9,9 +9,9 @@ from src.models.database import DatabaseError
 
 logger = logging.getLogger(__name__)
 
-# Nome exibido no índice -> endpoint do blueprint. As URLs vêm do url_map, então não há
-# caminho duplicado entre este módulo e src/views/*_routes.py.
-ENDPOINTS_PUBLICOS = {
+# Rotas anunciadas no índice (públicas e protegidas): nome exibido -> endpoint do blueprint.
+# As URLs vêm do url_map, então não há caminho duplicado entre este módulo e src/views/*_routes.py.
+ENDPOINTS_INDICE = {
     "produtos": "produtos.listar_produtos",
     "usuarios": "usuarios.listar_usuarios",
     "pedidos": "pedidos.listar_todos_pedidos",
@@ -22,7 +22,7 @@ ENDPOINTS_PUBLICOS = {
 
 
 def index():
-    endpoints = {nome: url_for(endpoint) for nome, endpoint in ENDPOINTS_PUBLICOS.items()}
+    endpoints = {nome: url_for(endpoint) for nome, endpoint in ENDPOINTS_INDICE.items()}
     return jsonify({"mensagem": "Bem-vindo à API da Loja", "versao": API_VERSION, "endpoints": endpoints})
 
 

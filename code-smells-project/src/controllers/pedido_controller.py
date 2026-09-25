@@ -1,6 +1,7 @@
 from flask import jsonify, request
 
 from src.controllers.validators import ler_pedido, ler_status
+from src.middlewares.auth_guard import exigir_dono_ou_admin
 from src.models import pedido_model
 from src.services import pedido_service
 from src.views.serializers import serializar_pedido
@@ -8,6 +9,7 @@ from src.views.serializers import serializar_pedido
 
 def criar_pedido():
     dados = ler_pedido(request.get_json(silent=True))
+    exigir_dono_ou_admin(dados["usuario_id"])
     resultado = pedido_service.criar_pedido(dados["usuario_id"], dados["itens"])
     return jsonify({"dados": resultado, "sucesso": True, "mensagem": "Pedido criado com sucesso"}), 201
 

@@ -5,11 +5,11 @@ from flask import jsonify, request
 
 from src.controllers.validators.task_validator import (parse_search_filters, validate_new_task,
                                                        validate_task_changes)
+from src.middlewares.auth_guard import ensure_can_act_for
 from src.models.category_model import Category
-from src.models.task_model import TASK_NOT_FOUND_MESSAGE, Task
+from src.models.task_model import Task
 from src.models.user_model import User
 from src.utils.datetime_utils import utcnow_naive
-from src.utils.errors import NotFoundError
 from src.views.serializers import (serialize_task, serialize_task_detail, serialize_task_statistics,
                                    serialize_task_with_relations)
 
@@ -28,11 +28,13 @@ class TaskController:
         return jsonify([serialize_task_with_relations(task, now) for task in tasks]), 200
 
     def get_task(self, task_id):
-        return jsonify(serialize_task_detail(self._find(task_id))), 200
+        return jsonify(serialize_task_detail(Task.get_or_404(task_id))), 200
 
     def create_task(self):
         fields = validate_new_task(request.get_json(silent=True),
                                    user_exists=User.exists, category_exists=Category.exists)
+        # criar em nome de outro usuário exige ser ele ou admin
+        ensure_can_act_for(fields['user_id'])
         task = Task()
         task.assign(fields)
         task.create()
@@ -40,16 +42,21 @@ class TaskController:
         return jsonify(serialize_task(task)), 201
 
     def update_task(self, task_id):
-        task = self._find(task_id)
+        task = Task.get_or_404(task_id)
+        ensure_can_act_for(task.user_id)
         changes = validate_task_changes(request.get_json(silent=True),
                                         user_exists=User.exists, category_exists=Category.exists)
+        if 'user_id' in changes:
+            ensure_can_act_for(changes['user_id'])
         task.assign(changes)
         task.update()
         logger.info('Task atualizada: id=%s', task.id)
         return jsonify(serialize_task(task)), 200
 
     def delete_task(self, task_id):
-        self._find(task_id).delete()
+        task = Task.get_or_404(task_id)
+        ensure_can_act_for(task.user_id)
+        task.delete()
         logger.info('Task deletada: id=%s', task_id)
         return jsonify({'message': TASK_DELETED_MESSAGE}), 200
 
@@ -59,10 +66,3 @@ class TaskController:
 
     def task_stats(self):
         return jsonify(serialize_task_statistics(self._reports.task_statistics())), 200
-
-    @staticmethod
-    def _find(task_id) -> Task:
-        task = Task.get_by_id(task_id)
-        if task is None:
-            raise NotFoundError(TASK_NOT_FOUND_MESSAGE)
-        return task

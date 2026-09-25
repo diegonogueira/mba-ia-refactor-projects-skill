@@ -21,7 +21,7 @@ HTTP_ERROR_MESSAGES = {
 def register_error_handlers(app) -> None:
     @app.errorhandler(AppError)
     def handle_app_error(error: AppError):
-        return jsonify({ERROR_KEY: error.message}), error.status_code
+        return jsonify({ERROR_KEY: error.message}), error.status_code, error.headers
 
     @app.errorhandler(HTTPException)
     def handle_http_error(error: HTTPException):

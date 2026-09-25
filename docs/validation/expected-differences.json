@@ -29,6 +29,10 @@
     }
   },
   "p2": {
+    "2": {
+      "status": "200->401",
+      "motivo": "checkout com o e-mail de uma conta existente e senha errada deixou de comprar em nome dessa conta (exceção 11: agir em nome de um usuário exige a senha dela); a resposta é 401 em texto, antes de qualquer cobrança"
+    },
     "6": {
       "status": "200->403",
       "motivo": "GET /api/admin/financial-report — rota destrutiva/administrativa fechada por padrão (exceção 2); com ADMIN_ENDPOINTS_ENABLED=true + ADMIN_TOKEN volta a responder como o original"

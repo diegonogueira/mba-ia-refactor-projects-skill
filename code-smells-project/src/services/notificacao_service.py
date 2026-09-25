@@ -1,7 +1,7 @@
 """Notificações disparadas pelos casos de uso de pedido (simuladas via log)."""
 import logging
 
-from src.models.pedido_model import STATUS_APROVADO, STATUS_CANCELADO
+from src.models.status_pedido import STATUS_APROVADO, STATUS_CANCELADO
 
 logger = logging.getLogger(__name__)
 

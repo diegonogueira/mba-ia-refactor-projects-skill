@@ -8,7 +8,7 @@ from src.models.task_model import (DEFAULT_PRIORITY, DEFAULT_STATUS, DUE_DATE_FO
 from src.models.user_model import USER_NOT_FOUND_MESSAGE
 from src.utils.errors import NotFoundError, ValidationError
 from src.utils.validators import (ensure_optional_text, is_integer, require_json_object,
-                                  validate_bounded_text)
+                                  validate_required_text)
 
 TITLE_REQUIRED_MESSAGE = 'Título é obrigatório'
 TITLE_INVALID_MESSAGE = 'Título inválido'
@@ -27,8 +27,8 @@ DUE_DATE_ON_UPDATE_MESSAGE = 'Formato de data inválido'
 
 
 def _title(value) -> str:
-    title = validate_bounded_text(value, MAX_TITLE_LENGTH, invalid_message=TITLE_INVALID_MESSAGE,
-                                  too_long_message=TITLE_TOO_LONG_MESSAGE)
+    title = validate_required_text(value, MAX_TITLE_LENGTH, required_message=TITLE_REQUIRED_MESSAGE,
+                                   invalid_message=TITLE_INVALID_MESSAGE, too_long_message=TITLE_TOO_LONG_MESSAGE)
     if len(title) < MIN_TITLE_LENGTH:
         raise ValidationError(TITLE_TOO_SHORT_MESSAGE)
     return title

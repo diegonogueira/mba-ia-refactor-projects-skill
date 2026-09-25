@@ -123,7 +123,7 @@ validate_2() {
 validate_3() {
   echo "=== Projeto 3: task-manager-api (Python/Flask) ==="
   local d="$WORK/p3"; copy_project task-manager-api "$d"; python_env "$d" || return 1
-  (cd "$d" && .venv/bin/python seed.py 2>/dev/null | sed 's/^/  /') || return 1
+  (cd "$d" && SEED_PASSWORD=senha1234 .venv/bin/python seed.py 2>/dev/null | sed 's/^/  /') || return 1
   start_server "$d" 5000 "$OUT/server-p3.log" "$d/.venv/bin/python" app.py || { stop_server; return 1; }
   check_project 3 5000
 }

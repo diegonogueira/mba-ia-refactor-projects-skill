@@ -6,7 +6,7 @@ Uso: python3 scripts/smoke_test.py <p1|p2|p3> <base_url> <saida.json>
 Os checks estão na mesma ordem para o código original e o refatorado, o que permite
 comparar as duas execuções com scripts/compare_results.py.
 
-Projeto 1: antes dos checks, faz login como o admin do seed. Se a resposta trouxer um token
+Projetos 1 e 3: antes dos checks, faz login como o admin do seed. Se a resposta trouxer um token
 (código refatorado, rotas de gestão autenticadas), ele vai em `Authorization: Bearer` em todas
 as requisições; o código original não emite token e ignora o header. Assim as duas execuções
 são comparáveis. Os casos 401/403 ficam em scripts/security_probes.sh.
@@ -127,7 +127,10 @@ def shape(value, depth=0):
     return type(value).__name__
 
 
-ADMIN_LOGIN = {"p1": ("/login", {"email": "admin@loja.com", "senha": "admin123"})}
+ADMIN_LOGIN = {
+    "p1": ("/login", {"email": "admin@loja.com", "senha": "admin123"}),
+    "p3": ("/login", {"email": "joao@email.com", "password": "senha1234"}),   # joao é o admin do seed
+}
 
 
 def call(base, method, path, body, token=None):
@@ -159,7 +162,8 @@ def main():
     if project in ADMIN_LOGIN:
         login = call(base, "POST", *ADMIN_LOGIN[project])
         try:
-            token = json.loads(login.get("body", "{}")).get("dados", {}).get("token")
+            corpo = json.loads(login.get("body", "{}"))
+            token = (corpo.get("dados") or {}).get("token") or corpo.get("token")
         except ValueError:
             token = None
         print(f"login de admin: HTTP {login['status']}, token {'recebido' if token else 'ausente'}")

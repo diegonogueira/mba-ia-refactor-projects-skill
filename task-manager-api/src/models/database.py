@@ -2,9 +2,10 @@
 import logging
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.utils.errors import PersistenceError
+from src.utils.errors import NotFoundError, PersistenceError
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +35,40 @@ def commit(failure_message: str) -> None:
 
 
 class PersistableMixin:
-    """Operações de escrita comuns às entidades, com as mensagens de erro da API."""
+    """Consultas e operações de escrita comuns às entidades, com as mensagens de erro da API."""
 
     CREATE_ERROR_MESSAGE = 'Erro ao criar registro'
     UPDATE_ERROR_MESSAGE = 'Erro ao atualizar'
     DELETE_ERROR_MESSAGE = 'Erro ao deletar'
+    NOT_FOUND_MESSAGE = 'Registro não encontrado'
+
+    # --- consultas ---------------------------------------------------------
+
+    @classmethod
+    def get_by_id(cls, entity_id):
+        return db.session.get(cls, entity_id)
+
+    @classmethod
+    def get_or_404(cls, entity_id):
+        """Busca pelo id; ausente vira o 404 com a mensagem de contrato da entidade."""
+        entity = cls.get_by_id(entity_id)
+        if entity is None:
+            raise NotFoundError(cls.NOT_FOUND_MESSAGE)
+        return entity
+
+    @classmethod
+    def exists(cls, entity_id) -> bool:
+        return cls.get_by_id(entity_id) is not None
+
+    @classmethod
+    def list_all(cls) -> list:
+        return list(db.session.execute(select(cls).order_by(cls.id)).scalars())
+
+    @classmethod
+    def count_all(cls) -> int:
+        return db.session.scalar(select(func.count(cls.id)))
+
+    # --- escrita -----------------------------------------------------------
 
     def assign(self, fields: dict) -> None:
         """Aplica os campos já validados à entidade."""

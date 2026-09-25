@@ -11,13 +11,10 @@
     "path": "/api/checkout"
   },
   {
-    "status": 200,
-    "json": true,
-    "shape": {
-      "enrollment_id": "int",
-      "msg": "str"
-    },
-    "body": "{\"msg\":\"Sucesso\",\"enrollment_id\":3}",
+    "status": 401,
+    "json": false,
+    "body": "Credenciais inválidas",
+    "ctype": "text/html; charset=utf-8",
     "method": "POST",
     "path": "/api/checkout"
   },

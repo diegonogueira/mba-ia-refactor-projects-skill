@@ -18,6 +18,12 @@ class PaymentDeniedError extends AppError {
     }
 }
 
+class UnauthorizedError extends AppError {
+    constructor(message = 'Credenciais inválidas') {
+        super(message, 401);
+    }
+}
+
 class ForbiddenError extends AppError {
     constructor(message = 'Acesso negado') {
         super(message, 403);
@@ -30,4 +36,4 @@ class NotFoundError extends AppError {
     }
 }
 
-module.exports = { AppError, ValidationError, PaymentDeniedError, ForbiddenError, NotFoundError };
+module.exports = { AppError, ValidationError, PaymentDeniedError, UnauthorizedError, ForbiddenError, NotFoundError };

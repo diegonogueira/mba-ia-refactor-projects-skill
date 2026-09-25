@@ -3,9 +3,8 @@ from datetime import datetime, timedelta
 
 from src.models.category_model import Category
 from src.models.task_model import NO_TASKS, Task
-from src.models.user_model import USER_NOT_FOUND_MESSAGE, User
+from src.models.user_model import User
 from src.utils.datetime_utils import utcnow_naive
-from src.utils.errors import NotFoundError
 from src.utils.math_utils import calculate_percentage
 
 REPORT_WINDOW_DAYS = 7
@@ -48,9 +47,7 @@ class ReportService:
     def user_report(self, user_id, now: datetime | None = None) -> dict:
         """Estatísticas das tasks de um usuário, agregadas no banco."""
         now = now or utcnow_naive()
-        user = User.get_by_id(user_id)
-        if user is None:
-            raise NotFoundError(USER_NOT_FOUND_MESSAGE)
+        user = User.get_or_404(user_id)
 
         by_status = Task.count_by_status(user_id=user_id)
         total = Task.count_all(user_id=user_id)

@@ -1,6 +1,7 @@
 """Guards das rotas de gestão: exigem o token do /login (header `Authorization: Bearer <token>`).
 
-Sem token, token adulterado/expirado ou usuário inexistente → 401; papel insuficiente → 403.
+Sem token, token adulterado/expirado ou usuário inexistente → 401; papel insuficiente ou
+agir em nome de outro usuário → 403.
 O papel vem do banco a cada requisição, nunca do token nem do corpo da requisição.
 """
 from functools import wraps
@@ -30,6 +31,21 @@ def _usuario_autenticado():
     return usuario
 
 
+def login_required(view):
+    """Exige um usuário autenticado (qualquer papel); o controller o lê de `g.usuario`."""
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        _usuario_autenticado()
+        return view(*args, **kwargs)
+    return wrapper
+
+
+def exigir_dono_ou_admin(usuario_id):
+    """O usuário autenticado só age em nome de si mesmo, salvo se for administrador."""
+    if g.usuario["tipo"] != TIPO_ADMIN and g.usuario["id"] != usuario_id:
+        raise ForbiddenError("Acesso negado")
+
+
 def admin_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
@@ -44,9 +60,8 @@ def owner_or_admin(parametro):
     def decorator(view):
         @wraps(view)
         def wrapper(*args, **kwargs):
-            usuario = _usuario_autenticado()
-            if usuario["tipo"] != TIPO_ADMIN and usuario["id"] != kwargs[parametro]:
-                raise ForbiddenError("Acesso negado")
+            _usuario_autenticado()
+            exigir_dono_ou_admin(kwargs[parametro])
             return view(*args, **kwargs)
         return wrapper
     return decorator

@@ -37,6 +37,18 @@ Content-Type: application/json
   "card": "4111222233334444"
 }
 
+### Checkout - e-mail já cadastrado com senha errada (401, o cartão não é cobrado)
+POST {{baseUrl}}/api/checkout
+Content-Type: application/json
+
+{
+  "usr": "Guilherme",
+  "eml": "gui@fullcycle.com.br",
+  "pwd": "senha-errada",
+  "c_id": 1,
+  "card": "4111222233334444"
+}
+
 ### Relatório financeiro administrativo
 # Requer ADMIN_ENDPOINTS_ENABLED=true e ADMIN_TOKEN definidos no servidor; sem isso, 403.
 GET {{baseUrl}}/api/admin/financial-report

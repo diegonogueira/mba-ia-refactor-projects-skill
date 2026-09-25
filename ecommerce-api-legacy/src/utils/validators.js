@@ -2,6 +2,8 @@ const { ValidationError } = require('./errors');
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CARD_NUMBER_PATTERN = /^\d+(?:[ -]?\d+)*$/;
+const CARD_SEPARATORS = /[ -]/g;
+const CARD_DIGITS = Object.freeze({ min: 13, max: 19 });
 const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
 
 const isFilledString = (value) => typeof value === 'string' && value.trim() !== '';
@@ -12,23 +14,33 @@ function parsePositiveInteger(value) {
     return null;
 }
 
+// Card numbers have 13 to 19 digits; spaces and hyphens between groups are accepted and removed.
+function parseCardNumber(value) {
+    if (typeof value !== 'string' || !CARD_NUMBER_PATTERN.test(value)) return null;
+    const digits = value.replace(CARD_SEPARATORS, '');
+    return digits.length >= CARD_DIGITS.min && digits.length <= CARD_DIGITS.max ? digits : null;
+}
+
 // Request field names (usr, eml, pwd, c_id, card) are part of the public contract.
 // courseId is null when c_id cannot identify a course; the checkout answers that as "course not found".
+// E-mails are compared case-insensitively, so they are trimmed and lower-cased before reaching the models.
 function validateCheckoutInput(body) {
-    const { usr: name, eml: email, pwd: password, c_id: rawCourseId, card: cardNumber } = body || {};
-    if (!name || !email || !rawCourseId || !cardNumber) throw new ValidationError();
+    const { usr: rawName, eml: rawEmail, pwd: password, c_id: rawCourseId, card: rawCardNumber } = body || {};
+    if (!rawName || !rawEmail || !rawCourseId || !rawCardNumber) throw new ValidationError();
+    if (!isFilledString(rawName) || typeof rawEmail !== 'string') throw new ValidationError();
 
+    const email = rawEmail.trim().toLowerCase();
+    const cardNumber = parseCardNumber(rawCardNumber);
     const validPassword = password === undefined || password === null || typeof password === 'string';
-    if (
-        !isFilledString(name)
-        || !isFilledString(email) || !EMAIL_PATTERN.test(email)
-        || typeof cardNumber !== 'string' || !CARD_NUMBER_PATTERN.test(cardNumber)
-        || !validPassword
-    ) {
-        throw new ValidationError();
-    }
+    if (!EMAIL_PATTERN.test(email) || cardNumber === null || !validPassword) throw new ValidationError();
 
-    return { name, email, password: password || null, courseId: parsePositiveInteger(rawCourseId), cardNumber };
+    return {
+        name: rawName.trim(),
+        email,
+        password: password || null,
+        courseId: parsePositiveInteger(rawCourseId),
+        cardNumber,
+    };
 }
 
 // Route ids are positive integers; anything else is a bad request instead of a no-op reported as success.

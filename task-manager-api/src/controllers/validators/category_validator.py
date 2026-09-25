@@ -2,8 +2,8 @@
 from src.models.category_model import (COLOR_PATTERN, DEFAULT_COLOR, MAX_DESCRIPTION_LENGTH,
                                        MAX_NAME_LENGTH)
 from src.utils.errors import ValidationError
-from src.utils.validators import (require_json_object, validate_bounded_text,
-                                  validate_optional_bounded_text)
+from src.utils.validators import (require_json_object, validate_optional_bounded_text,
+                                  validate_required_text)
 
 NAME_REQUIRED_MESSAGE = 'Nome é obrigatório'
 NAME_INVALID_MESSAGE = 'Nome inválido'
@@ -14,8 +14,8 @@ COLOR_INVALID_MESSAGE = 'Cor inválida'
 
 
 def _name(value) -> str:
-    return validate_bounded_text(value, MAX_NAME_LENGTH, invalid_message=NAME_INVALID_MESSAGE,
-                                 too_long_message=NAME_TOO_LONG_MESSAGE)
+    return validate_required_text(value, MAX_NAME_LENGTH, required_message=NAME_REQUIRED_MESSAGE,
+                                  invalid_message=NAME_INVALID_MESSAGE, too_long_message=NAME_TOO_LONG_MESSAGE)
 
 
 def _description(value):

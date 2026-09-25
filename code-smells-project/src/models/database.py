@@ -8,6 +8,7 @@ from pathlib import Path
 from flask import current_app, g
 from werkzeug.security import generate_password_hash
 
+from src.models.status_pedido import STATUS_PENDENTE
 from src.models.tipos_usuario import TIPO_ADMIN, TIPO_CLIENTE
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE TABLE IF NOT EXISTS pedidos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER REFERENCES usuarios (id),
-    status TEXT DEFAULT 'pendente',
+    status TEXT DEFAULT '{STATUS_PENDENTE}',
     total REAL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

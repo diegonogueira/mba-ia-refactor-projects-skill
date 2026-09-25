@@ -1,12 +1,18 @@
 const { createModels } = require('../models');
 const { PAYMENT_STATUS } = require('../utils/constants');
-const { hashPassword } = require('../utils/password');
-const { NotFoundError, PaymentDeniedError, ValidationError } = require('../utils/errors');
+const { hashPassword, verifyPassword } = require('../utils/password');
+const { NotFoundError, PaymentDeniedError, UnauthorizedError, ValidationError } = require('../utils/errors');
 
 const ALREADY_ENROLLED_MESSAGE = 'Usuário já matriculado neste curso';
 
 function createCheckoutService({ db, paymentGateway, logger }) {
     const { courses, users, enrollments, auditLogs } = createModels(db);
+
+    // A checkout for an existing e-mail acts on that account, so it must carry the account's password.
+    // Accounts stored without a credential never authenticate.
+    async function authenticate(account, password) {
+        if (!password || !(await verifyPassword(password, account.passwordHash))) throw new UnauthorizedError();
+    }
 
     async function assertNotEnrolled(enrollmentModel, userId, courseId) {
         if (await enrollmentModel.findByUserAndCourse({ userId, courseId })) {
@@ -31,12 +37,15 @@ function createCheckoutService({ db, paymentGateway, logger }) {
             const course = courseId === null ? null : await courses.findActiveById(courseId);
             if (!course) throw new NotFoundError('Curso não encontrado');
 
-            // Refuse the duplicate before charging the card; the check is repeated inside the transaction.
-            const existingUser = await users.findByEmail(email);
-            if (existingUser) await assertNotEnrolled(enrollments, existingUser.id, course.id);
+            // Authenticate and refuse the duplicate before charging the card; both are repeated inside the transaction.
+            const existingUser = await users.findCredentialsByEmail(email);
+            if (existingUser) {
+                await authenticate(existingUser, password);
+                await assertNotEnrolled(enrollments, existingUser.id, course.id);
+            }
 
             // The KDF costs ~200 ms; deriving it here keeps it out of the transaction that holds the connection.
-            const passwordHash = password ? await hashPassword(password) : null;
+            const passwordHash = !existingUser && password ? await hashPassword(password) : null;
 
             const { status, authorizationId } = await paymentGateway.authorize({
                 cardNumber,
@@ -48,7 +57,9 @@ function createCheckoutService({ db, paymentGateway, logger }) {
                 return await db.transaction(async (tx) => {
                     const models = createModels(tx);
 
-                    const user = await models.users.findByEmail(email);
+                    const user = await models.users.findCredentialsByEmail(email);
+                    // Only when a concurrent request created the account after the first check.
+                    if (user && user.id !== existingUser?.id) await authenticate(user, password);
                     if (user) await assertNotEnrolled(models.enrollments, user.id, course.id);
 
                     const userId = user ? user.id : await models.users.create({ name, email, passwordHash });
