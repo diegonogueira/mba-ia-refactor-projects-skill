@@ -13,7 +13,7 @@ allowed-tools:
   - Bash(git status *)
   - Bash(npm audit *)
 metadata:
-  version: 1.6.0
+  version: 1.6.1
   phases: analysis, audit, refactoring
 ---
 
